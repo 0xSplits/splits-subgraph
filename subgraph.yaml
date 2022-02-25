@@ -1,0 +1,44 @@
+specVersion: 0.0.1
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SplitMain
+    network: matic
+    source:
+      address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
+      abi: SplitMain
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.5
+      language: wasm/assemblyscript
+      entities:
+        - CancelControlTransfer
+        - ControlTransfer
+        - CreateSplit
+        - DistributeERC20
+        - DistributeETH
+        - InitiateControlTransfer
+        - UpdateSplit
+        - Withdrawal
+      abis:
+        - name: SplitMain
+          file: ./abis/SplitMain.json
+      eventHandlers:
+        - event: CancelControlTransfer(indexed address)
+          handler: handleCancelControlTransfer
+        - event: ControlTransfer(indexed address,indexed address,indexed address)
+          handler: handleControlTransfer
+        - event: CreateSplit(indexed address,address[],uint32[],uint32,address)
+          handler: handleCreateSplit
+        - event: DistributeERC20(indexed address,indexed address,uint256,indexed address)
+          handler: handleDistributeERC20
+        - event: DistributeETH(indexed address,uint256,indexed address)
+          handler: handleDistributeETH
+        - event: InitiateControlTransfer(indexed address,indexed address)
+          handler: handleInitiateControlTransfer
+        - event: UpdateSplit(indexed address,address[],uint32[],uint32)
+          handler: handleUpdateSplit
+        - event: Withdrawal(indexed address,uint256,address[],uint256[])
+          handler: handleWithdrawal
+      file: ./src/mapping.ts
