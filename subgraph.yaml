@@ -1,4 +1,6 @@
-specVersion: 0.0.1
+specVersion: 0.0.2
+description: 0xSplits
+repository: https://github.com/0xSplits/splits-subgraph-polygon
 schema:
   file: ./schema.graphql
 dataSources:
@@ -8,19 +10,15 @@ dataSources:
     source:
       address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
       abi: SplitMain
+      # block SplitMain deployed on
+      startBlock: 25303316
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.5
+      apiVersion: 0.0.6
       language: wasm/assemblyscript
       entities:
-        - CancelControlTransfer
-        - ControlTransfer
-        - CreateSplit
-        - DistributeERC20
-        - DistributeETH
-        - InitiateControlTransfer
-        - UpdateSplit
-        - Withdrawal
+        - Split
+        - Account
       abis:
         - name: SplitMain
           file: ./abis/SplitMain.json

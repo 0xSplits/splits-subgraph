@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt, Address, TypedMap, store } from "@graphprotocol/graph-ts";
 import {
   SplitMain,
   CancelControlTransfer,
@@ -9,72 +9,206 @@ import {
   InitiateControlTransfer,
   UpdateSplit,
   Withdrawal
-} from "../generated/SplitMain/SplitMain"
-import { ExampleEntity } from "../generated/schema"
+} from "../generated/SplitMain/SplitMain";
+import { SplitWallet } from "../generated/templates";
+import { ReceiveETH } from "../generated/templates/SplitWallet/SplitWallet";
+import {
+  Split,
+  User,
+  Recipient,
+  TokenInternalBalance,
+  TokenWithdrawals
+} from "../generated/schema";
+
+// TODO: helper fns?
+
+const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
+const ONE = BigInt.fromI32(1);
 
 export function handleCancelControlTransfer(
   event: CancelControlTransfer
 ): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
-
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (!entity) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
-
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.split = event.params.split
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.PERCENTAGE_SCALE(...)
-  // - contract.createSplit(...)
-  // - contract.getController(...)
-  // - contract.getERC20Balance(...)
-  // - contract.getETHBalance(...)
-  // - contract.getHash(...)
-  // - contract.getNewPotentialController(...)
-  // - contract.predictImmutableSplitAddress(...)
-  // - contract.walletImplementation(...)
+  // use new object for partial updates when existing values not needed
+  let split = new Split(event.params.split.toString());
+  split.newPotentialController = Address.zero();
+  split.save();
 }
 
-export function handleControlTransfer(event: ControlTransfer): void {}
+export function handleControlTransfer(event: ControlTransfer): void {
+  // use new object for partial updates when existing values not needed
+  let split = new Split(event.params.split.toString());
+  split.controller = event.params.newController;
+  split.newPotentialController = Address.zero();
+  split.save();
+}
 
-export function handleCreateSplit(event: CreateSplit): void {}
+export function handleCreateSplit(event: CreateSplit): void {
+  let splitId = event.params.split.toString();
+  let split = new Split(splitId);
+  split.controller = event.params.controller;
+  split.distributorFee = event.params.distributorFee;
+  split.save();
 
-export function handleDistributeERC20(event: DistributeERC20): void {}
+  let accounts = event.params.accounts;
+  let percentAllocations = event.params.percentAllocations;
+  for (let i: i32 = 0; i < accounts.length; i++) {
+    let account = accounts[i].toString();
+    let recipient = new Recipient(splitId + account);
+    recipient.split = splitId;
+    recipient.account = account;
+    recipient.ownership = percentAllocations[i];
+    recipient.save();
+  }
+}
 
-export function handleDistributeETH(event: DistributeETH): void {}
+export function handleDistributeERC20(event: DistributeERC20): void {
+  let splitId = event.params.split.toString();
+  let tokenId = event.params.token.toString();
+  let amount = event.params.amount;
+  let distributorAddress = event.params.distributorAddress;
+  _handleDistribute(splitId, tokenId, amount, distributorAddress);
+}
+
+export function handleDistributeETH(event: DistributeETH): void {
+  let splitId = event.params.split.toString();
+  let tokenId = Address.zero().toString();
+  let amount = event.params.amount;
+  let distributorAddress = event.params.distributorAddress;
+  _handleDistribute(splitId, tokenId, amount, distributorAddress);
+}
+
+function _handleDistribute(
+  splitId: string,
+  tokenId: string,
+  amount: BigInt,
+  distributorAddress: Address
+): void {
+  let splitTokenBalanceId = splitId + tokenId;
+  let splitTokenInternalBalance = TokenInternalBalance.load(
+    splitTokenBalanceId
+  );
+  if (splitTokenInternalBalance) {
+    splitTokenInternalBalance.amount = ONE;
+    splitTokenInternalBalance.save();
+  }
+
+  // must exist
+  let split = Split.load(splitId) as Split;
+
+  // doesn't know msg.sender; only affects advance users distributing from contracts
+  // assuming they don't explicitly use distributorFee to repoint the proceeds elsewhere;
+  // likely very rare & can fix accounting on withdrawal anyway)
+  let distributorFee = split.distributorFee;
+  if (distributorFee !== BigInt.zero()) {
+    let distributorAmount = (amount * distributorFee) / PERCENTAGE_SCALE;
+    amount -= distributorAmount;
+
+    // if address is zero, dont give to any account (don't know msg.sender)
+    if (distributorAddress !== Address.zero()) {
+      let distributorTokenBalanceId = distributorAddress.toString() + tokenId;
+      let distributorTokenInternalBalance = TokenInternalBalance.load(
+        distributorTokenBalanceId
+      );
+      if (!distributorTokenInternalBalance)
+        distributorTokenInternalBalance = new TokenInternalBalance(
+          distributorTokenBalanceId
+        );
+      distributorTokenInternalBalance.amount += distributorAmount;
+      distributorTokenInternalBalance.save();
+    }
+  }
+
+  let recipients = split.recipients;
+  for (let i: i32 = 0; i < recipients.length; i++) {
+    let recipientId = splitId + recipients[i];
+    // must exist
+    let recipient = Recipient.load(recipientId) as Recipient;
+    let ownership = recipient.ownership;
+    let recipientAmount = (amount * ownership) / PERCENTAGE_SCALE;
+
+    let recipientTokenBalanceId = recipients[i] + tokenId;
+    let recipientTokenInternalBalance = TokenInternalBalance.load(
+      recipientTokenBalanceId
+    );
+    if (!recipientTokenInternalBalance)
+      recipientTokenInternalBalance = new TokenInternalBalance(
+        recipientTokenBalanceId
+      );
+    recipientTokenInternalBalance.amount += recipientAmount;
+    recipientTokenInternalBalance.save();
+  }
+}
 
 export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
-): void {}
+): void {
+  // use new object for partial updates when existing values not needed
+  let split = new Split(event.params.split.toString());
+  split.newPotentialController = event.params.newPotentialController;
+  split.save();
+}
 
-export function handleUpdateSplit(event: UpdateSplit): void {}
+export function handleUpdateSplit(event: UpdateSplit): void {
+  // use new object for partial updates when existing values not needed
+  let splitId = event.params.split.toString();
+  // must exist
+  let split = Split.load(splitId) as Split;
+  split.distributorFee = event.params.distributorFee;
+  split.save();
 
-export function handleWithdrawal(event: Withdrawal): void {}
+  let accounts = event.params.accounts;
+  let accountSet = new Set<string>();
+  for (let i: i32 = 0; i < accounts.length; i++) {
+    let account = accounts[i].toString();
+    accountSet.add(account);
+    let recipient = new Recipient(splitId + account);
+    recipient.account = account;
+    recipient.split = splitId;
+    recipient.ownership = event.params.percentAllocations[i];
+    recipient.save();
+  }
+
+  // delete existing recipients not in updated split
+  let recipients = split.recipients;
+  for (let i: i32 = 0; i < recipients.length; i++) {
+    let recipient = recipients[i];
+    // remove recipients no longer in split
+    if (!accountSet.has(recipient)) store.remove("Recipient", recipient);
+  }
+}
+
+export function handleWithdrawal(event: Withdrawal): void {
+  let account = event.params.account;
+  let ethAmount = event.params.ethAmount;
+  let tokens = event.params.tokens;
+  let tokenAmounts = event.params.tokenAmounts;
+
+  if (ethAmount) {
+    let tokenBalanceId = account.toString() + Address.zero().toString();
+
+    let tokenWithdrawals = TokenWithdrawals.load(tokenBalanceId);
+    if (!tokenWithdrawals)
+      tokenWithdrawals = new TokenWithdrawals(tokenBalanceId);
+    tokenWithdrawals.amount += ethAmount;
+    tokenWithdrawals.save();
+
+    let tokenInternalBalance = new TokenInternalBalance(tokenBalanceId);
+    tokenInternalBalance.amount = ONE;
+    tokenInternalBalance.save();
+  }
+
+  for (let i: i32 = 0; i < tokens.length; i++) {
+    let tokenBalanceId = account.toString() + tokens[i].toString();
+    let tokenAmount = tokenAmounts[i];
+
+    let tokenWithdrawals = TokenWithdrawals.load(tokenBalanceId);
+    if (!tokenWithdrawals)
+      tokenWithdrawals = new TokenWithdrawals(tokenBalanceId);
+    tokenWithdrawals.amount += tokenAmount;
+    tokenWithdrawals.save();
+
+    let tokenInternalBalance = new TokenInternalBalance(tokenBalanceId);
+    tokenInternalBalance.amount = ONE;
+    tokenInternalBalance.save();
+  }
+}

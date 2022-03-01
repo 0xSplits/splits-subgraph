@@ -1,5 +1,59 @@
-type ExampleEntity @entity {
-  id: ID!
-  count: BigInt!
-  split: Bytes! # address
+interface Account {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawals!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+}
+
+type Token @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "token")
+  withdrawals: [TokenWithdrawals!]! @derivedFrom(field: "token")
+}
+
+interface TokenBalance {
+  id: ID! # accountId + tokenId
+  amount: BigInt!
+  token: Token!
+  account: Account!
+}
+
+type TokenInternalBalance implements TokenBalance @entity {
+  id: ID! # accountId + tokenId
+  amount: BigInt!
+  token: Token!
+  account: Account!
+}
+
+type TokenWithdrawals implements TokenBalance @entity {
+  id: ID! # accountId + tokenId
+  amount: BigInt!
+  token: Token!
+  account: Account!
+}
+
+type User implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawals!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+}
+
+type Split implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawals!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+
+  controller: Bytes!
+  newPotentialController: Bytes!
+  distributorFee: BigInt!
+  recipients: [Recipient!]! @derivedFrom(field: "split")
+}
+
+type Recipient @entity {
+  id: ID! # splitId + accountId
+  split: Split!
+  account: Account!
+  ownership: BigInt!
 }
