@@ -1,0 +1,5 @@
+{
+  "network": "ropsten",
+  "startBlock": "11962375",
+  "ethereum": true
+}

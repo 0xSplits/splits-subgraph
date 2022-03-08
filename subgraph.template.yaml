@@ -1,0 +1,60 @@
+specVersion: 0.0.2
+description: 0xSplits
+repository: https://github.com/0xSplits/splits-subgraph
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SplitMain
+    network: {{network}}
+    source:
+      address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
+      abi: SplitMain
+      startBlock: {{startBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Split
+        - Account
+      abis:
+        - name: SplitMain
+          file: ./abis/SplitMain.json
+      eventHandlers:
+          {{#polygon}}
+        - event: CreateSplit(indexed address,address[],uint32[],uint32,address)
+          handler: handleCreateSplit
+          {{/polygon}}
+        - event: InitiateControlTransfer(indexed address,indexed address)
+          handler: handleInitiateControlTransfer
+        - event: CancelControlTransfer(indexed address)
+          handler: handleCancelControlTransfer
+        - event: ControlTransfer(indexed address,indexed address,indexed address)
+          handler: handleControlTransfer
+          {{#polygon}}
+        - event: UpdateSplit(indexed address,address[],uint32[],uint32)
+          handler: handleUpdateSplit
+          {{/polygon}}
+        - event: DistributeETH(indexed address,uint256,indexed address)
+          handler: handleDistributeETH
+        - event: DistributeERC20(indexed address,indexed address,uint256,indexed address)
+          handler: handleDistributeERC20
+        - event: Withdrawal(indexed address,uint256,address[],uint256[])
+          handler: handleWithdrawal
+      {{#ethereum}}
+      callHandlers:
+        - function: createSplit(address[],uint32[],uint32,address)
+          handler: handleCreateSplitCall
+        - function: updateSplit(address,address[],uint32[],uint32)
+          handler: handleUpdateSplitCall
+        - function: updateAndDistributeETH(address,address[],uint32[],uint32,address)
+          handler: handleUpdateAndDistributeETHCall
+        - function: updateAndDistributeERC20(address,address,address[],uint32[],uint32,address)
+          handler: handleUpdateAndDistributeERC20Call
+        - function: distributeETH(address,address[],uint32[],uint32,address)
+          handler: handleDistributeETHCall
+        - function: distributeERC20(address,address,address[],uint32[],uint32,address)
+          handler: handleDistributeERC20Call
+      {{/ethereum}}
+      file: ./src/mapping.ts

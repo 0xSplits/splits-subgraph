@@ -1,16 +1,26 @@
 {
-  "name": "splits-subgraph-matic",
+  "name": "splits-subgraph",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
     "build": "graph build",
-    "deploy": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-matic",
-    "create-local": "graph create --node http://localhost:8020/ 0xSplits/splits-subgraph-matic",
-    "remove-local": "graph remove --node http://localhost:8020/ 0xSplits/splits-subgraph-matic",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 0xSplits/splits-subgraph-matic"
+    "deploy:mainnet": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-ethereum",
+    "deploy:ropsten": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-ropsten",
+    "deploy:polygon": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-polygon",
+    "deploy:mumbai": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-mumbai",
+    "create-local": "graph create --node http://localhost:8020/ 0xSplits/splits-subgraph",
+    "remove-local": "graph remove --node http://localhost:8020/ 0xSplits/splits-subgraph",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 0xSplits/splits-subgraph",
+    "prepare:mainnet": "mustache config/mainnet.json schema.template.graphql > schema.graphql && mustache config/mainnet.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:ropsten": "mustache config/ropsten.json schema.template.graphql > schema.graphql && mustache config/ropsten.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:polygon": "mustache config/polygon.json schema.template.graphql > schema.graphql && mustache config/polygon.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:mumbai": "mustache config/mumbai.json schema.template.graphql > schema.graphql && mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.27.0",
     "@graphprotocol/graph-ts": "0.24.1"
+  },
+  "devDependencies": {
+    "mustache": "^4.2.0"
   }
 }

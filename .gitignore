@@ -10,3 +10,9 @@
 abis
 build
 generated
+
+# build artifacts
+subgraph.yaml
+schema.graphql
+src/mapping.ts
+abi/SplitMain.json
