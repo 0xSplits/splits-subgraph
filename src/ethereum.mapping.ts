@@ -56,6 +56,7 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let splitId = call.outputs.split.toHexString();
   let split = new Split(splitId);
   split.controller = call.inputs.controller;
+  split.newPotentialController = Address.zero();
   split.distributorFee = call.inputs.distributorFee;
 
   let accounts = call.inputs.accounts;

@@ -44,6 +44,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   let splitId = event.params.split.toHexString();
   let split = new Split(splitId);
   split.controller = event.params.controller;
+  split.newPotentialController = Address.zero();
   split.distributorFee = event.params.distributorFee;
 
   let accounts = event.params.accounts;
