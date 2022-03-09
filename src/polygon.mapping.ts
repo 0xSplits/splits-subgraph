@@ -42,6 +42,10 @@ export function handleControlTransfer(event: ControlTransfer): void {
 
 export function handleCreateSplit(event: CreateSplit): void {
   let splitId = event.params.split.toHexString();
+  // check & remove if a user exists at splitId
+  let splitUserId = User.load(splitId);
+  if (splitUserId) store.remove("User", splitId);
+
   let split = new Split(splitId);
   split.controller = event.params.controller;
   split.newPotentialController = Address.zero();
@@ -52,8 +56,12 @@ export function handleCreateSplit(event: CreateSplit): void {
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    let user = new User(accountId);
-    user.save();
+    // only create a User if accountId doesn't point to a Split
+    let splitAccountId = Split.load(accountId);
+    if (!splitAccountId) {
+      let user = new User(accountId);
+      user.save();
+    }
 
     let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
@@ -107,8 +115,12 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let percentAllocations = event.params.percentAllocations;
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    let user = new User(accountId);
-    user.save();
+    // only create a User if accountId doesn't point to a Split
+    let splitAccountId = Split.load(accountId);
+    if (!splitAccountId) {
+      let user = new User(accountId);
+      user.save();
+    }
 
     let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);

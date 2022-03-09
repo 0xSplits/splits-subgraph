@@ -54,6 +54,10 @@ export function handleControlTransfer(event: ControlTransfer): void {
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
   let splitId = call.outputs.split.toHexString();
+  // check & remove if a user exists at splitId
+  let splitUserId = User.load(splitId);
+  if (splitUserId) store.remove("User", splitId);
+
   let split = new Split(splitId);
   split.controller = call.inputs.controller;
   split.newPotentialController = Address.zero();
@@ -64,8 +68,12 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    let user = new User(accountId);
-    user.save();
+    // only create a User if accountId doesn't point to a Split
+    let splitAccountId = Split.load(accountId);
+    if (!splitAccountId) {
+      let user = new User(accountId);
+      user.save();
+    }
 
     let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
@@ -268,8 +276,12 @@ function _updateSplit(
   let newRecipientIdSet = new Set<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i];
-    let user = new User(accountId);
-    user.save();
+    // only create a User if accountId doesn't point to a Split
+    let splitAccountId = Split.load(accountId);
+    if (!splitAccountId) {
+      let user = new User(accountId);
+      user.save();
+    }
 
     let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);
