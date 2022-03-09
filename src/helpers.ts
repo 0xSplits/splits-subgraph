@@ -45,10 +45,21 @@ export function distributeSplit(
   amount: BigInt,
   distributorAddress: Address
 ): void {
+  let splitTokenBalanceId = createJointId([splitId, tokenId]);
+
+  let splitTokenWithdrawalId = createJointId([
+    TOKEN_WITHDRAWAL_PREFIX,
+    splitTokenBalanceId
+  ]);
+  let splitTokenWithdrawal = TokenWithdrawal.load(splitTokenWithdrawalId);
+  if (!splitTokenWithdrawal)
+    splitTokenWithdrawal = new TokenWithdrawal(splitTokenWithdrawalId);
+  splitTokenWithdrawal.amount += amount;
+  splitTokenWithdrawal.save();
+
   let splitTokenInternalBalanceId = createJointId([
     TOKEN_INTERNAL_BALANCE_PREFIX,
-    splitId,
-    tokenId
+    splitTokenBalanceId
   ]);
   let splitTokenInternalBalance = TokenInternalBalance.load(
     splitTokenInternalBalanceId
