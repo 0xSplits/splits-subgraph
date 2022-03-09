@@ -10,7 +10,7 @@ import {
   UpdateSplit,
   Withdrawal
 } from "../generated/SplitMain/SplitMain";
-import { Split, Recipient } from "../generated/schema";
+import { Split, Recipient, User } from "../generated/schema";
 import {
   createJointId,
   distributeSplit,
@@ -50,11 +50,14 @@ export function handleCreateSplit(event: CreateSplit): void {
   let percentAllocations = event.params.percentAllocations;
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
-    let account = accounts[i].toHexString();
-    let recipientId = createJointId([splitId, account]);
+    let accountId = accounts[i].toHexString();
+    let user = new User(accountId);
+    user.save();
+
+    let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
     recipient.split = splitId;
-    recipient.account = account;
+    recipient.account = accountId;
     recipient.ownership = percentAllocations[i];
     recipient.save();
     recipientIds.push(recipientId);
@@ -102,11 +105,14 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let accounts = event.params.accounts;
   let percentAllocations = event.params.percentAllocations;
   for (let i: i32 = 0; i < accounts.length; i++) {
-    let account = accounts[i].toHexString();
-    let recipientId = createJointId([splitId, account]);
+    let accountId = accounts[i].toHexString();
+    let user = new User(accountId);
+    user.save();
+
+    let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);
     let recipient = new Recipient(recipientId);
-    recipient.account = account;
+    recipient.account = accountId;
     recipient.split = splitId;
     recipient.ownership = percentAllocations[i];
     recipient.save();

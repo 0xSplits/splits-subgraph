@@ -17,6 +17,7 @@ import {
 import {
   Split,
   Recipient,
+  User,
   Transaction,
   DistributionEvent
 } from "../generated/schema";
@@ -61,11 +62,14 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let percentAllocations = call.inputs.percentAllocations;
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
-    let account = accounts[i].toHexString();
-    let recipientId = createJointId([splitId, account]);
+    let accountId = accounts[i].toHexString();
+    let user = new User(accountId);
+    user.save();
+
+    let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
     recipient.split = splitId;
-    recipient.account = account;
+    recipient.account = accountId;
     recipient.ownership = percentAllocations[i];
     recipient.save();
     recipientIds.push(recipientId);
@@ -262,11 +266,14 @@ function _updateSplit(
 
   let newRecipientIdSet = new Set<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
-    let account = accounts[i];
-    let recipientId = createJointId([splitId, account]);
+    let accountId = accounts[i];
+    let user = new User(accountId);
+    user.save();
+
+    let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);
     let recipient = new Recipient(recipientId);
-    recipient.account = account;
+    recipient.account = accountId;
     recipient.split = splitId;
     recipient.ownership = percentAllocations[i];
     recipient.save();
