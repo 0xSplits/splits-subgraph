@@ -31,10 +31,13 @@ function addBalanceToUser(
   let accountTokenInternalBalance = TokenInternalBalance.load(
     accountTokenInternalBalanceId
   );
-  if (!accountTokenInternalBalance)
+  if (!accountTokenInternalBalance) {
     accountTokenInternalBalance = new TokenInternalBalance(
       accountTokenInternalBalanceId
     );
+    accountTokenInternalBalance.account = accountId;
+    accountTokenInternalBalance.token = tokenId;
+  }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
 }
@@ -52,8 +55,11 @@ export function distributeSplit(
     splitTokenBalanceId
   ]);
   let splitTokenWithdrawal = TokenWithdrawal.load(splitTokenWithdrawalId);
-  if (!splitTokenWithdrawal)
+  if (!splitTokenWithdrawal) {
     splitTokenWithdrawal = new TokenWithdrawal(splitTokenWithdrawalId);
+    splitTokenWithdrawal.account = splitId;
+    splitTokenWithdrawal.token = tokenId;
+  }
   splitTokenWithdrawal.amount += amount;
   splitTokenWithdrawal.save();
 
@@ -113,8 +119,11 @@ export function handleTokenWithdrawal(
     tokenBalanceId
   ]);
   let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
-  if (!tokenWithdrawal)
+  if (!tokenWithdrawal) {
     tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
+    tokenWithdrawal.account = accountId;
+    tokenWithdrawal.token = tokenId;
+  }
   tokenWithdrawal.amount += amount;
   tokenWithdrawal.save();
 
