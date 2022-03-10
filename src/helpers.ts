@@ -86,12 +86,12 @@ export function distributeSplit(
   // assuming they don't explicitly use distributorFee to repoint the proceeds elsewhere;
   // likely very rare & can fix accounting on withdrawal anyway)
   let distributorFee = split.distributorFee;
-  if (distributorFee !== ZERO) {
+  if (distributorFee != ZERO) {
     let distributorAmount = (amount * distributorFee) / PERCENTAGE_SCALE;
     amount -= distributorAmount;
 
     // if address is zero, dont give to any account (don't know msg.sender)
-    if (distributorAddress !== Address.zero()) {
+    if (distributorAddress != Address.zero()) {
       addBalanceToUser(
         distributorAddress.toHexString(),
         tokenId,

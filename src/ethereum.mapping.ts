@@ -136,7 +136,7 @@ export function handleDistributeERC20Call(call: DistributeERC20Call): void {
   let splitId = call.inputs.split.toHexString();
   let tokenId = call.inputs.token.toHexString();
   let distributorAddress =
-    call.inputs.distributorAddress !== Address.zero()
+    call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
   let txHash = call.transaction.hash.toHexString();
@@ -149,7 +149,7 @@ export function handleDistributeETHCall(call: DistributeETHCall): void {
   let splitId = call.inputs.split.toHexString();
   let tokenId = Address.zero().toHexString();
   let distributorAddress =
-    call.inputs.distributorAddress !== Address.zero()
+    call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
   let txHash = call.transaction.hash.toHexString();
@@ -173,8 +173,8 @@ function _getDistributionAmount(
     let distEvent = DistributionEvent.load(distEvents[i]) as DistributionEvent;
     // take the earliest event that exists matching the split & token
     if (
-      distEvent.split === splitId &&
-      distEvent.token === tokenId &&
+      distEvent.split == splitId &&
+      distEvent.token == tokenId &&
       distEvent.logIndex < logIdx
     ) {
       amount = distEvent.amount;
@@ -214,7 +214,7 @@ export function handleUpdateAndDistributeETHCall(
   let percentAllocations = call.inputs.percentAllocations;
   let distributorFee = call.inputs.distributorFee;
   let distributorAddress =
-    call.inputs.distributorAddress !== Address.zero()
+    call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
   let txHash = call.transaction.hash.toHexString();
@@ -234,7 +234,7 @@ export function handleUpdateAndDistributeERC20Call(
   let percentAllocations = call.inputs.percentAllocations;
   let distributorFee = call.inputs.distributorFee;
   let distributorAddress =
-    call.inputs.distributorAddress !== Address.zero()
+    call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
   let txHash = call.transaction.hash.toHexString();
