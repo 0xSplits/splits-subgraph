@@ -2,6 +2,7 @@ import { BigInt, Address } from "@graphprotocol/graph-ts";
 import {
   Split,
   Recipient,
+  Token,
   TokenInternalBalance,
   TokenWithdrawal
 } from "../generated/schema";
@@ -48,6 +49,9 @@ export function distributeSplit(
   amount: BigInt,
   distributorAddress: Address
 ): void {
+  let token = new Token(tokenId);
+  token.save();
+
   let splitTokenBalanceId = createJointId([splitId, tokenId]);
 
   let splitTokenWithdrawalId = createJointId([
