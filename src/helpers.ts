@@ -107,7 +107,7 @@ export function distributeSplit(
     let recipient = Recipient.load(recipientId) as Recipient;
     let ownership = recipient.ownership;
     let recipientAmount = (amount * ownership) / PERCENTAGE_SCALE;
-    addBalanceToUser(recipientId, tokenId, recipientAmount);
+    addBalanceToUser(recipient.account, tokenId, recipientAmount);
   }
 }
 
