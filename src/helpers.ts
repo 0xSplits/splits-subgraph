@@ -136,6 +136,8 @@ export function handleTokenWithdrawal(
     tokenBalanceId
   ]);
   let tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
+  tokenInternalBalance.account = accountId
+  tokenInternalBalance.token = tokenId
   tokenInternalBalance.amount = ONE;
   tokenInternalBalance.save();
 }
