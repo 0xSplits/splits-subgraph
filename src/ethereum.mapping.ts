@@ -39,14 +39,14 @@ export function handleCancelControlTransfer(
   event: CancelControlTransfer
 ): void {
   // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.newPotentialController = Address.zero();
   split.save();
 }
 
 export function handleControlTransfer(event: ControlTransfer): void {
   // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.controller = event.params.newController;
   split.newPotentialController = Address.zero();
   split.save();
@@ -193,7 +193,7 @@ export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
 ): void {
   // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.newPotentialController = event.params.newPotentialController;
   split.save();
 }
