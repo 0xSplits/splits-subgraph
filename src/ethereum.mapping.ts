@@ -33,7 +33,7 @@ import {
   ID_SEPARATOR
 } from "./helpers";
 
-const MAX_BIGINT = BigInt.fromI32(-1);
+const MAX_BIGINT = BigInt.fromI32(i32.MAX_VALUE);
 
 export function handleCancelControlTransfer(
   event: CancelControlTransfer
