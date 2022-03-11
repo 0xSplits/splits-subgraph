@@ -26,15 +26,15 @@ import {
 export function handleCancelControlTransfer(
   event: CancelControlTransfer
 ): void {
-  // use new object for partial updates when existing values not needed
-  let split = new Split(event.params.split.toHexString());
+  // must exist
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.newPotentialController = Address.zero();
   split.save();
 }
 
 export function handleControlTransfer(event: ControlTransfer): void {
-  // use new object for partial updates when existing values not needed
-  let split = new Split(event.params.split.toHexString());
+  // must exist
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.controller = event.params.newController;
   split.newPotentialController = Address.zero();
   split.save();
@@ -95,8 +95,8 @@ export function handleDistributeETH(event: DistributeETH): void {
 export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
 ): void {
-  // use new object for partial updates when existing values not needed
-  let split = new Split(event.params.split.toHexString());
+  // must exist
+  let split = Split.load(event.params.split.toHexString()) as Split;
   split.newPotentialController = event.params.newPotentialController;
   split.save();
 }
