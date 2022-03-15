@@ -47,6 +47,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   if (splitUserId) store.remove("User", splitId);
 
   let split = new Split(splitId);
+  split.latestBlock = event.block.number.toI32();
   split.controller = event.params.controller;
   split.newPotentialController = Address.zero();
   split.distributorFee = event.params.distributorFee;
@@ -106,6 +107,7 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let splitId = event.params.split.toHexString();
   // must exist
   let split = Split.load(splitId) as Split;
+  split.latestBlock = event.block.number.toI32();
   split.distributorFee = event.params.distributorFee;
   let oldRecipientIds = split.recipients;
   let newRecipientIds = new Array<string>();

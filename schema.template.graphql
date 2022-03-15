@@ -50,6 +50,7 @@ type Split implements Account @entity {
   distributorFee: BigInt!
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
+  latestBlock: Int!
 }
 
 type Recipient @entity {

@@ -59,6 +59,7 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   if (splitUserId) store.remove("User", splitId);
 
   let split = new Split(splitId);
+  split.latestBlock = call.block.number.toI32();
   split.controller = call.inputs.controller;
   split.newPotentialController = Address.zero();
   split.distributorFee = call.inputs.distributorFee;
@@ -203,7 +204,7 @@ export function handleUpdateSplitCall(call: UpdateSplitCall): void {
   let accounts = call.inputs.accounts.map<string>(acc => acc.toHexString());
   let percentAllocations = call.inputs.percentAllocations;
   let distributorFee = call.inputs.distributorFee;
-  _updateSplit(splitId, accounts, percentAllocations, distributorFee);
+  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
 }
 
 export function handleUpdateAndDistributeETHCall(
@@ -220,7 +221,7 @@ export function handleUpdateAndDistributeETHCall(
       : call.from;
   let txHash = call.transaction.hash.toHexString();
 
-  _updateSplit(splitId, accounts, percentAllocations, distributorFee);
+  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
 
   let amount = _getDistributionAmount(splitId, tokenId, txHash);
   distributeSplit(splitId, tokenId, amount, distributorAddress);
@@ -240,7 +241,7 @@ export function handleUpdateAndDistributeERC20Call(
       : call.from;
   let txHash = call.transaction.hash.toHexString();
 
-  _updateSplit(splitId, accounts, percentAllocations, distributorFee);
+  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
 
   let amount = _getDistributionAmount(splitId, tokenId, txHash);
   distributeSplit(splitId, tokenId, amount, distributorAddress);
@@ -263,6 +264,7 @@ export function handleWithdrawal(event: Withdrawal): void {
 
 function _updateSplit(
   splitId: string,
+  blockNumber: i32,
   accounts: string[],
   percentAllocations: BigInt[],
   distributorFee: BigInt
@@ -270,6 +272,7 @@ function _updateSplit(
   // use new object for partial updates when existing values not needed
   // must exist
   let split = Split.load(splitId) as Split;
+  split.latestBlock = blockNumber;
   split.distributorFee = distributorFee;
   let oldRecipientIds = split.recipients;
   let newRecipientIds = new Array<string>();
