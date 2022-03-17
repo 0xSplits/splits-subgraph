@@ -4,7 +4,8 @@ import {
   Recipient,
   Token,
   TokenInternalBalance,
-  TokenWithdrawal
+  TokenWithdrawal,
+  User
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -92,6 +93,10 @@ export function distributeSplit(
 
     // if address is zero, dont give to any account (don't know msg.sender)
     if (distributorAddress != Address.zero()) {
+      // 'Create' the user in case they don't exist yet
+      let user = new User(distributorAddress.toHexString());
+      user.save();
+
       addBalanceToUser(
         distributorAddress.toHexString(),
         tokenId,
