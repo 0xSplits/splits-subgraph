@@ -23,6 +23,7 @@ import {
 } from "../generated/schema";
 import {
   createJointId,
+  saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
   PERCENTAGE_SCALE,
@@ -32,8 +33,6 @@ import {
   TOKEN_INTERNAL_BALANCE_PREFIX,
   ID_SEPARATOR
 } from "./helpers";
-
-const MAX_BIGINT = BigInt.fromI32(i32.MAX_VALUE);
 
 export function handleCancelControlTransfer(
   event: CancelControlTransfer
@@ -91,103 +90,106 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
 }
 
 export function handleDistributeERC20(event: DistributeERC20): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
   let tokenId = event.params.token.toHexString();
   let amount = event.params.amount;
-  let txHash = event.transaction.hash.toHexString();
-  let logIdx = event.logIndex;
-  _handleDistributeEvent(splitId, tokenId, amount, txHash, logIdx);
+  saveDistributeEvent(timestamp, txHash, logIdx, splitId, tokenId, amount);
 }
 
 export function handleDistributeETH(event: DistributeETH): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
   let tokenId = Address.zero().toHexString();
   let amount = event.params.amount;
-  let txHash = event.transaction.hash.toHexString();
-  let logIdx = event.logIndex;
-  _handleDistributeEvent(splitId, tokenId, amount, txHash, logIdx);
-}
-
-function _handleDistributeEvent(
-  splitId: string,
-  tokenId: string,
-  amount: BigInt,
-  txHash: string,
-  logIdx: BigInt
-): void {
-  let tx = Transaction.load(txHash);
-  if (!tx) tx = new Transaction(txHash);
-  let distEvents = tx.distributionEvents;
-  if (!distEvents) distEvents = new Array<string>();
-
-  let distEventId = createJointId([txHash, logIdx.toString()]);
-  let distEvent = new DistributionEvent(distEventId);
-  distEvent.transaction = txHash;
-  distEvent.logIndex = logIdx;
-  distEvent.split = splitId;
-  distEvent.amount = amount;
-  distEvent.token = tokenId;
-  distEvent.save();
-  distEvents.push(distEventId);
-
-  tx.distributionEvents = distEvents;
-  tx.save();
+  saveDistributeEvent(timestamp, txHash, logIdx, splitId, tokenId, amount);
 }
 
 export function handleDistributeERC20Call(call: DistributeERC20Call): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = call.inputs.token.toHexString();
   let distributorAddress =
     call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
-  let txHash = call.transaction.hash.toHexString();
 
-  let amount = _getDistributionAmount(splitId, tokenId, txHash);
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  let distributionEvent = _getDistributionEvent(
+    txHash,
+    splitId,
+    tokenId
+  ) as DistributionEvent;
+  let amount = distributionEvent.amount;
+  let logIdx = distributionEvent.logIndex;
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
 export function handleDistributeETHCall(call: DistributeETHCall): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = Address.zero().toHexString();
   let distributorAddress =
     call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
-  let txHash = call.transaction.hash.toHexString();
 
-  let amount = _getDistributionAmount(splitId, tokenId, txHash);
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  let distributionEvent = _getDistributionEvent(
+    txHash,
+    splitId,
+    tokenId
+  ) as DistributionEvent;
+  let amount = distributionEvent.amount;
+  let logIdx = distributionEvent.logIndex;
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
-function _getDistributionAmount(
+function _getDistributionEvent(
+  txHash: string,
   splitId: string,
-  tokenId: string,
-  txHash: string
-): BigInt {
+  tokenId: string
+): DistributionEvent | null {
   // must exist (event handlers fire before call handlers)
   let tx = Transaction.load(txHash) as Transaction;
   // must exist (event handlers fire before call handlers)
   let distEvents = tx.distributionEvents as Array<string>;
-  let amount = ZERO;
-  let logIdx = MAX_BIGINT;
+  let distEvent: DistributionEvent;
   for (let i = 0; i < distEvents.length; i++) {
     let distEvent = DistributionEvent.load(distEvents[i]) as DistributionEvent;
     // take the earliest event that exists matching the split & token
-    if (
-      distEvent.split == splitId &&
-      distEvent.token == tokenId &&
-      distEvent.logIndex < logIdx
-    ) {
-      amount = distEvent.amount;
-      logIdx = distEvent.logIndex;
+    // note: if we want to support txns that distribute the same token for the
+    // same split twice, will need to add some kind of 'processed' boolean to
+    // event
+    if (distEvent.account == splitId && distEvent.token == tokenId) {
+      return distEvent;
     }
   }
-  // remove the used distribution event & tx if that was the last attached event
-  store.remove("DistributionEvent", createJointId([tx.id, logIdx.toString()]));
-  if (distEvents.length <= 1) store.remove("Transaction", tx.id);
-
-  return amount;
+  return null;
 }
 
 export function handleInitiateControlTransfer(
@@ -204,12 +206,20 @@ export function handleUpdateSplitCall(call: UpdateSplitCall): void {
   let accounts = call.inputs.accounts.map<string>(acc => acc.toHexString());
   let percentAllocations = call.inputs.percentAllocations;
   let distributorFee = call.inputs.distributorFee;
-  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
+  _updateSplit(
+    splitId,
+    call.block.number.toI32(),
+    accounts,
+    percentAllocations,
+    distributorFee
+  );
 }
 
 export function handleUpdateAndDistributeETHCall(
   call: UpdateAndDistributeETHCall
 ): void {
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = Address.zero().toHexString();
   let accounts = call.inputs.accounts.map<string>(acc => acc.toHexString());
@@ -219,17 +229,38 @@ export function handleUpdateAndDistributeETHCall(
     call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
-  let txHash = call.transaction.hash.toHexString();
 
-  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
+  _updateSplit(
+    splitId,
+    call.block.number.toI32(),
+    accounts,
+    percentAllocations,
+    distributorFee
+  );
 
-  let amount = _getDistributionAmount(splitId, tokenId, txHash);
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  let distributionEvent = _getDistributionEvent(
+    txHash,
+    splitId,
+    tokenId
+  ) as DistributionEvent;
+  let amount = distributionEvent.amount;
+  let logIdx = distributionEvent.logIndex;
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
 export function handleUpdateAndDistributeERC20Call(
   call: UpdateAndDistributeERC20Call
 ): void {
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = call.inputs.token.toHexString();
   let accounts = call.inputs.accounts.map<string>(acc => acc.toHexString());
@@ -239,26 +270,62 @@ export function handleUpdateAndDistributeERC20Call(
     call.inputs.distributorAddress != Address.zero()
       ? call.inputs.distributorAddress
       : call.from;
-  let txHash = call.transaction.hash.toHexString();
 
-  _updateSplit(splitId, call.block.number.toI32(), accounts, percentAllocations, distributorFee);
+  _updateSplit(
+    splitId,
+    call.block.number.toI32(),
+    accounts,
+    percentAllocations,
+    distributorFee
+  );
 
-  let amount = _getDistributionAmount(splitId, tokenId, txHash);
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  let distributionEvent = _getDistributionEvent(
+    txHash,
+    splitId,
+    tokenId
+  ) as DistributionEvent;
+  let amount = distributionEvent.amount;
+  let logIdx = distributionEvent.logIndex;
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
 export function handleWithdrawal(event: Withdrawal): void {
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let account = event.params.account.toHexString();
   let ethAmount = event.params.ethAmount;
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
 
   if (ethAmount) {
-    handleTokenWithdrawal(account, Address.zero().toHexString(), ethAmount);
+    handleTokenWithdrawal(
+      timestamp,
+      txHash,
+      logIdx,
+      account,
+      Address.zero().toHexString(),
+      ethAmount
+    );
   }
 
   for (let i: i32 = 0; i < tokens.length; i++) {
-    handleTokenWithdrawal(account, tokens[i].toHexString(), tokenAmounts[i]);
+    handleTokenWithdrawal(
+      timestamp,
+      txHash,
+      logIdx,
+      account,
+      tokens[i].toHexString(),
+      tokenAmounts[i]
+    );
   }
 }
 

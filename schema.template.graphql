@@ -3,6 +3,7 @@ interface Account {
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
 }
 
 type Token @entity {
@@ -37,6 +38,7 @@ type User implements Account @entity {
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
 }
 
 type Split implements Account @entity {
@@ -44,10 +46,12 @@ type Split implements Account @entity {
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
 
   controller: Bytes!
   newPotentialController: Bytes!
   distributorFee: BigInt!
+  # can't use derived relations inside mapping.ts
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
   latestBlock: Int!
@@ -60,19 +64,59 @@ type Recipient @entity {
   ownership: BigInt!
 }
 
-{{#ethereum}}
-type DistributionEvent @entity {
-  id: ID! # ${txHash}-${logIdx}
-  transaction: Transaction!
-  logIndex: BigInt!
-  split: Split!
+type Transaction @entity {
+  id: ID! #txHash
+  # can't use derived relations inside mapping.ts
+  # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
+  distributionEvents: [DistributionEvent!]
+}
+
+interface AccountEvent {
+  id: ID! # ${prefix}-${txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
   token: Token!
   amount: BigInt!
 }
 
-type Transaction @entity {
-  id: ID! #txHash
-  # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
-  distributionEvents: [DistributionEvent!]
+type DistributionEvent implements AccountEvent @entity {
+  id: ID! # ${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  token: Token!
+  amount: BigInt!
+
+  transaction: Transaction!
+  logIndex: BigInt!
+
+  receiveDistributionEvents: [ReceiveDistributionEvent!]! @derivedFrom(field: "distributionEvent")
+  distributeDistributionEvents: DistributeDistributionEvent @derivedFrom(field: "distributionEvent")
 }
-{{/ethereum}}
+
+type ReceiveDistributionEvent implements AccountEvent @entity {
+  id: ID! # r-de-${txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+  token: Token!
+  amount: BigInt!
+
+  distributionEvent: DistributionEvent!
+}
+
+type DistributeDistributionEvent implements AccountEvent @entity {
+  id: ID! # d-de-${txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+  token: Token!
+  amount: BigInt!
+
+  distributionEvent: DistributionEvent!
+}
+
+type TokenWithdrawalEvent implements AccountEvent @entity {
+  id: ID! # we-${txHash}-${logIdx}-${accountId}-${tokenId}
+  timestamp: BigInt!
+  account: Account!
+  token: Token!
+  amount: BigInt!
+}

@@ -13,6 +13,7 @@ import {
 import { Split, Recipient, User } from "../generated/schema";
 import {
   createJointId,
+  saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
   PERCENTAGE_SCALE,
@@ -78,19 +79,45 @@ export function handleCreateSplit(event: CreateSplit): void {
 }
 
 export function handleDistributeERC20(event: DistributeERC20): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
   let tokenId = event.params.token.toHexString();
   let amount = event.params.amount;
   let distributorAddress = event.params.distributorAddress;
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  saveDistributeEvent(timestamp, txHash, logIdx, splitId, tokenId, amount);
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
 export function handleDistributeETH(event: DistributeETH): void {
+  // TODO: explore cleaning this up w union type
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
   let tokenId = Address.zero().toHexString();
   let amount = event.params.amount;
   let distributorAddress = event.params.distributorAddress;
-  distributeSplit(splitId, tokenId, amount, distributorAddress);
+  saveDistributeEvent(timestamp, txHash, logIdx, splitId, tokenId, amount);
+  distributeSplit(
+    timestamp,
+    txHash,
+    logIdx,
+    splitId,
+    tokenId,
+    amount,
+    distributorAddress
+  );
 }
 
 export function handleInitiateControlTransfer(
@@ -147,16 +174,33 @@ export function handleUpdateSplit(event: UpdateSplit): void {
 }
 
 export function handleWithdrawal(event: Withdrawal): void {
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let account = event.params.account.toHexString();
   let ethAmount = event.params.ethAmount;
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
 
   if (ethAmount) {
-    handleTokenWithdrawal(account, Address.zero().toHexString(), ethAmount);
+    handleTokenWithdrawal(
+      timestamp,
+      txHash,
+      logIdx,
+      account,
+      Address.zero().toHexString(),
+      ethAmount
+    );
   }
 
   for (let i: i32 = 0; i < tokens.length; i++) {
-    handleTokenWithdrawal(account, tokens[i].toHexString(), tokenAmounts[i]);
+    handleTokenWithdrawal(
+      timestamp,
+      txHash,
+      logIdx,
+      account,
+      tokens[i].toHexString(),
+      tokenAmounts[i]
+    );
   }
 }
