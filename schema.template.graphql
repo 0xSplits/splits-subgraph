@@ -90,7 +90,7 @@ type DistributionEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   receiveDistributionEvents: [ReceiveDistributionEvent!]! @derivedFrom(field: "distributionEvent")
-  distributeDistributionEvents: DistributeDistributionEvent @derivedFrom(field: "distributionEvent")
+  distributeDistributionEvent: DistributeDistributionEvent @derivedFrom(field: "distributionEvent")
 }
 
 type ReceiveDistributionEvent implements AccountEvent @entity {
