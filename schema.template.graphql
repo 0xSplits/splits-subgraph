@@ -75,19 +75,17 @@ interface AccountEvent {
   id: ID! # ${prefix}-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
-  token: Token!
-  amount: BigInt!
 }
 
 type DistributionEvent implements AccountEvent @entity {
-  id: ID! # ${txHash}-${logIdx}
+  id: ID! # de-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
-  token: Token!
-  amount: BigInt!
 
   transaction: Transaction!
   logIndex: BigInt!
+  token: Token!
+  amount: BigInt!
 
   receiveDistributionEvents: [ReceiveDistributionEvent!]! @derivedFrom(field: "distributionEvent")
   distributeDistributionEvent: DistributeDistributionEvent @derivedFrom(field: "distributionEvent")
@@ -97,9 +95,9 @@ type ReceiveDistributionEvent implements AccountEvent @entity {
   id: ID! # r-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+
   token: Token!
   amount: BigInt!
-
   distributionEvent: DistributionEvent!
 }
 
@@ -107,16 +105,24 @@ type DistributeDistributionEvent implements AccountEvent @entity {
   id: ID! # d-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+
   token: Token!
   amount: BigInt!
-
   distributionEvent: DistributionEvent!
 }
 
-type TokenWithdrawalEvent implements AccountEvent @entity {
-  id: ID! # we-${txHash}-${logIdx}-${accountId}-${tokenId}
+type WithdrawalEvent implements AccountEvent @entity {
+  id: ID! # we-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+
+  transaction: Transaction!
+  tokenWithdrawalEvents: [TokenWithdrawalEvent!]! @derivedFrom(field: "withdrawalEvent")
+}
+
+type TokenWithdrawalEvent @entity {
+  id: ID! # t-we-${txHash}-${logIdx}-${accountId}-${tokenId}
   token: Token!
   amount: BigInt!
+  withdrawalEvent: WithdrawalEvent!
 }
