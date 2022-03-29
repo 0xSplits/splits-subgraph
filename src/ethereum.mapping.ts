@@ -1,6 +1,5 @@
 import { store, BigInt, Address } from "@graphprotocol/graph-ts";
 import {
-  SplitMain,
   CancelControlTransfer,
   ControlTransfer,
   CreateSplitCall,
@@ -19,19 +18,14 @@ import {
   Recipient,
   User,
   Transaction,
-  DistributionEvent
+  DistributionEvent,
 } from "../generated/schema";
 import {
   createJointId,
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
-  PERCENTAGE_SCALE,
-  ZERO,
-  ONE,
-  TOKEN_WITHDRAWAL_PREFIX,
-  TOKEN_INTERNAL_BALANCE_PREFIX,
-  ID_SEPARATOR
+  createWithdrawalEvent
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -306,11 +300,16 @@ export function handleWithdrawal(event: Withdrawal): void {
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
 
+  let withdrawalEventId = createWithdrawalEvent(
+    timestamp,
+    txHash,
+    logIdx,
+    account
+  );
+
   if (ethAmount) {
     handleTokenWithdrawal(
-      timestamp,
-      txHash,
-      logIdx,
+      withdrawalEventId,
       account,
       Address.zero().toHexString(),
       ethAmount
@@ -319,9 +318,7 @@ export function handleWithdrawal(event: Withdrawal): void {
 
   for (let i: i32 = 0; i < tokens.length; i++) {
     handleTokenWithdrawal(
-      timestamp,
-      txHash,
-      logIdx,
+      withdrawalEventId,
       account,
       tokens[i].toHexString(),
       tokenAmounts[i]

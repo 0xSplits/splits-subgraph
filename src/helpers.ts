@@ -10,7 +10,8 @@ import {
   DistributionEvent,
   DistributeDistributionEvent,
   ReceiveDistributionEvent,
-  TokenWithdrawalEvent
+  TokenWithdrawalEvent,
+  WithdrawalEvent,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -20,6 +21,7 @@ export const ONE = BigInt.fromI32(1);
 export const RECEIVE_PREFIX = "r";
 export const DISTRIBUTE_PREFIX = "d";
 export const DISTRIBUTION_EVENT_PREFIX = "de";
+export const TOKEN_PREFIX = "t";
 export const WITHDRAWAL_EVENT_PREFIX = "we";
 export const TOKEN_WITHDRAWAL_PREFIX = "w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
@@ -190,10 +192,29 @@ export function distributeSplit(
   }
 }
 
-export function handleTokenWithdrawal(
+export function createWithdrawalEvent(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
+  accountId: string,
+): string {
+  let withdrawalEventId = createJointId([
+    WITHDRAWAL_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+    accountId,
+  ]);
+  let withdrawalEvent = new WithdrawalEvent(withdrawalEventId);
+  withdrawalEvent.timestamp = timestamp;
+  withdrawalEvent.account = accountId;
+  withdrawalEvent.transaction = txHash;
+  withdrawalEvent.save();
+
+  return withdrawalEventId
+}
+
+export function handleTokenWithdrawal(
+  withdrawalEventId: string,
   accountId: string,
   tokenId: string,
   amount: BigInt
@@ -224,16 +245,13 @@ export function handleTokenWithdrawal(
   tokenInternalBalance.save();
 
   let tokenWithdrawalEventId = createJointId([
-    WITHDRAWAL_EVENT_PREFIX,
-    txHash,
-    logIdx.toString(),
-    accountId,
-    tokenId
+    TOKEN_PREFIX,
+    withdrawalEventId,
+    tokenId,
   ]);
   let tokenWithdrawalEvent = new TokenWithdrawalEvent(tokenWithdrawalEventId);
-  tokenWithdrawalEvent.timestamp = timestamp;
-  tokenWithdrawalEvent.account = accountId;
   tokenWithdrawalEvent.token = tokenId;
   tokenWithdrawalEvent.amount = amount;
+  tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
   tokenWithdrawalEvent.save();
 }
