@@ -175,13 +175,13 @@ export function distributeSplit(
     let receiveDistributionEventId = createJointId([
       RECEIVE_PREFIX,
       distributionEventId,
-      recipientId
+      recipient.account
     ]);
     let receiveDistributionEvent = new ReceiveDistributionEvent(
       receiveDistributionEventId
     );
     receiveDistributionEvent.timestamp = timestamp;
-    receiveDistributionEvent.account = recipientId;
+    receiveDistributionEvent.account = recipient.account;
     receiveDistributionEvent.token = tokenId;
     receiveDistributionEvent.amount = recipientAmount;
     receiveDistributionEvent.save();
