@@ -66,7 +66,7 @@ export function saveDistributeEvent(
   let distEvents = tx.distributionEvents;
   if (!distEvents) distEvents = new Array<string>();
 
-  let distEventId = createJointId([txHash, logIdx.toString()]);
+  let distEventId = createJointId([DISTRIBUTION_EVENT_PREFIX, txHash, logIdx.toString()]);
   let distEvent = new DistributionEvent(distEventId);
   distEvent.timestamp = timestamp;
   distEvent.transaction = txHash;
@@ -159,6 +159,7 @@ export function distributeSplit(
       distributeDistributionEvent.account = distributorAddressString;
       distributeDistributionEvent.token = tokenId;
       distributeDistributionEvent.amount = distributorAmount;
+      distributeDistributionEvent.distributionEvent = distributionEventId;
       distributeDistributionEvent.save();
     }
   }
@@ -184,6 +185,7 @@ export function distributeSplit(
     receiveDistributionEvent.account = recipient.account;
     receiveDistributionEvent.token = tokenId;
     receiveDistributionEvent.amount = recipientAmount;
+    receiveDistributionEvent.distributionEvent = distributionEventId;
     receiveDistributionEvent.save();
   }
 }
