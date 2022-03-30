@@ -25,7 +25,7 @@ import {
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
-  createWithdrawalEvent
+  saveWithdrawalEvent
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -300,7 +300,7 @@ export function handleWithdrawal(event: Withdrawal): void {
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
 
-  let withdrawalEventId = createWithdrawalEvent(
+  let withdrawalEventId = saveWithdrawalEvent(
     timestamp,
     txHash,
     logIdx,

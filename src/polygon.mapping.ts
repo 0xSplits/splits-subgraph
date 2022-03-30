@@ -12,7 +12,7 @@ import {
 import { Split, Recipient, User } from "../generated/schema";
 import {
   createJointId,
-  createWithdrawalEvent,
+  saveWithdrawalEvent,
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
@@ -176,7 +176,7 @@ export function handleWithdrawal(event: Withdrawal): void {
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
 
-  let withdrawalEventId = createWithdrawalEvent(
+  let withdrawalEventId = saveWithdrawalEvent(
     timestamp,
     txHash,
     logIdx,

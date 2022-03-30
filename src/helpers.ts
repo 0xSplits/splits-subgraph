@@ -192,12 +192,16 @@ export function distributeSplit(
   }
 }
 
-export function createWithdrawalEvent(
+export function saveWithdrawalEvent(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
   accountId: string,
 ): string {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  tx.save();
+
   let withdrawalEventId = createJointId([
     WITHDRAWAL_EVENT_PREFIX,
     txHash,
