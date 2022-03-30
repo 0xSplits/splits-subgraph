@@ -5,13 +5,24 @@ import {
   Token,
   TokenInternalBalance,
   TokenWithdrawal,
-  User
+  User,
+  Transaction,
+  DistributionEvent,
+  DistributeDistributionEvent,
+  ReceiveDistributionEvent,
+  TokenWithdrawalEvent,
+  WithdrawalEvent,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
 
+export const RECEIVE_PREFIX = "r";
+export const DISTRIBUTE_PREFIX = "d";
+export const DISTRIBUTION_EVENT_PREFIX = "de";
+export const TOKEN_PREFIX = "t";
+export const WITHDRAWAL_EVENT_PREFIX = "we";
 export const TOKEN_WITHDRAWAL_PREFIX = "w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
 export const ID_SEPARATOR = "-";
@@ -44,7 +55,38 @@ function addBalanceToUser(
   accountTokenInternalBalance.save();
 }
 
+export function saveDistributeEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+  tokenId: string,
+  amount: BigInt
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  let distEvents = tx.distributionEvents;
+  if (!distEvents) distEvents = new Array<string>();
+
+  let distEventId = createJointId([DISTRIBUTION_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let distEvent = new DistributionEvent(distEventId);
+  distEvent.timestamp = timestamp;
+  distEvent.transaction = txHash;
+  distEvent.logIndex = logIdx;
+  distEvent.account = splitId;
+  distEvent.amount = amount;
+  distEvent.token = tokenId;
+  distEvent.save();
+  distEvents.push(distEventId);
+
+  tx.distributionEvents = distEvents;
+  tx.save();
+}
+
 export function distributeSplit(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
   splitId: string,
   tokenId: string,
   amount: BigInt,
@@ -52,6 +94,12 @@ export function distributeSplit(
 ): void {
   let token = new Token(tokenId);
   token.save();
+
+  let distributionEventId = createJointId([
+    DISTRIBUTION_EVENT_PREFIX,
+    txHash,
+    logIdx.toString()
+  ]);
 
   let splitTokenBalanceId = createJointId([splitId, tokenId]);
 
@@ -93,15 +141,28 @@ export function distributeSplit(
 
     // if address is zero, dont give to any account (don't know msg.sender)
     if (distributorAddress != Address.zero()) {
+      let distributorAddressString = distributorAddress.toHexString();
+
       // 'Create' the user in case they don't exist yet
-      let user = new User(distributorAddress.toHexString());
+      let user = new User(distributorAddressString);
       user.save();
 
-      addBalanceToUser(
-        distributorAddress.toHexString(),
-        tokenId,
-        distributorAmount
+      addBalanceToUser(distributorAddressString, tokenId, distributorAmount);
+
+      let distributeDistributionEventId = createJointId([
+        DISTRIBUTE_PREFIX,
+        distributionEventId,
+        distributorAddressString
+      ]);
+      let distributeDistributionEvent = new DistributeDistributionEvent(
+        distributeDistributionEventId
       );
+      distributeDistributionEvent.timestamp = timestamp;
+      distributeDistributionEvent.account = distributorAddressString;
+      distributeDistributionEvent.token = tokenId;
+      distributeDistributionEvent.amount = distributorAmount;
+      distributeDistributionEvent.distributionEvent = distributionEventId;
+      distributeDistributionEvent.save();
     }
   }
 
@@ -113,10 +174,51 @@ export function distributeSplit(
     let ownership = recipient.ownership;
     let recipientAmount = (amount * ownership) / PERCENTAGE_SCALE;
     addBalanceToUser(recipient.account, tokenId, recipientAmount);
+
+    let receiveDistributionEventId = createJointId([
+      RECEIVE_PREFIX,
+      distributionEventId,
+      recipient.account
+    ]);
+    let receiveDistributionEvent = new ReceiveDistributionEvent(
+      receiveDistributionEventId
+    );
+    receiveDistributionEvent.timestamp = timestamp;
+    receiveDistributionEvent.account = recipient.account;
+    receiveDistributionEvent.token = tokenId;
+    receiveDistributionEvent.amount = recipientAmount;
+    receiveDistributionEvent.distributionEvent = distributionEventId;
+    receiveDistributionEvent.save();
   }
 }
 
+export function saveWithdrawalEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+): string {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  tx.save();
+
+  let withdrawalEventId = createJointId([
+    WITHDRAWAL_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+    accountId,
+  ]);
+  let withdrawalEvent = new WithdrawalEvent(withdrawalEventId);
+  withdrawalEvent.timestamp = timestamp;
+  withdrawalEvent.account = accountId;
+  withdrawalEvent.transaction = txHash;
+  withdrawalEvent.save();
+
+  return withdrawalEventId
+}
+
 export function handleTokenWithdrawal(
+  withdrawalEventId: string,
   accountId: string,
   tokenId: string,
   amount: BigInt
@@ -141,8 +243,19 @@ export function handleTokenWithdrawal(
     tokenBalanceId
   ]);
   let tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
-  tokenInternalBalance.account = accountId
-  tokenInternalBalance.token = tokenId
+  tokenInternalBalance.account = accountId;
+  tokenInternalBalance.token = tokenId;
   tokenInternalBalance.amount = ONE;
   tokenInternalBalance.save();
+
+  let tokenWithdrawalEventId = createJointId([
+    TOKEN_PREFIX,
+    withdrawalEventId,
+    tokenId,
+  ]);
+  let tokenWithdrawalEvent = new TokenWithdrawalEvent(tokenWithdrawalEventId);
+  tokenWithdrawalEvent.token = tokenId;
+  tokenWithdrawalEvent.amount = amount;
+  tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
+  tokenWithdrawalEvent.save();
 }
