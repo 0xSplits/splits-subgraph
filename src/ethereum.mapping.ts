@@ -25,6 +25,7 @@ import {
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
+  saveControlTransferEvents,
   saveWithdrawalEvent
 } from "./helpers";
 
@@ -33,16 +34,46 @@ export function handleCancelControlTransfer(
 ): void {
   // must exist
   let split = Split.load(event.params.split.toHexString()) as Split;
+  let oldPotentialController = split.newPotentialController;
   split.newPotentialController = Address.zero();
   split.save();
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
+
+  saveControlTransferEvents(
+    timestamp,
+    txHash,
+    logIdx,
+    split.id,
+    'cancel',
+    split.controller.toHexString(),
+    oldPotentialController.toHexString(),
+  )
 }
 
 export function handleControlTransfer(event: ControlTransfer): void {
   // must exist
   let split = Split.load(event.params.split.toHexString()) as Split;
+  let oldController = split.controller;
   split.controller = event.params.newController;
   split.newPotentialController = Address.zero();
   split.save();
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
+
+  saveControlTransferEvents(
+    timestamp,
+    txHash,
+    logIdx,
+    split.id,
+    'transfer',
+    oldController.toHexString(),
+    split.controller.toHexString(),
+  )
 }
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
@@ -193,6 +224,20 @@ export function handleInitiateControlTransfer(
   let split = Split.load(event.params.split.toHexString()) as Split;
   split.newPotentialController = event.params.newPotentialController;
   split.save();
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
+
+  saveControlTransferEvents(
+    timestamp,
+    txHash,
+    logIdx,
+    split.id,
+    'initiate',
+    split.controller.toHexString(),
+    split.newPotentialController.toHexString(),
+  )
 }
 
 export function handleUpdateSplitCall(call: UpdateSplitCall): void {

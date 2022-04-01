@@ -9,6 +9,9 @@ import {
   Transaction,
   DistributionEvent,
   DistributeDistributionEvent,
+  ControlTransferEvent,
+  FromUserControlTransferEvent,
+  ToUserControlTransferEvent,
   ReceiveDistributionEvent,
   TokenWithdrawalEvent,
   WithdrawalEvent,
@@ -25,6 +28,9 @@ export const TOKEN_PREFIX = "t";
 export const WITHDRAWAL_EVENT_PREFIX = "we";
 export const TOKEN_WITHDRAWAL_PREFIX = "w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
+export const CONTROL_TRANSFER_EVENT_PREFIX = "ct";
+export const FROM_USER_PREFIX = "fu";
+export const TO_USER_PREFIX = "tu";
 export const ID_SEPARATOR = "-";
 
 export function createJointId(args: Array<string>): string {
@@ -215,6 +221,54 @@ export function saveWithdrawalEvent(
   withdrawalEvent.save();
 
   return withdrawalEventId
+}
+
+export function saveControlTransferEvents(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+  type: string,
+  fromUserId: string,
+  toUserId: string,
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  tx.save();
+
+  let controlTransferEventId = createJointId([
+    CONTROL_TRANSFER_EVENT_PREFIX,
+    txHash,
+    logIdx.toString()
+  ]);
+  let controlTransferEvent = new ControlTransferEvent(controlTransferEventId);
+  controlTransferEvent.timestamp = timestamp;
+  controlTransferEvent.account = splitId;
+  controlTransferEvent.type = type;
+  controlTransferEvent.transaction = txHash;
+  controlTransferEvent.save();
+  
+  let fromUserControlTransferEventId = createJointId([
+    FROM_USER_PREFIX,
+    controlTransferEventId,
+    fromUserId,
+  ]);
+  let fromUserControlTransferEvent = new FromUserControlTransferEvent(fromUserControlTransferEventId);
+  fromUserControlTransferEvent.timestamp = timestamp;
+  fromUserControlTransferEvent.account = fromUserId;
+  fromUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
+  fromUserControlTransferEvent.save();
+  
+  let toUserControlTransferEventId = createJointId([
+    TO_USER_PREFIX,
+    controlTransferEventId,
+    toUserId,
+  ]);
+  let toUserControlTransferEvent = new ToUserControlTransferEvent(toUserControlTransferEventId);
+  toUserControlTransferEvent.timestamp = timestamp;
+  toUserControlTransferEvent.account = toUserId;
+  toUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
+  toUserControlTransferEvent.save();
 }
 
 export function handleTokenWithdrawal(
