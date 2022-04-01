@@ -77,6 +77,22 @@ interface AccountEvent {
   account: Account!
 }
 
+type CreateSplitEvent implements AccountEvent @entity {
+  id: ID! # cs-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+}
+
+type UpdateSplitEvent implements AccountEvent @entity {
+  id: ID! # us-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+}
+
 type DistributionEvent implements AccountEvent @entity {
   id: ID! # de-${txHash}-${logIdx}
   timestamp: BigInt!

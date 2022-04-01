@@ -2,12 +2,14 @@ import { store, BigInt, Address } from "@graphprotocol/graph-ts";
 import {
   CancelControlTransfer,
   ControlTransfer,
+  CreateSplit,
   CreateSplitCall,
   DistributeERC20,
   DistributeERC20Call,
   DistributeETH,
   DistributeETHCall,
   InitiateControlTransfer,
+  UpdateSplit,
   UpdateSplitCall,
   UpdateAndDistributeETHCall,
   UpdateAndDistributeERC20Call,
@@ -25,8 +27,10 @@ import {
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
+  saveCreateSplitEvent,
+  saveUpdateSplitEvent,
   saveControlTransferEvents,
-  saveWithdrawalEvent
+  saveWithdrawalEvent,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -74,6 +78,15 @@ export function handleControlTransfer(event: ControlTransfer): void {
     oldController.toHexString(),
     split.controller.toHexString(),
   )
+}
+
+export function handleCreateSplit(event: CreateSplit): void {
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
+  let splitId = event.params.split.toHexString();
+
+  saveCreateSplitEvent(timestamp, txHash, logIdx, splitId);
 }
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
@@ -238,6 +251,15 @@ export function handleInitiateControlTransfer(
     split.controller.toHexString(),
     split.newPotentialController.toHexString(),
   )
+}
+
+export function handleUpdateSplit(event: UpdateSplit): void {
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
+  let splitId = event.params.split.toHexString();
+
+  saveUpdateSplitEvent(timestamp, txHash, logIdx, splitId);
 }
 
 export function handleUpdateSplitCall(call: UpdateSplitCall): void {

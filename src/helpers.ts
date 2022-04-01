@@ -7,6 +7,8 @@ import {
   TokenWithdrawal,
   User,
   Transaction,
+  CreateSplitEvent,
+  UpdateSplitEvent,
   DistributionEvent,
   DistributeDistributionEvent,
   ControlTransferEvent,
@@ -21,6 +23,8 @@ export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
 
+export const CREATE_SPLIT_EVENT_PREFIX = "ce";
+export const UPDATE_SPLIT_EVENT_PREFIX = "ue";
 export const RECEIVE_PREFIX = "r";
 export const DISTRIBUTE_PREFIX = "d";
 export const DISTRIBUTION_EVENT_PREFIX = "de";
@@ -59,6 +63,38 @@ function addBalanceToUser(
   }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
+}
+
+export function saveCreateSplitEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+
+  let createEventId = createJointId([CREATE_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let createEvent = new CreateSplitEvent(createEventId);
+  createEvent.timestamp = timestamp;
+  createEvent.transaction = txHash;
+  createEvent.account = splitId;
+}
+
+export function saveUpdateSplitEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+
+  let updateEventId = createJointId([UPDATE_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateEvent = new CreateSplitEvent(updateEventId);
+  updateEvent.timestamp = timestamp;
+  updateEvent.transaction = txHash;
+  updateEvent.account = splitId;
 }
 
 export function saveDistributeEvent(
