@@ -21,14 +21,16 @@ import {
   User,
   Transaction,
   DistributionEvent,
+  SetSplitEvent,
 } from "../generated/schema";
 import {
   createJointId,
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
-  saveCreateSplitEvent,
-  saveUpdateSplitEvent,
+  saveSetSplitEvent,
+  saveSplitRecipientAddedEvent,
+  saveSplitRecipientRemovedEvent,
   saveControlTransferEvents,
   saveWithdrawalEvent,
 } from "./helpers";
@@ -86,7 +88,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
 
-  saveCreateSplitEvent(timestamp, txHash, logIdx, splitId);
+  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 }
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
@@ -105,6 +107,15 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let percentAllocations = call.inputs.percentAllocations;
   let recipientIds = new Array<string>();
 
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
+
+  let setSplitEvent = _getSetSplitEvent(
+    txHash,
+    splitId,
+  ) as SetSplitEvent;
+  let logIdx = setSplitEvent.logIndex;
+
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
     // only create a User if accountId doesn't point to a Split
@@ -121,6 +132,13 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
     recipient.ownership = percentAllocations[i];
     recipient.save();
     recipientIds.push(recipientId);
+
+    saveSplitRecipientAddedEvent(
+      timestamp,
+      txHash,
+      logIdx,
+      accountId
+    )
   }
 
   split.recipients = recipientIds;
@@ -230,6 +248,28 @@ function _getDistributionEvent(
   return null;
 }
 
+function _getSetSplitEvent(
+  txHash: string,
+  splitId: string
+): SetSplitEvent | null {
+  // must exist (event handlers fire before call handlers)
+  let tx = Transaction.load(txHash) as Transaction;
+  // must exist (event handlers fire before call handlers)
+  let setSplitEvents = tx.setSplitEvents as Array<string>;
+
+  for (let i = 0; i < setSplitEvents.length; i++) {
+    let setEvent = SetSplitEvent.load(setSplitEvents[i]) as SetSplitEvent;
+    // take the earliest event that exists matching the split
+    // note: if we want to support txns that set the same split twice,
+    // will need to add some kind of 'processed' boolean to
+    // event
+    if (setEvent.account == splitId) {
+      return setEvent;
+    }
+  }
+  return null;
+}
+
 export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
 ): void {
@@ -259,15 +299,19 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
 
-  saveUpdateSplitEvent(timestamp, txHash, logIdx, splitId);
+  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'update');
 }
 
 export function handleUpdateSplitCall(call: UpdateSplitCall): void {
+  let txHash = call.transaction.hash.toHexString();
+  let timestamp = call.block.timestamp;
   let splitId = call.inputs.split.toHexString();
   let accounts = call.inputs.accounts.map<string>(acc => acc.toHexString());
   let percentAllocations = call.inputs.percentAllocations;
   let distributorFee = call.inputs.distributorFee;
   _updateSplit(
+    txHash,
+    timestamp,
     splitId,
     call.block.number.toI32(),
     accounts,
@@ -292,6 +336,8 @@ export function handleUpdateAndDistributeETHCall(
       : call.from;
 
   _updateSplit(
+    txHash,
+    timestamp,
     splitId,
     call.block.number.toI32(),
     accounts,
@@ -333,6 +379,8 @@ export function handleUpdateAndDistributeERC20Call(
       : call.from;
 
   _updateSplit(
+    txHash,
+    timestamp,
     splitId,
     call.block.number.toI32(),
     accounts,
@@ -394,6 +442,8 @@ export function handleWithdrawal(event: Withdrawal): void {
 }
 
 function _updateSplit(
+  txHash: string,
+  timestamp: BigInt,
   splitId: string,
   blockNumber: i32,
   accounts: string[],
@@ -407,6 +457,12 @@ function _updateSplit(
   split.distributorFee = distributorFee;
   let oldRecipientIds = split.recipients;
   let newRecipientIds = new Array<string>();
+
+  let setSplitEvent = _getSetSplitEvent(
+    txHash,
+    splitId,
+  ) as SetSplitEvent;
+  let logIdx = setSplitEvent.logIndex;
 
   let newRecipientIdSet = new Set<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
@@ -426,14 +482,32 @@ function _updateSplit(
     recipient.ownership = percentAllocations[i];
     recipient.save();
     newRecipientIds.push(recipientId);
+
+    if (!oldRecipientIds.includes(recipientId)) {
+      saveSplitRecipientAddedEvent(
+        timestamp,
+        txHash,
+        logIdx,
+        accountId
+      );
+    }
   }
 
   // delete existing recipients not in updated split
   for (let i: i32 = 0; i < oldRecipientIds.length; i++) {
     let recipientId = oldRecipientIds[i];
     // remove recipients no longer in split
-    if (!newRecipientIdSet.has(recipientId))
+    if (!newRecipientIdSet.has(recipientId)) {
+      let removedRecipient = Recipient.load(recipientId);
+      if (removedRecipient)
+        saveSplitRecipientRemovedEvent(
+          timestamp,
+          txHash,
+          logIdx,
+          removedRecipient.account
+        );
       store.remove("Recipient", recipientId);
+    }
   }
 
   split.recipients = newRecipientIds;

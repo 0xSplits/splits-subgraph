@@ -69,6 +69,7 @@ type Transaction @entity {
   # can't use derived relations inside mapping.ts
   # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
   distributionEvents: [DistributionEvent!]
+  setSplitEvents: [SetSplitEvent!]
 }
 
 interface AccountEvent {
@@ -77,20 +78,33 @@ interface AccountEvent {
   account: Account!
 }
 
-type CreateSplitEvent implements AccountEvent @entity {
-  id: ID! # cs-${txHash}-${logIdx}
+type SetSplitEvent implements AccountEvent @entity {
+  id: ID! # sse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
 
   transaction: Transaction!
+  logIndex: BigInt!
+  type: String! # create | update
+
+  recipientAddedEvents: [RecipientAddedEvent!] @derivedFrom(field: "setSplitEvent")
+  recipientRemovedEvents: [RecipientRemovedEvent!] @derivedFrom(field: "setSplitEvent")
 }
 
-type UpdateSplitEvent implements AccountEvent @entity {
-  id: ID! # us-${txHash}-${logIdx}
+type RecipientAddedEvent implements AccountEvent @entity {
+  id: ID!
   timestamp: BigInt!
   account: Account!
 
-  transaction: Transaction!
+  setSplitEvent: SetSplitEvent!
+}
+
+type RecipientRemovedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+
+  setSplitEvent: SetSplitEvent!
 }
 
 type DistributionEvent implements AccountEvent @entity {

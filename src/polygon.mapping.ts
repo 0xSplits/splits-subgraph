@@ -16,6 +16,9 @@ import {
   saveDistributeEvent,
   distributeSplit,
   handleTokenWithdrawal,
+  saveSetSplitEvent,
+  saveSplitRecipientAddedEvent,
+  saveSplitRecipientRemovedEvent,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -36,7 +39,13 @@ export function handleControlTransfer(event: ControlTransfer): void {
 }
 
 export function handleCreateSplit(event: CreateSplit): void {
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
+
+  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
+
   // check & remove if a user exists at splitId
   let splitUserId = User.load(splitId);
   if (splitUserId) store.remove("User", splitId);
@@ -66,6 +75,13 @@ export function handleCreateSplit(event: CreateSplit): void {
     recipient.ownership = percentAllocations[i];
     recipient.save();
     recipientIds.push(recipientId);
+
+    saveSplitRecipientAddedEvent(
+      timestamp,
+      txHash,
+      logIdx,
+      accountId
+    )
   }
 
   split.recipients = recipientIds;
@@ -124,8 +140,14 @@ export function handleInitiateControlTransfer(
 }
 
 export function handleUpdateSplit(event: UpdateSplit): void {
-  // use new object for partial updates when existing values not needed
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
+
+  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'update');
+
+  // use new object for partial updates when existing values not needed
   // must exist
   let split = Split.load(splitId) as Split;
   split.latestBlock = event.block.number.toI32();
@@ -153,14 +175,32 @@ export function handleUpdateSplit(event: UpdateSplit): void {
     recipient.ownership = percentAllocations[i];
     recipient.save();
     newRecipientIds.push(recipientId);
+
+    if (!oldRecipientIds.includes(recipientId)) {
+      saveSplitRecipientAddedEvent(
+        timestamp,
+        txHash,
+        logIdx,
+        accountId
+      );
+    }
   }
 
   // delete existing recipients not in updated split
   for (let i: i32 = 0; i < oldRecipientIds.length; i++) {
     let recipientId = oldRecipientIds[i];
     // remove recipients no longer in split
-    if (!newRecipientIdSet.has(recipientId))
+    if (!newRecipientIdSet.has(recipientId)) {
+      let removedRecipient = Recipient.load(recipientId);
+      if (removedRecipient)
+        saveSplitRecipientRemovedEvent(
+          timestamp,
+          txHash,
+          logIdx,
+          removedRecipient.account
+        );
       store.remove("Recipient", recipientId);
+    }
   }
 
   split.recipients = newRecipientIds;

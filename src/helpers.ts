@@ -7,14 +7,15 @@ import {
   TokenWithdrawal,
   User,
   Transaction,
-  CreateSplitEvent,
-  UpdateSplitEvent,
+  SetSplitEvent,
   DistributionEvent,
   DistributeDistributionEvent,
   ControlTransferEvent,
   FromUserControlTransferEvent,
   ToUserControlTransferEvent,
   ReceiveDistributionEvent,
+  RecipientAddedEvent,
+  RecipientRemovedEvent,
   TokenWithdrawalEvent,
   WithdrawalEvent,
 } from "../generated/schema";
@@ -23,9 +24,10 @@ export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
 
-export const CREATE_SPLIT_EVENT_PREFIX = "ce";
-export const UPDATE_SPLIT_EVENT_PREFIX = "ue";
-export const RECEIVE_PREFIX = "r";
+export const SET_SPLIT_EVENT_PREFIX = "sse";
+export const ADDED_PREFIX = "add";
+export const REMOVED_PREFIX = "rem";
+export const RECEIVE_PREFIX = "rec";
 export const DISTRIBUTE_PREFIX = "d";
 export const DISTRIBUTION_EVENT_PREFIX = "de";
 export const TOKEN_PREFIX = "t";
@@ -65,36 +67,62 @@ function addBalanceToUser(
   accountTokenInternalBalance.save();
 }
 
-export function saveCreateSplitEvent(
+export function saveSetSplitEvent(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
   splitId: string,
+  type: string,
 ): void {
   let tx = Transaction.load(txHash);
   if (!tx) tx = new Transaction(txHash);
+  let setSplitEvents = tx.setSplitEvents;
+  if (!setSplitEvents) setSplitEvents = new Array<string>();
 
-  let createEventId = createJointId([CREATE_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
-  let createEvent = new CreateSplitEvent(createEventId);
-  createEvent.timestamp = timestamp;
-  createEvent.transaction = txHash;
-  createEvent.account = splitId;
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let setEvent = new SetSplitEvent(setSplitEventId);
+  setEvent.timestamp = timestamp;
+  setEvent.transaction = txHash;
+  setEvent.logIndex = logIdx;
+  setEvent.account = splitId;
+  setEvent.type = type;
+  setEvent.save();
+  setSplitEvents.push(setSplitEventId)
+
+  tx.setSplitEvents = setSplitEvents;
+  tx.save();
 }
 
-export function saveUpdateSplitEvent(
+export function saveSplitRecipientAddedEvent(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
-  splitId: string,
+  accountId: string,
 ): void {
-  let tx = Transaction.load(txHash);
-  if (!tx) tx = new Transaction(txHash);
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
 
-  let updateEventId = createJointId([UPDATE_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
-  let updateEvent = new CreateSplitEvent(updateEventId);
-  updateEvent.timestamp = timestamp;
-  updateEvent.transaction = txHash;
-  updateEvent.account = splitId;
+  let recipientAddedEventId = createJointId([ADDED_PREFIX, setSplitEventId, accountId]);
+  let recipientAddedEvent = new RecipientAddedEvent(recipientAddedEventId);
+  recipientAddedEvent.timestamp = timestamp;
+  recipientAddedEvent.account = accountId;
+  recipientAddedEvent.setSplitEvent = setSplitEventId;
+  recipientAddedEvent.save();
+}
+
+export function saveSplitRecipientRemovedEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+): void {
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+
+  let recipientRemovedEventId = createJointId([REMOVED_PREFIX, setSplitEventId, accountId]);
+  let recipientRemovedEvent = new RecipientRemovedEvent(recipientRemovedEventId);
+  recipientRemovedEvent.timestamp = timestamp;
+  recipientRemovedEvent.account = accountId;
+  recipientRemovedEvent.setSplitEvent = setSplitEventId;
+  recipientRemovedEvent.save();
 }
 
 export function saveDistributeEvent(
