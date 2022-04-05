@@ -56,7 +56,7 @@ export function handleCancelControlTransfer(
     'cancel',
     split.controller.toHexString(),
     oldPotentialController.toHexString(),
-  )
+  );
 }
 
 export function handleControlTransfer(event: ControlTransfer): void {
@@ -79,7 +79,7 @@ export function handleControlTransfer(event: ControlTransfer): void {
     'transfer',
     oldController.toHexString(),
     split.controller.toHexString(),
-  )
+  );
 }
 
 export function handleCreateSplit(event: CreateSplit): void {
@@ -290,7 +290,7 @@ export function handleInitiateControlTransfer(
     'initiate',
     split.controller.toHexString(),
     split.newPotentialController.toHexString(),
-  )
+  );
 }
 
 export function handleUpdateSplit(event: UpdateSplit): void {

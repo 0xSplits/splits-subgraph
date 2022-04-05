@@ -165,7 +165,7 @@ type ControlTransferEvent implements AccountEvent @entity {
   type: String! # initiate | cancel | transfer
   transaction: Transaction!
   fromUserEvent: FromUserControlTransferEvent! @derivedFrom(field: "controlTransferEvent")
-  toUserEvent: ToUserControlTransferEvent! @derivedFrom(field: "controlTransferEvent")
+  toUserEvent: ToUserControlTransferEvent @derivedFrom(field: "controlTransferEvent")
 }
 
 type FromUserControlTransferEvent implements AccountEvent @entity {

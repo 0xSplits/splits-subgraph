@@ -323,16 +323,18 @@ export function saveControlTransferEvents(
   fromUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
   fromUserControlTransferEvent.save();
   
-  let toUserControlTransferEventId = createJointId([
-    TO_USER_PREFIX,
-    controlTransferEventId,
-    toUserId,
-  ]);
-  let toUserControlTransferEvent = new ToUserControlTransferEvent(toUserControlTransferEventId);
-  toUserControlTransferEvent.timestamp = timestamp;
-  toUserControlTransferEvent.account = toUserId;
-  toUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
-  toUserControlTransferEvent.save();
+  if (toUserId != Address.zero().toHexString()) {
+    let toUserControlTransferEventId = createJointId([
+      TO_USER_PREFIX,
+      controlTransferEventId,
+      toUserId,
+    ]);
+    let toUserControlTransferEvent = new ToUserControlTransferEvent(toUserControlTransferEventId);
+    toUserControlTransferEvent.timestamp = timestamp;
+    toUserControlTransferEvent.account = toUserId;
+    toUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
+    toUserControlTransferEvent.save();
+  }
 }
 
 export function handleTokenWithdrawal(
