@@ -7,9 +7,15 @@ import {
   TokenWithdrawal,
   User,
   Transaction,
+  SetSplitEvent,
   DistributionEvent,
   DistributeDistributionEvent,
+  ControlTransferEvent,
+  FromUserControlTransferEvent,
+  ToUserControlTransferEvent,
   ReceiveDistributionEvent,
+  RecipientAddedEvent,
+  RecipientRemovedEvent,
   TokenWithdrawalEvent,
   WithdrawalEvent,
 } from "../generated/schema";
@@ -18,13 +24,19 @@ export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
 
-export const RECEIVE_PREFIX = "r";
+export const SET_SPLIT_EVENT_PREFIX = "sse";
+export const ADDED_PREFIX = "add";
+export const REMOVED_PREFIX = "rem";
+export const RECEIVE_PREFIX = "rec";
 export const DISTRIBUTE_PREFIX = "d";
 export const DISTRIBUTION_EVENT_PREFIX = "de";
 export const TOKEN_PREFIX = "t";
 export const WITHDRAWAL_EVENT_PREFIX = "we";
 export const TOKEN_WITHDRAWAL_PREFIX = "w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
+export const CONTROL_TRANSFER_EVENT_PREFIX = "ct";
+export const FROM_USER_PREFIX = "fu";
+export const TO_USER_PREFIX = "tu";
 export const ID_SEPARATOR = "-";
 
 export function createJointId(args: Array<string>): string {
@@ -53,6 +65,64 @@ function addBalanceToUser(
   }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
+}
+
+export function saveSetSplitEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+  type: string,
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  let setSplitEvents = tx.setSplitEvents;
+  if (!setSplitEvents) setSplitEvents = new Array<string>();
+
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let setEvent = new SetSplitEvent(setSplitEventId);
+  setEvent.timestamp = timestamp;
+  setEvent.transaction = txHash;
+  setEvent.logIndex = logIdx;
+  setEvent.account = splitId;
+  setEvent.type = type;
+  setEvent.save();
+  setSplitEvents.push(setSplitEventId)
+
+  tx.setSplitEvents = setSplitEvents;
+  tx.save();
+}
+
+export function saveSplitRecipientAddedEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+): void {
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+
+  let recipientAddedEventId = createJointId([ADDED_PREFIX, setSplitEventId, accountId]);
+  let recipientAddedEvent = new RecipientAddedEvent(recipientAddedEventId);
+  recipientAddedEvent.timestamp = timestamp;
+  recipientAddedEvent.account = accountId;
+  recipientAddedEvent.setSplitEvent = setSplitEventId;
+  recipientAddedEvent.save();
+}
+
+export function saveSplitRecipientRemovedEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+): void {
+  let setSplitEventId = createJointId([SET_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+
+  let recipientRemovedEventId = createJointId([REMOVED_PREFIX, setSplitEventId, accountId]);
+  let recipientRemovedEvent = new RecipientRemovedEvent(recipientRemovedEventId);
+  recipientRemovedEvent.timestamp = timestamp;
+  recipientRemovedEvent.account = accountId;
+  recipientRemovedEvent.setSplitEvent = setSplitEventId;
+  recipientRemovedEvent.save();
 }
 
 export function saveDistributeEvent(
@@ -215,6 +285,56 @@ export function saveWithdrawalEvent(
   withdrawalEvent.save();
 
   return withdrawalEventId
+}
+
+export function saveControlTransferEvents(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  splitId: string,
+  type: string,
+  fromUserId: string,
+  toUserId: string,
+): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) tx = new Transaction(txHash);
+  tx.save();
+
+  let controlTransferEventId = createJointId([
+    CONTROL_TRANSFER_EVENT_PREFIX,
+    txHash,
+    logIdx.toString()
+  ]);
+  let controlTransferEvent = new ControlTransferEvent(controlTransferEventId);
+  controlTransferEvent.timestamp = timestamp;
+  controlTransferEvent.account = splitId;
+  controlTransferEvent.type = type;
+  controlTransferEvent.transaction = txHash;
+  controlTransferEvent.save();
+  
+  let fromUserControlTransferEventId = createJointId([
+    FROM_USER_PREFIX,
+    controlTransferEventId,
+    fromUserId,
+  ]);
+  let fromUserControlTransferEvent = new FromUserControlTransferEvent(fromUserControlTransferEventId);
+  fromUserControlTransferEvent.timestamp = timestamp;
+  fromUserControlTransferEvent.account = fromUserId;
+  fromUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
+  fromUserControlTransferEvent.save();
+  
+  if (toUserId != Address.zero().toHexString()) {
+    let toUserControlTransferEventId = createJointId([
+      TO_USER_PREFIX,
+      controlTransferEventId,
+      toUserId,
+    ]);
+    let toUserControlTransferEvent = new ToUserControlTransferEvent(toUserControlTransferEventId);
+    toUserControlTransferEvent.timestamp = timestamp;
+    toUserControlTransferEvent.account = toUserId;
+    toUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
+    toUserControlTransferEvent.save();
+  }
 }
 
 export function handleTokenWithdrawal(

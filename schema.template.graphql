@@ -69,12 +69,47 @@ type Transaction @entity {
   # can't use derived relations inside mapping.ts
   # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
   distributionEvents: [DistributionEvent!]
+  setSplitEvents: [SetSplitEvent!]
 }
 
 interface AccountEvent {
   id: ID! # ${prefix}-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+}
+
+enum SetSplitType {
+  create
+  update
+}
+
+type SetSplitEvent implements AccountEvent @entity {
+  id: ID! # sse-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+  logIndex: BigInt!
+  type: SetSplitType
+
+  recipientAddedEvents: [RecipientAddedEvent!] @derivedFrom(field: "setSplitEvent")
+  recipientRemovedEvents: [RecipientRemovedEvent!] @derivedFrom(field: "setSplitEvent")
+}
+
+type RecipientAddedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+
+  setSplitEvent: SetSplitEvent!
+}
+
+type RecipientRemovedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+
+  setSplitEvent: SetSplitEvent!
 }
 
 type DistributionEvent implements AccountEvent @entity {
@@ -125,4 +160,37 @@ type TokenWithdrawalEvent @entity {
   token: Token!
   amount: BigInt!
   withdrawalEvent: WithdrawalEvent!
+}
+
+enum ControlTransferType {
+  initiate
+  cancel
+  transfer
+}
+
+type ControlTransferEvent implements AccountEvent @entity {
+  id: ID! # ct-{txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  type: ControlTransferType
+  transaction: Transaction!
+  fromUserEvent: FromUserControlTransferEvent! @derivedFrom(field: "controlTransferEvent")
+  toUserEvent: ToUserControlTransferEvent @derivedFrom(field: "controlTransferEvent")
+}
+
+type FromUserControlTransferEvent implements AccountEvent @entity {
+  id: ID! # fu-ct-{txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+
+  controlTransferEvent: ControlTransferEvent!
+}
+
+type ToUserControlTransferEvent implements AccountEvent @entity {
+  id: ID! # tu-ct-{txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+
+  controlTransferEvent: ControlTransferEvent!
 }

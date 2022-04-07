@@ -22,6 +22,10 @@ dataSources:
         - name: SplitMain
           file: ./abis/SplitMain.json
       eventHandlers:
+          {{#ethereum}}
+        - event: CreateSplit(indexed address)
+          handler: handleCreateSplit
+          {{/ethereum}}
           {{#polygon}}
         - event: CreateSplit(indexed address,address[],uint32[],uint32,address)
           handler: handleCreateSplit
@@ -32,6 +36,10 @@ dataSources:
           handler: handleCancelControlTransfer
         - event: ControlTransfer(indexed address,indexed address,indexed address)
           handler: handleControlTransfer
+          {{#ethereum}}
+        - event: UpdateSplit(indexed address)
+          handler: handleUpdateSplit
+          {{/ethereum}}
           {{#polygon}}
         - event: UpdateSplit(indexed address,address[],uint32[],uint32)
           handler: handleUpdateSplit
