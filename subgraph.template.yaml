@@ -10,7 +10,7 @@ dataSources:
     source:
       address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
       abi: SplitMain
-      startBlock: {{startBlock}}
+      startBlock: {{splitStartBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -66,3 +66,46 @@ dataSources:
           handler: handleDistributeERC20Call
       {{/ethereum}}
       file: ./src/mapping.ts
+  - kind: ethereum
+    name: VestingModuleFactory
+    network: {{network}}
+    source: 
+      address: "0x45a07c683CcF62a4C3d34c09266c5249AEE49D08"
+      abi: VestingModuleFactory
+      startBlock: {{vestingStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VestingModule
+        - CreateVestingModuleEvent
+      abis:
+        - name: VestingModuleFactory
+          file: ./abis/VestingModuleFactory.json
+      eventHandlers:
+        - event: CreateVestingModule(indexed address,indexed address,uint256)
+          handler: handleCreateVestingModule
+      file: ./src/vesting.mapping.ts
+  - kind: ethereum
+    name: VestingModule
+    network: {{network}}
+    source: 
+      abi: VestingModule
+      startBlock: {{vestingStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VestingStream
+      abis:
+        - name: VestingModule
+          file: ./abis/VestingModule.json
+      eventHandlers:
+        - event: CreateVestingStream(indexed uint256,indexed address,uint256)
+          handler: handleCreateVestingStream
+        - event: ReleaseFromVestingStream(indexed uint256,uint256)
+          handler: handleReleaseFromVestingStream
+      file: ./src/vesting.mapping.ts
+
