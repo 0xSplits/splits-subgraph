@@ -55,6 +55,8 @@ type Split implements Account @entity {
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
   latestBlock: Int!
+
+  vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
 }
 
 type Recipient @entity {
@@ -72,7 +74,7 @@ type VestingModule implements Account @entity {
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   
   vestingPeriod: BigInt!
-  beneficiary: Account!
+  beneficiary: Split!
   streams: [VestingStream!] @derivedFrom(field: "account")
 }
 
