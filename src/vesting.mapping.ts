@@ -5,6 +5,7 @@ import {
   ReleaseFromVestingStream,
 } from "../generated/VestingModule/VestingModule";
 import {
+  Token,
   Transaction,
   VestingModule,
   VestingStream,
@@ -46,14 +47,17 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
   // Save stream
   let vestingModuleId = event.address.toHexString();
   let streamId = event.params.id;
-  let token = event.params.token.toHexString();
+  let tokenId = event.params.token.toHexString();
   let startTime = event.block.timestamp;
   let totalAmount = event.params.amount;
+
+  let token = new Token(tokenId);
+  token.save();
 
   let vestingStreamId = createJointId([vestingModuleId, streamId.toString()]);
   let vestingStream = new VestingStream(vestingStreamId);
   vestingStream.streamId = streamId;
-  vestingStream.token = token;
+  vestingStream.token = tokenId;
   vestingStream.totalAmount = totalAmount;
   vestingStream.startTime = startTime;
   vestingStream.account = vestingModuleId;
@@ -71,7 +75,7 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
   createVestingStreamEvent.timestamp = timestamp;
   createVestingStreamEvent.transaction = txHash;
   createVestingStreamEvent.account = vestingModuleId;
-  createVestingStreamEvent.token = token;
+  createVestingStreamEvent.token = tokenId;
   createVestingStreamEvent.amount = totalAmount;
   createVestingStreamEvent.save();
 }
