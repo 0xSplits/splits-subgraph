@@ -1,5 +1,5 @@
 {
   "network": "mainnet",
-  "startBlock": "14206768",
+  "splitStartBlock": "14206768",
   "ethereum": true
 }
