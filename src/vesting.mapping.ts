@@ -48,10 +48,10 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
   // Save stream
   let vestingModuleId = event.address.toHexString();
   // must exist
-  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule
+  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule;
   if (event.block.number.toI32() > vestingModule.latestBlock) {
-    vestingModule.latestBlock = event.block.number.toI32()
-    vestingModule.save()
+    vestingModule.latestBlock = event.block.number.toI32();
+    vestingModule.save();
   }
 
   let streamId = event.params.id;
@@ -92,10 +92,10 @@ export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream):
   // Update stream
   let vestingModuleId = event.address.toHexString();
   // must exist
-  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule
+  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule;
   if (event.block.number.toI32() > vestingModule.latestBlock) {
-    vestingModule.latestBlock = event.block.number.toI32()
-    vestingModule.save()
+    vestingModule.latestBlock = event.block.number.toI32();
+    vestingModule.save();
   }
 
   let streamId = event.params.id.toString();
@@ -127,6 +127,6 @@ function createTransactionIfMissing(txHash: string): void {
   let tx = Transaction.load(txHash);
   if (!tx) {
     tx = new Transaction(txHash);
-    tx.save()
+    tx.save();
   }
 }

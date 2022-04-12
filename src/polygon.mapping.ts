@@ -122,6 +122,7 @@ export function handleCreateSplit(event: CreateSplit): void {
 export function handleDistributeERC20(event: DistributeERC20): void {
   // TODO: explore cleaning this up w union type
   let timestamp = event.block.timestamp;
+  let blockNumber = event.block.number.toI32();
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
@@ -136,13 +137,15 @@ export function handleDistributeERC20(event: DistributeERC20): void {
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber
   );
 }
 
 export function handleDistributeETH(event: DistributeETH): void {
   // TODO: explore cleaning this up w union type
   let timestamp = event.block.timestamp;
+  let blockNumber = event.block.number.toI32();
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
@@ -157,7 +160,8 @@ export function handleDistributeETH(event: DistributeETH): void {
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber
   );
 }
 
