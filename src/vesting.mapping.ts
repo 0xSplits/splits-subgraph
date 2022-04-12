@@ -27,6 +27,7 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   let vestingModule = new VestingModule(vestingModuleId);
   vestingModule.vestingPeriod = event.params.vestingPeriod;
   vestingModule.beneficiary = event.params.beneficiary.toHexString();
+  vestingModule.latestBlock = event.block.number.toI32()
   vestingModule.save();
 
   // Save event
@@ -46,6 +47,13 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
 export function handleCreateVestingStream(event: CreateVestingStream): void {
   // Save stream
   let vestingModuleId = event.address.toHexString();
+  // must exist
+  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule
+  if (event.block.number.toI32() > vestingModule.latestBlock) {
+    vestingModule.latestBlock = event.block.number.toI32()
+    vestingModule.save()
+  }
+
   let streamId = event.params.id;
   let tokenId = event.params.token.toHexString();
   let startTime = event.block.timestamp;
@@ -83,6 +91,13 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
 export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream): void {
   // Update stream
   let vestingModuleId = event.address.toHexString();
+  // must exist
+  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule
+  if (event.block.number.toI32() > vestingModule.latestBlock) {
+    vestingModule.latestBlock = event.block.number.toI32()
+    vestingModule.save()
+  }
+
   let streamId = event.params.id.toString();
   let transferAmount = event.params.amount;
 

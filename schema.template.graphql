@@ -76,6 +76,7 @@ type VestingModule implements Account @entity {
   vestingPeriod: BigInt!
   beneficiary: Split!
   streams: [VestingStream!] @derivedFrom(field: "account")
+  latestBlock: Int!
 }
 
 type VestingStream @entity {
