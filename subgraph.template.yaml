@@ -70,7 +70,7 @@ dataSources:
     name: VestingModuleFactory
     network: {{network}}
     source: 
-      address: "0x45a07c683CcF62a4C3d34c09266c5249AEE49D08"
+      address: "0x0a2841630f198745a55c4dab3fe98f77271949e5"
       abi: VestingModuleFactory
       startBlock: {{vestingStartBlock}}
     mapping:

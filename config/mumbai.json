@@ -1,6 +1,6 @@
 {
   "network": "mumbai",
   "splitStartBlock": "25258326",
-  "vestingStartBlock": "25883053",
+  "vestingStartBlock": "26224690",
   "polygon": true
 }
