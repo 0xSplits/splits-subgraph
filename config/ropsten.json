@@ -1,5 +1,6 @@
 {
   "network": "ropsten",
-  "startBlock": "11962375",
+  "splitStartBlock": "11962375",
+  "vestingStartBlock": "12241710",
   "ethereum": true
 }

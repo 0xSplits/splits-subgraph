@@ -55,6 +55,8 @@ type Split implements Account @entity {
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
   latestBlock: Int!
+
+  vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
 }
 
 type Recipient @entity {
@@ -62,6 +64,30 @@ type Recipient @entity {
   split: Split!
   account: Account!
   ownership: BigInt!
+}
+
+type VestingModule implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  
+  vestingPeriod: BigInt!
+  beneficiary: Split!
+  streams: [VestingStream!] @derivedFrom(field: "account")
+  latestBlock: Int!
+}
+
+type VestingStream @entity {
+  id: ID! # ${vestingId}-${streamId}
+  streamId: BigInt!
+  token: Token!
+  totalAmount: BigInt!
+  startTime: BigInt!
+  account: VestingModule!
+
+  claimedAmount: BigInt!
 }
 
 type Transaction @entity {
@@ -193,4 +219,32 @@ type ToUserControlTransferEvent implements AccountEvent @entity {
   account: Account!
 
   controlTransferEvent: ControlTransferEvent!
+}
+
+type CreateVestingModuleEvent implements AccountEvent @entity {
+  id: ID! # cvme-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+}
+
+type CreateVestingStreamEvent implements AccountEvent @entity {
+  id: ID! # cvse-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+  token: Token!
+  amount: BigInt!
+}
+
+type ReleaseVestingFundsEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+  token: Token!
+  amount: BigInt!
 }

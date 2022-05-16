@@ -170,6 +170,7 @@ export function handleDistributeETH(event: DistributeETH): void {
 export function handleDistributeERC20Call(call: DistributeERC20Call): void {
   // TODO: explore cleaning this up w union type
   let timestamp = call.block.timestamp;
+  let blockNumber = call.block.number.toI32();
   let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = call.inputs.token.toHexString();
@@ -192,13 +193,15 @@ export function handleDistributeERC20Call(call: DistributeERC20Call): void {
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber,
   );
 }
 
 export function handleDistributeETHCall(call: DistributeETHCall): void {
   // TODO: explore cleaning this up w union type
   let timestamp = call.block.timestamp;
+  let blockNumber = call.block.number.toI32();
   let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = Address.zero().toHexString();
@@ -221,7 +224,8 @@ export function handleDistributeETHCall(call: DistributeETHCall): void {
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber
   );
 }
 
@@ -324,6 +328,7 @@ export function handleUpdateAndDistributeETHCall(
   call: UpdateAndDistributeETHCall
 ): void {
   let timestamp = call.block.timestamp;
+  let blockNumber = call.block.number.toI32();
   let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = Address.zero().toHexString();
@@ -339,7 +344,7 @@ export function handleUpdateAndDistributeETHCall(
     txHash,
     timestamp,
     splitId,
-    call.block.number.toI32(),
+    blockNumber,
     accounts,
     percentAllocations,
     distributorFee
@@ -359,7 +364,8 @@ export function handleUpdateAndDistributeETHCall(
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber
   );
 }
 
@@ -367,6 +373,7 @@ export function handleUpdateAndDistributeERC20Call(
   call: UpdateAndDistributeERC20Call
 ): void {
   let timestamp = call.block.timestamp;
+  let blockNumber = call.block.number.toI32();
   let txHash = call.transaction.hash.toHexString();
   let splitId = call.inputs.split.toHexString();
   let tokenId = call.inputs.token.toHexString();
@@ -382,7 +389,7 @@ export function handleUpdateAndDistributeERC20Call(
     txHash,
     timestamp,
     splitId,
-    call.block.number.toI32(),
+    blockNumber,
     accounts,
     percentAllocations,
     distributorFee
@@ -402,7 +409,8 @@ export function handleUpdateAndDistributeERC20Call(
     splitId,
     tokenId,
     amount,
-    distributorAddress
+    distributorAddress,
+    blockNumber
   );
 }
 

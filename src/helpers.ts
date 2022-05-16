@@ -160,7 +160,8 @@ export function distributeSplit(
   splitId: string,
   tokenId: string,
   amount: BigInt,
-  distributorAddress: Address
+  distributorAddress: Address,
+  blockNumber: i32
 ): void {
   let token = new Token(tokenId);
   token.save();
@@ -200,6 +201,10 @@ export function distributeSplit(
 
   // must exist
   let split = Split.load(splitId) as Split;
+  if (blockNumber > split.latestBlock) {
+    split.latestBlock = blockNumber;
+    split.save();
+  }
 
   // doesn't know msg.sender; only affects advance users distributing from contracts
   // assuming they don't explicitly use distributorFee to repoint the proceeds elsewhere;
