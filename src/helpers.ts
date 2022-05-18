@@ -346,7 +346,8 @@ export function handleTokenWithdrawal(
   withdrawalEventId: string,
   accountId: string,
   tokenId: string,
-  amount: BigInt
+  amount: BigInt,
+  resetBalance: boolean
 ): void {
   let tokenBalanceId = createJointId([accountId, tokenId]);
 
@@ -367,10 +368,22 @@ export function handleTokenWithdrawal(
     TOKEN_INTERNAL_BALANCE_PREFIX,
     tokenBalanceId
   ]);
-  let tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
-  tokenInternalBalance.account = accountId;
-  tokenInternalBalance.token = tokenId;
-  tokenInternalBalance.amount = ONE;
+  let tokenInternalBalance = TokenInternalBalance.load(tokenInternalBalanceId);
+  if (!tokenInternalBalance) {
+    tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
+    tokenInternalBalance.account = accountId;
+    tokenInternalBalance.token = tokenId;
+  }
+
+  // There's a bug on ethereum when distribute and withdraw events are grouped together in a transaction.
+  // Subtracting the amount in that case instead of just setting the balance to one handles it (because
+  // this is running before the distribute function in that case).
+  // See: https://linear.app/0xsplits/issue/PANDE-354/fix-subgraph-bug
+  if (resetBalance) {
+    tokenInternalBalance.amount = ONE;
+  } else {
+    tokenInternalBalance.amount -= amount;
+  }
   tokenInternalBalance.save();
 
   let tokenWithdrawalEventId = createJointId([

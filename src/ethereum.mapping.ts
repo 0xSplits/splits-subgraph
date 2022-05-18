@@ -435,7 +435,8 @@ export function handleWithdrawal(event: Withdrawal): void {
       withdrawalEventId,
       account,
       Address.zero().toHexString(),
-      ethAmount
+      ethAmount,
+      false
     );
   }
 
@@ -444,7 +445,8 @@ export function handleWithdrawal(event: Withdrawal): void {
       withdrawalEventId,
       account,
       tokens[i].toHexString(),
-      tokenAmounts[i]
+      tokenAmounts[i],
+      false
     );
   }
 }
