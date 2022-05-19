@@ -1,12 +1,13 @@
 # 0xSplits Subgraph
 
 ## Ethereum
-- Mainnet: [WIP]
-- Ropsten: [WIP]
+- [Mainnet](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ethereum)
+- [Ropsten](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ropsten)
+- [Kovan](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-kovan)
 
 ## Polygon
-- Polygon: [WIP]
-- Mumbai: [WIP]
+- [Polygon](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-polygon)
+- [Mumbai](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-mumbai)
 
 ### Install
 
