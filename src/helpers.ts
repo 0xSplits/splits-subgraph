@@ -397,3 +397,14 @@ export function handleTokenWithdrawal(
   tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
   tokenWithdrawalEvent.save();
 }
+
+export function createUserIfMissing(
+  accountId: string,
+): void {
+  // only create a User if accountId doesn't point to a Split
+  let splitId = Split.load(accountId);
+  if (!splitId) {
+    let user = new User(accountId);
+    user.save();
+  }
+}
