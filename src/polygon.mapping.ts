@@ -12,6 +12,7 @@ import {
 import { Split, Recipient, User } from "../generated/schema";
 import {
   createJointId,
+  createUserIfMissing,
   saveWithdrawalEvent,
   saveDistributeEvent,
   distributeSplit,
@@ -81,6 +82,8 @@ export function handleCreateSplit(event: CreateSplit): void {
   let splitUserId = User.load(splitId);
   if (splitUserId) store.remove("User", splitId);
 
+  createUserIfMissing(event.params.controller.toHexString());
+
   let split = new Split(splitId);
   split.latestBlock = event.block.number.toI32();
   split.controller = event.params.controller;
@@ -92,12 +95,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    // only create a User if accountId doesn't point to a Split
-    let splitAccountId = Split.load(accountId);
-    if (!splitAccountId) {
-      let user = new User(accountId);
-      user.save();
-    }
+    createUserIfMissing(accountId);
 
     let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
@@ -170,6 +168,9 @@ export function handleInitiateControlTransfer(
 ): void {
   // must exist
   let split = Split.load(event.params.split.toHexString()) as Split;
+
+  createUserIfMissing(event.params.newPotentialController.toHexString());
+
   split.newPotentialController = event.params.newPotentialController;
   split.save();
 
