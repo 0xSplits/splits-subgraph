@@ -1,4 +1,4 @@
-import { store, BigInt, Address } from "@graphprotocol/graph-ts";
+import { log, store, BigInt, Address } from "@graphprotocol/graph-ts";
 import {
   CancelControlTransfer,
   ControlTransfer,
@@ -96,7 +96,10 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let splitId = call.outputs.split.toHexString();
   // check & remove if a user exists at splitId
   let splitUserId = User.load(splitId);
-  if (splitUserId) store.remove("User", splitId);
+  if (splitUserId) {
+    store.remove("User", splitId);
+    log.warning('Removed user {}', [splitId]);
+  }
 
   createUserIfMissing(call.inputs.controller.toHexString());
 
@@ -140,6 +143,13 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   }
 
   split.recipients = recipientIds;
+
+  // check & remove if a user exists at splitId
+  splitUserId = User.load(splitId);
+  if (splitUserId) {
+    log.warning('Found the removed user {}', [splitId]);
+  }
+
   split.save();
 }
 
