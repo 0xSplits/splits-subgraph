@@ -1,0 +1,6 @@
+{
+  "network": "goerli",
+  "splitStartBlock": "6374540",
+  "vestingStartBlock": "6839434",
+  "ethereum": true
+}

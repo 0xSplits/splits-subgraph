@@ -7,6 +7,7 @@
     "deploy:mainnet": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-ethereum",
     "deploy:ropsten": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-ropsten",
     "deploy:kovan": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-kovan",
+    "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-goerli",
     "deploy:polygon": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-polygon",
     "deploy:mumbai": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-mumbai",
     "create-local": "graph create --node http://localhost:8020/ 0xSplits/splits-subgraph",
@@ -15,10 +16,11 @@
     "prepare:mainnet": "mustache config/mainnet.json schema.template.graphql > schema.graphql && mustache config/mainnet.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:ropsten": "mustache config/ropsten.json schema.template.graphql > schema.graphql && mustache config/ropsten.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:kovan": "mustache config/kovan.json schema.template.graphql > schema.graphql && mustache config/kovan.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:goerli": "mustache config/goerli.json schema.template.graphql > schema.graphql && mustache config/goerli.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:polygon": "mustache config/polygon.json schema.template.graphql > schema.graphql && mustache config/polygon.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:mumbai": "mustache config/mumbai.json schema.template.graphql > schema.graphql && mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
-    "build-and-deploy-all": "yarn prepare:kovan && yarn build && yarn deploy:kovan && yarn prepare:ropsten && yarn build && yarn deploy:ropsten && yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:polygon && yarn build && yarn deploy:polygon",
-    "build-and-deploy-testnets": "yarn prepare:kovan && yarn build && yarn deploy:kovan && yarn prepare:ropsten && yarn build && yarn deploy:ropsten && yarn prepare:mumbai && yarn build && yarn deploy:mumbai"
+    "build-and-deploy-all": "yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:kovan && yarn build && yarn deploy:kovan && yarn prepare:ropsten && yarn build && yarn deploy:ropsten && yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:polygon && yarn build && yarn deploy:polygon",
+    "build-and-deploy-testnets": "yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:kovan && yarn build && yarn deploy:kovan && yarn prepare:ropsten && yarn build && yarn deploy:ropsten && yarn prepare:mumbai && yarn build && yarn deploy:mumbai"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.27.0",
