@@ -32,7 +32,8 @@ export const DISTRIBUTE_PREFIX = "d";
 export const DISTRIBUTION_EVENT_PREFIX = "de";
 export const TOKEN_PREFIX = "t";
 export const WITHDRAWAL_EVENT_PREFIX = "we";
-export const TOKEN_WITHDRAWAL_PREFIX = "w";
+export const TOKEN_WITHDRAWAL_SPLIT_PREFIX = "w-s";
+export const TOKEN_WITHDRAWAL_USER_PREFIX = "w-u";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
 export const CONTROL_TRANSFER_EVENT_PREFIX = "ct";
 export const FROM_USER_PREFIX = "fu";
@@ -175,7 +176,7 @@ export function distributeSplit(
   let splitTokenBalanceId = createJointId([splitId, tokenId]);
 
   let splitTokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_PREFIX,
+    TOKEN_WITHDRAWAL_SPLIT_PREFIX,
     splitTokenBalanceId
   ]);
   let splitTokenWithdrawal = TokenWithdrawal.load(splitTokenWithdrawalId);
@@ -352,7 +353,7 @@ export function handleTokenWithdrawal(
   let tokenBalanceId = createJointId([accountId, tokenId]);
 
   let tokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_PREFIX,
+    TOKEN_WITHDRAWAL_USER_PREFIX,
     tokenBalanceId
   ]);
   let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
