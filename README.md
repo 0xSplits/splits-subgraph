@@ -3,7 +3,7 @@
 ## Ethereum
 - [Mainnet](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ethereum)
 - [Ropsten](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ropsten)
-- [Kovan](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-kovan)
+- [Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-goerli)
 
 ## Polygon
 - [Polygon](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-polygon)
