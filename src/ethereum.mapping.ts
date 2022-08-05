@@ -94,6 +94,7 @@ export function handleCreateSplit(event: CreateSplit): void {
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
   let splitId = call.outputs.split.toHexString();
+  let blockNumber = call.block.number.toI32();
   // check & remove if a user exists at splitId
   let splitUserId = User.load(splitId);
   if (splitUserId) store.remove("User", splitId);
@@ -101,7 +102,8 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   createUserIfMissing(call.inputs.controller.toHexString());
 
   let split = new Split(splitId);
-  split.latestBlock = call.block.number.toI32();
+  split.createdBlock = blockNumber;
+  split.latestBlock = blockNumber;
   split.controller = call.inputs.controller;
   split.newPotentialController = Address.zero();
   split.distributorFee = call.inputs.distributorFee;

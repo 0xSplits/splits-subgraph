@@ -54,6 +54,7 @@ type Split implements Account @entity {
   # can't use derived relations inside mapping.ts
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
+  createdBlock: Int!
   latestBlock: Int!
 
   vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")

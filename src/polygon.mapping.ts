@@ -75,6 +75,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
+  let blockNumber = event.block.number.toI32();
 
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 
@@ -85,7 +86,8 @@ export function handleCreateSplit(event: CreateSplit): void {
   createUserIfMissing(event.params.controller.toHexString());
 
   let split = new Split(splitId);
-  split.latestBlock = event.block.number.toI32();
+  split.createdBlock = blockNumber;
+  split.latestBlock = blockNumber;
   split.controller = event.params.controller;
   split.newPotentialController = Address.zero();
   split.distributorFee = event.params.distributorFee;
