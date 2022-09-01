@@ -164,6 +164,9 @@ export function distributeSplit(
   distributorAddress: Address,
   blockNumber: i32
 ): void {
+  let split = getSplit(splitId);
+  if (!split) return;
+
   let token = new Token(tokenId);
   token.save();
 
@@ -200,8 +203,6 @@ export function distributeSplit(
     splitTokenInternalBalance.save();
   }
 
-  // must exist
-  let split = Split.load(splitId) as Split;
   if (blockNumber > split.latestBlock) {
     split.latestBlock = blockNumber;
     split.save();
@@ -408,4 +409,15 @@ export function createUserIfMissing(
     let user = new User(accountId);
     user.save();
   }
+}
+
+export function getSplit(splitId: string): Split | undefined {
+  let split = Split.load(splitId);
+  if (!split) {
+    let splitUser = User.load(splitId);
+    if (splitUser) return; // It's a valid case where the split doesn't exist. Just exit.
+    throw new Error('Split must exist');
+  }
+
+  return split;
 }

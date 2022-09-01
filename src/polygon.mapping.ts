@@ -21,13 +21,16 @@ import {
   saveSetSplitEvent,
   saveSplitRecipientAddedEvent,
   saveSplitRecipientRemovedEvent,
+  getSplit,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
   event: CancelControlTransfer
 ): void {
-  // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split;
+  let splitId = event.params.split.toHexString();
+  let split = getSplit(splitId);
+  if (!split) return;
+
   let oldPotentialController = split.newPotentialController;
   split.newPotentialController = Address.zero();
   split.save();
@@ -48,8 +51,10 @@ export function handleCancelControlTransfer(
 }
 
 export function handleControlTransfer(event: ControlTransfer): void {
-  // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split;
+  let splitId = event.params.split.toHexString();
+  let split = getSplit(splitId);
+  if (!split) return;
+
   let oldController = split.controller;
   split.controller = event.params.newController;
   split.newPotentialController = Address.zero();
@@ -77,11 +82,13 @@ export function handleCreateSplit(event: CreateSplit): void {
   let splitId = event.params.split.toHexString();
   let blockNumber = event.block.number.toI32();
 
-  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
+  // If a user already exists at this id, just return for now. Cannot have two
+  // entities with the same id if they share an interface. Will handle this situation
+  // in subgraph v2.
+  let splitUser = User.load(splitId);
+  if (splitUser) return;
 
-  // check & remove if a user exists at splitId
-  let splitUserId = User.load(splitId);
-  if (splitUserId) store.remove("User", splitId);
+  saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 
   createUserIfMissing(event.params.controller.toHexString());
 
@@ -168,8 +175,9 @@ export function handleDistributeETH(event: DistributeETH): void {
 export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
 ): void {
-  // must exist
-  let split = Split.load(event.params.split.toHexString()) as Split;
+  let splitId = event.params.split.toHexString();
+  let split = getSplit(splitId);
+  if (!split) return;
 
   createUserIfMissing(event.params.newPotentialController.toHexString());
 
@@ -200,8 +208,9 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'update');
 
   // use new object for partial updates when existing values not needed
-  // must exist
-  let split = Split.load(splitId) as Split;
+  let split = getSplit(splitId);
+  if (!split) return;
+
   split.latestBlock = event.block.number.toI32();
   split.distributorFee = event.params.distributorFee;
   let oldRecipientIds = split.recipients;
@@ -212,12 +221,7 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let percentAllocations = event.params.percentAllocations;
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    // only create a User if accountId doesn't point to a Split
-    let splitAccountId = Split.load(accountId);
-    if (!splitAccountId) {
-      let user = new User(accountId);
-      user.save();
-    }
+    createUserIfMissing(accountId);
 
     let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);
