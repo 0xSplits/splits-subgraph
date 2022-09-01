@@ -91,6 +91,28 @@ type VestingStream @entity {
   claimedAmount: BigInt!
 }
 
+type WaterfallModule implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+
+  token: Token!
+  tranches: [WaterfallTranche!] @derivedFrom(field: "account")
+  totalClaimedAmount: BigInt!
+  latestBlock: Int!
+}
+
+type WaterfallTranche @entity {
+  id: ID! #${waterfallId}-${trancheId}
+  account: WaterfallModule!
+  startAmount: BigInt!
+  size: BigInt # optional because the residual has no size
+  claimedAmount: BigInt!
+  recipient: Account!
+}
+
 type Transaction @entity {
   id: ID! #txHash
   # can't use derived relations inside mapping.ts

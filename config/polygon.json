@@ -2,5 +2,6 @@
   "network": "matic",
   "splitStartBlock": "25303316",
   "vestingStartBlock": "27984752",
+  "waterfallStartBlock": "",
   "polygon": true
 }

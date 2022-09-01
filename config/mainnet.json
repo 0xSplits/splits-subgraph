@@ -2,5 +2,6 @@
   "network": "mainnet",
   "splitStartBlock": "14206768",
   "vestingStartBlock": "14722373",
+  "waterfallStartBlock": "",
   "ethereum": true
 }

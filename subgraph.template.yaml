@@ -108,4 +108,44 @@ dataSources:
         - event: ReleaseFromVestingStream(indexed uint256,uint256)
           handler: handleReleaseFromVestingStream
       file: ./src/vesting.mapping.ts
-
+  - kind: ethereum
+    name: WaterfallModuleFactory
+    network: {{network}}
+    source: 
+      address: "0xB8c2853b9850Cf9E6B5418D25Bf8644aEeD5D80c"
+      abi: WaterfallModuleFactory
+      startBlock: {{waterfallStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - WaterfallModule
+      abis:
+        - name: WaterfallModuleFactory
+          file: ./abis/WaterfallModuleFactory.json
+      eventHandlers:
+        - event: CreateWaterfallModule(indexed address,address,address[],uint256[])
+          handler: handleCreateWaterfallModule
+      file: ./src/waterfall.mapping.ts
+  - kind: ethereum
+    name: WaterfallModule
+    network: {{network}}
+    source: 
+      abi: WaterfallModule
+      startBlock: {{waterfallStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - WaterfallTranche
+      abis:
+        - name: WaterfallModule
+          file: ./abis/WaterfallModule.json
+      eventHandlers:
+        - event: WaterfallFunds(address[],uint256[])
+          handler: handleWaterfallFunds
+        - event: RecoverNonWaterfallFunds(address,address,uint256)
+          handler: handleRecoverNonWaterfallFunds
+      file: ./src/waterfall.mapping.ts

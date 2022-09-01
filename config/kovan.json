@@ -1,6 +1,0 @@
-{
-  "network": "kovan",
-  "splitStartBlock": "29821123",
-  "vestingStartBlock": "31452259",
-  "ethereum": true
-}
