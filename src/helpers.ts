@@ -18,6 +18,8 @@ import {
   RecipientRemovedEvent,
   TokenWithdrawalEvent,
   WithdrawalEvent,
+  WaterfallModule,
+  VestingModule,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -403,12 +405,18 @@ export function handleTokenWithdrawal(
 export function createUserIfMissing(
   accountId: string,
 ): void {
-  // only create a User if accountId doesn't point to a Split
-  let splitId = Split.load(accountId);
-  if (!splitId) {
-    let user = new User(accountId);
-    user.save();
-  }
+  // only create a User if accountId doesn't point to another module
+  let split = Split.load(accountId);
+  if (split) return;
+
+  let waterfall = WaterfallModule.load(accountId);
+  if (waterfall) return;
+
+  let vesting = VestingModule.load(accountId);
+  if (vesting) return;
+
+  let user = new User(accountId);
+  user.save();
 }
 
 export function getSplit(splitId: string): Split | null {
