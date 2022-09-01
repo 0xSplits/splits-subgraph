@@ -1,4 +1,4 @@
-import { BigInt, Address } from "@graphprotocol/graph-ts";
+import { BigInt, Address, log } from "@graphprotocol/graph-ts";
 import {
   Split,
   Recipient,
@@ -422,7 +422,11 @@ export function getSplit(splitId: string): Split | null {
   let split = Split.load(splitId);
   if (!split) {
     let splitUser = User.load(splitId);
-    if (splitUser) return null; // It's a valid case where the split doesn't exist. Just exit.
+    if (splitUser) {
+      // It's a valid case where the split doesn't exist. Just exit.
+      log.warning('Trying to fetch a split, but a user already exists: {}', [splitId]);
+      return null;
+    }
     throw new Error('Split must exist');
   }
 

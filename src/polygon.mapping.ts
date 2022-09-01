@@ -1,4 +1,4 @@
-import { store, Address } from "@graphprotocol/graph-ts";
+import { store, Address, log } from "@graphprotocol/graph-ts";
 import {
   CancelControlTransfer,
   ControlTransfer,
@@ -86,7 +86,10 @@ export function handleCreateSplit(event: CreateSplit): void {
   // entities with the same id if they share an interface. Will handle this situation
   // in subgraph v2.
   let splitUser = User.load(splitId);
-  if (splitUser) return;
+  if (splitUser) {
+    log.warning('Trying to create a split, but a user already exists: {}', [splitId]);
+    return;
+  }
 
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 
