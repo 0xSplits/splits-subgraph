@@ -411,11 +411,11 @@ export function createUserIfMissing(
   }
 }
 
-export function getSplit(splitId: string): Split | undefined {
+export function getSplit(splitId: string): Split | null {
   let split = Split.load(splitId);
   if (!split) {
     let splitUser = User.load(splitId);
-    if (splitUser) return; // It's a valid case where the split doesn't exist. Just exit.
+    if (splitUser) return null; // It's a valid case where the split doesn't exist. Just exit.
     throw new Error('Split must exist');
   }
 
