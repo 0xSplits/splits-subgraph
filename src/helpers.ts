@@ -223,8 +223,7 @@ export function distributeSplit(
       let distributorAddressString = distributorAddress.toHexString();
 
       // 'Create' the user in case they don't exist yet
-      let user = new User(distributorAddressString);
-      user.save();
+      createUserIfMissing(distributorAddressString);
 
       addBalanceToUser(distributorAddressString, tokenId, distributorAmount);
 
