@@ -14,7 +14,7 @@ import {
   ReleaseVestingFundsEvent,
   User,
 } from "../generated/schema";
-import { createJointId } from "./helpers";
+import { createJointId, createTransactionIfMissing, getVestingModule } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
@@ -58,8 +58,10 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
 export function handleCreateVestingStream(event: CreateVestingStream): void {
   // Save stream
   let vestingModuleId = event.address.toHexString();
-  // must exist
-  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule;
+
+  let vestingModule = getVestingModule(vestingModuleId);
+  if (!vestingModule) return;
+
   if (event.block.number.toI32() > vestingModule.latestBlock) {
     vestingModule.latestBlock = event.block.number.toI32();
     vestingModule.save();
@@ -102,8 +104,10 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
 export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream): void {
   // Update stream
   let vestingModuleId = event.address.toHexString();
-  // must exist
-  let vestingModule = VestingModule.load(vestingModuleId) as VestingModule;
+
+  let vestingModule = getVestingModule(vestingModuleId);
+  if (!vestingModule) return;
+
   if (event.block.number.toI32() > vestingModule.latestBlock) {
     vestingModule.latestBlock = event.block.number.toI32();
     vestingModule.save();
@@ -132,12 +136,4 @@ export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream):
   releaseVestingFundsEvent.token = vestingStream.token;
   releaseVestingFundsEvent.amount = transferAmount;
   releaseVestingFundsEvent.save();
-}
-
-function createTransactionIfMissing(txHash: string): void {
-  let tx = Transaction.load(txHash);
-  if (!tx) {
-    tx = new Transaction(txHash);
-    tx.save();
-  }
 }

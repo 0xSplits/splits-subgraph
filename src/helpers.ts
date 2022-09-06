@@ -432,3 +432,41 @@ export function getSplit(splitId: string): Split | null {
 
   return split;
 }
+
+export function getWaterfallModule(waterfallModuleId: string): WaterfallModule | null {
+  let waterfall = WaterfallModule.load(waterfallModuleId);
+  if (!waterfall) {
+    let waterfallUser = User.load(waterfallModuleId);
+    if (waterfallUser) {
+      // It's a valid case where the waterfall doesn't exist. Just exit.
+      log.warning('Trying to fetch a waterfall, but a user already exists: {}', [waterfallModuleId]);
+      return null;
+    }
+    throw new Error('Waterfall must exist');
+  }
+
+  return waterfall;
+}
+
+export function getVestingModule(vestingModuleId: string): VestingModule | null {
+  let vesting = VestingModule.load(vestingModuleId);
+  if (!vesting) {
+    let vestingUser = User.load(vestingModuleId);
+    if (vestingUser) {
+      // It's a valid case where the vesting doesn't exist. Just exit.
+      log.warning('Trying to fetch a vesting, but a user already exists: {}', [vestingModuleId]);
+      return null;
+    }
+    throw new Error('Vesting must exist');
+  }
+
+  return vesting;
+}
+
+export function createTransactionIfMissing(txHash: string): void {
+  let tx = Transaction.load(txHash);
+  if (!tx) {
+    tx = new Transaction(txHash);
+    tx.save();
+  }
+}

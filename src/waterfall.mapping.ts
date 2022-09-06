@@ -19,7 +19,7 @@ import {
   WaterfallModule,
   WaterfallTranche,
 } from "../generated/schema";
-import { createJointId, createUserIfMissing } from "./helpers";
+import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getWaterfallModule } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
@@ -84,8 +84,9 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
 export function handleWaterfallFunds(event: WaterfallFunds): void {
   let waterfallModuleId = event.address.toHexString();
 
-  // must exist
-  let waterfallModule = WaterfallModule.load(waterfallModuleId) as WaterfallModule;
+  let waterfallModule = getWaterfallModule(waterfallModuleId);
+  if (!waterfallModule) return;
+
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
     waterfallModule.latestBlock = event.block.number.toI32();
   }
@@ -93,7 +94,6 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   let payoutAmounts = event.params.payouts;
   let remainingPayout = ZERO;
   for (let i: i32 = 0; i < payoutAmounts.length; i++) {
-    // TODO: Need to convert?
     remainingPayout += payoutAmounts[i];
   }
   waterfallModule.totalClaimedAmount += remainingPayout;
