@@ -4,28 +4,22 @@ import {
   WaterfallFunds,
   RecoverNonWaterfallFunds,
 } from "../generated/WaterfallModule/WaterfallModule";
-// import {
-//   Token,
-//   Transaction,
-//   VestingModule,
-//   VestingStream,
-//   CreateVestingModuleEvent,
-//   CreateVestingStreamEvent,
-//   ReleaseVestingFundsEvent,
-// } from "../generated/schema";
 import {
   Token,
   User,
   WaterfallModule,
   WaterfallTranche,
+  CreateWaterfallModuleEvent,
+  WaterfallRecipientAddedEvent,
+  WaterfallFundsEvent,
+  ReceiveWaterfallFundsEvent,
 } from "../generated/schema";
-import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getWaterfallModule } from "./helpers";
+import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getWaterfallModule, RECEIVE_PREFIX } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
-// export const CREATE_VESTING_MODULE_EVENT_PREFIX = "cvme";
-// export const CREATE_VESTING_STREAM_EVENT_PREFIX = "cvse";
-// export const RELEASE_VESTING_FUNDS_EVENT_PREFIX = "rvfe";
+export const CREATE_WATERFALL_MODULE_EVENT_PREFIX = "cwme";
+export const WATERFALL_FUNDS_EVENT_PREFIX = "wfe";
 
 export function handleCreateWaterfallModule(event: CreateWaterfallModule): void {
   // Save module
@@ -39,6 +33,11 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
     log.warning('Trying to create a waterfall, but a user already exists: {}', [waterfallModuleId]);
     return;
   }
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   let waterfallModule = new WaterfallModule(waterfallModuleId);
 
@@ -57,28 +56,27 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   let i: i32 = 0;
   for (; i < waterfallTrancheThresholds.length; i++) {
     let currentTrancheAmount = waterfallTrancheThresholds[i] - previousThreshold;
-    createWaterfallTranche(waterfallModuleId, waterfallTrancheRecipients[i].toHexString(), i.toString(), previousThreshold, currentTrancheAmount);
+    let accountId = waterfallTrancheRecipients[i].toHexString();
+    createWaterfallTranche(waterfallModuleId, accountId, i.toString(), previousThreshold, currentTrancheAmount);
+    saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
 
     previousThreshold = waterfallTrancheThresholds[i];
   }
 
   // One more create call for the residual recipient
-  createWaterfallTranche(waterfallModuleId, waterfallTrancheRecipients[i].toHexString(), i.toString(), previousThreshold);
+  let accountId = waterfallTrancheRecipients[i].toHexString();
+  createWaterfallTranche(waterfallModuleId, accountId, i.toString(), previousThreshold);
+  saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
 
   waterfallModule.save();
 
   // Save event
-  // let timestamp = event.block.timestamp;
-  // let txHash = event.transaction.hash.toHexString();
-  // createTransactionIfMissing(txHash);
-  // let logIdx = event.logIndex;
-
-  // let createVestingModuleEventId = createJointId([CREATE_VESTING_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
-  // let createVestingModuleEvent = new CreateVestingModuleEvent(createVestingModuleEventId);
-  // createVestingModuleEvent.timestamp = timestamp;
-  // createVestingModuleEvent.transaction = txHash;
-  // createVestingModuleEvent.account = vestingModuleId;
-  // createVestingModuleEvent.save();
+  let createWaterfallModuleEventId = createJointId([CREATE_WATERFALL_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let createWaterfallModuleEvent = new CreateWaterfallModuleEvent(createWaterfallModuleEventId);
+  createWaterfallModuleEvent.timestamp = timestamp;
+  createWaterfallModuleEvent.transaction = txHash;
+  createWaterfallModuleEvent.account = waterfallModuleId;
+  createWaterfallModuleEvent.save();
 }
 
 export function handleWaterfallFunds(event: WaterfallFunds): void {
@@ -86,6 +84,11 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 
   let waterfallModule = getWaterfallModule(waterfallModuleId);
   if (!waterfallModule) return;
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
     waterfallModule.latestBlock = event.block.number.toI32();
@@ -109,13 +112,27 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 
     // Nothing to save if the remaining payout didn't change, just skipped a filled tranche
     if (oldRemainingPayout !== remainingPayout) {
+      let recipientPayout = oldRemainingPayout.minus(remainingPayout)
+      saveWaterfallRecipientReceivedFundsEvent(
+        timestamp,
+        txHash,
+        logIdx,
+        waterfallTranche.recipient,
+        recipientPayout,
+      )
       waterfallTranche.save();
     }
   }
 
   waterfallModule.save();
 
-  // TODO: Events
+  // Save event
+  let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let waterfallFundsEvent = new WaterfallFundsEvent(waterfallFundsEventId);
+  waterfallFundsEvent.timestamp = timestamp;
+  waterfallFundsEvent.transaction = txHash;
+  waterfallFundsEvent.account = waterfallModuleId;
+  waterfallFundsEvent.save();
 }
 
 export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds): void {
@@ -164,10 +181,41 @@ function updateWaterfallTrancheAmount(waterfallTranche: WaterfallTranche, remain
   return remainingPayout - trancheFundsRemaining;
 }
 
-// function createTransactionIfMissing(txHash: string): void {
-//   let tx = Transaction.load(txHash);
-//   if (!tx) {
-//     tx = new Transaction(txHash);
-//     tx.save();
-//   }
-// }
+function saveWaterfallRecipientAddedEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+): void {
+  let createWaterfallModuleEventId = createJointId([CREATE_WATERFALL_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
+
+  let recipientAddedEventId = createJointId([ADDED_PREFIX, createWaterfallModuleEventId, accountId]);
+  let recipientAddedEvent = new WaterfallRecipientAddedEvent(recipientAddedEventId);
+  recipientAddedEvent.timestamp = timestamp;
+  recipientAddedEvent.account = accountId;
+  recipientAddedEvent.createWaterfallEvent = createWaterfallModuleEventId;
+  recipientAddedEvent.save();
+}
+
+function saveWaterfallRecipientReceivedFundsEvent(
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt,
+  accountId: string,
+  amount: BigInt,
+): void {
+  let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let receiveWaterfallFundsEventId = createJointId([
+    RECEIVE_PREFIX,
+    waterfallFundsEventId,
+    accountId
+  ]);
+  let receiveWaterfallFundsEvent = new ReceiveWaterfallFundsEvent(
+    receiveWaterfallFundsEventId
+  );
+  receiveWaterfallFundsEvent.timestamp = timestamp;
+  receiveWaterfallFundsEvent.account = accountId;
+  receiveWaterfallFundsEvent.amount = amount;
+  receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId;
+  receiveWaterfallFundsEvent.save();
+}

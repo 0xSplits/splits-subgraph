@@ -271,3 +271,41 @@ type ReleaseVestingFundsEvent implements AccountEvent @entity {
   token: Token!
   amount: BigInt!
 }
+
+type CreateWaterfallModuleEvent implements AccountEvent @entity {
+  id: ID! # cwme-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+  
+  recipientAddedEvents: [WaterfallRecipientAddedEvent!] @derivedFrom(field: "createWaterfallEvent")
+}
+
+type WaterfallRecipientAddedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+
+  createWaterfallEvent: CreateWaterfallModuleEvent!
+}
+
+type WaterfallFundsEvent implements AccountEvent @entity {
+  id: ID! # wfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+  amount: BigInt!
+
+  receiveFundsEvents: [ReceiveWaterfallFundsEvent!]! @derivedFrom(field: "waterfallFundsEvent")
+}
+
+type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
+  id: ID! # r-wfe-${txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+
+  amount: BigInt!
+  waterfallFundsEvent: WaterfallFundsEvent!
+}
