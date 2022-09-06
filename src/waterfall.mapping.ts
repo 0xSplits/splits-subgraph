@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import { CreateWaterfallModule } from "../generated/WaterfallModuleFactory/WaterfallModuleFactory";
 import {
   WaterfallFunds,
@@ -15,6 +15,7 @@ import {
 // } from "../generated/schema";
 import {
   Token,
+  User,
   WaterfallModule,
   WaterfallTranche,
 } from "../generated/schema";
@@ -29,6 +30,16 @@ export const ZERO = BigInt.fromI32(0);
 export function handleCreateWaterfallModule(event: CreateWaterfallModule): void {
   // Save module
   let waterfallModuleId = event.params.waterfallModule.toHexString();
+
+  // If a user already exists at this id, just return for now. Cannot have two
+  // entities with the same id if they share an interface. Will handle this situation
+  // in subgraph v2.
+  let waterfallUser = User.load(waterfallModuleId);
+  if (waterfallUser) {
+    log.warning('Trying to create a waterfall, but a user already exists: {}', [waterfallModuleId]);
+    return;
+  }
+
   let waterfallModule = new WaterfallModule(waterfallModuleId);
 
   let tokenId = event.params.token.toHexString();

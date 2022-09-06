@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts";
+import { BigInt, log } from "@graphprotocol/graph-ts";
 import {  CreateVestingModule } from "../generated/VestingModuleFactory/VestingModuleFactory";
 import {
   CreateVestingStream,
@@ -12,6 +12,7 @@ import {
   CreateVestingModuleEvent,
   CreateVestingStreamEvent,
   ReleaseVestingFundsEvent,
+  User,
 } from "../generated/schema";
 import { createJointId } from "./helpers";
 
@@ -24,6 +25,16 @@ export const RELEASE_VESTING_FUNDS_EVENT_PREFIX = "rvfe";
 export function handleCreateVestingModule(event: CreateVestingModule): void {
   // Save module
   let vestingModuleId = event.params.vestingModule.toHexString();
+
+  // If a user already exists at this id, just return for now. Cannot have two
+  // entities with the same id if they share an interface. Will handle this situation
+  // in subgraph v2.
+  let vestingUser = User.load(vestingModuleId);
+  if (vestingUser) {
+    log.warning('Trying to create a vesting module, but a user already exists: {}', [vestingModuleId]);
+    return;
+  }
+
   let vestingModule = new VestingModule(vestingModuleId);
   vestingModule.vestingPeriod = event.params.vestingPeriod;
   vestingModule.beneficiary = event.params.beneficiary.toHexString();
