@@ -99,6 +99,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   for (let i: i32 = 0; i < payoutAmounts.length; i++) {
     remainingPayout += payoutAmounts[i];
   }
+  let totalPayout = remainingPayout;
   waterfallModule.totalClaimedAmount += remainingPayout;
 
   let i: i32 = 0;
@@ -132,6 +133,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   waterfallFundsEvent.timestamp = timestamp;
   waterfallFundsEvent.transaction = txHash;
   waterfallFundsEvent.account = waterfallModuleId;
+  waterfallFundsEvent.amount = totalPayout;
   waterfallFundsEvent.save();
 }
 
