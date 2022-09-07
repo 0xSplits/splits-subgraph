@@ -14,4 +14,4 @@ generated
 subgraph.yaml
 schema.graphql
 src/mapping.ts
-abi/SplitMain.json
+abis/SplitMain.json
