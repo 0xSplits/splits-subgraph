@@ -8,6 +8,8 @@
     "deploy:goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-goerli",
     "deploy:polygon": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-polygon",
     "deploy:mumbai": "graph deploy --node https://api.thegraph.com/deploy/ 0xSplits/splits-subgraph-mumbai",
+    "deploy:opt-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-goerli",
+    "deploy:arb-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arb-goerli",
     "create-local": "graph create --node http://localhost:8020/ 0xSplits/splits-subgraph",
     "remove-local": "graph remove --node http://localhost:8020/ 0xSplits/splits-subgraph",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 0xSplits/splits-subgraph",
@@ -15,9 +17,11 @@
     "prepare:goerli": "mustache config/goerli.json schema.template.graphql > schema.graphql && mustache config/goerli.json subgraph.template.yaml > subgraph.yaml && cp src/ethereum.mapping.ts src/mapping.ts && cp abis/ethereum.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:polygon": "mustache config/polygon.json schema.template.graphql > schema.graphql && mustache config/polygon.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:mumbai": "mustache config/mumbai.json schema.template.graphql > schema.graphql && mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
-    "build-and-deploy-all": "yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:polygon && yarn build && yarn deploy:polygon",
+    "prepare:opt-goerli": "mustache config/opt-goerli.json schema.template.graphql > schema.graphql && mustache config/opt-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:arb-goerli": "mustache config/arb-goerli.json schema.template.graphql > schema.graphql && mustache config/arb-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "build-and-deploy-all": "yarn prepare:arb-goerli && yarn build && yarn deploy:arb-goerli && yarn prepare:opt-goerli && yarn build && yarn deploy:opt-goerli && yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:polygon && yarn build && yarn deploy:polygon",
     "build-and-deploy-prodnets": "yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:polygon && yarn build && yarn deploy:polygon",
-    "build-and-deploy-testnets": "yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mumbai && yarn build && yarn deploy:mumbai"
+    "build-and-deploy-testnets": "yarn prepare:arb-goerli && yarn build && yarn deploy:arb-goerli && yarn prepare:opt-goerli && yarn build && yarn deploy:opt-goerli && yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mumbai && yarn build && yarn deploy:mumbai"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.27.0",
