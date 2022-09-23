@@ -2,5 +2,6 @@
   "network": "optimism-goerli",
   "splitStartBlock": "1324620",
   "vestingStartBlock": "",
+  "waterfallStartBlock": "",
   "polygon": true
 }

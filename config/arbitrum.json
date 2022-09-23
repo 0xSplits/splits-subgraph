@@ -1,6 +1,6 @@
 {
-  "network": "arbitrum-goerli",
-  "splitStartBlock": "383218",
+  "network": "arbitrum-one",
+  "splitStartBlock": "26082503",
   "vestingStartBlock": "",
   "waterfallStartBlock": "",
   "polygon": true
