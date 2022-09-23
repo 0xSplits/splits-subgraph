@@ -112,7 +112,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
     remainingPayout = updateWaterfallTrancheAmount(waterfallTranche, remainingPayout);
 
     // Nothing to save if the remaining payout didn't change, just skipped a filled tranche
-    if (oldRemainingPayout !== remainingPayout) {
+    if (!oldRemainingPayout.equals(remainingPayout)) {
       let recipientPayout = oldRemainingPayout.minus(remainingPayout)
       saveWaterfallRecipientReceivedFundsEvent(
         timestamp,
