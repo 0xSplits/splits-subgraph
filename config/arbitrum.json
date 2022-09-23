@@ -1,7 +1,7 @@
 {
   "network": "arbitrum-one",
   "splitStartBlock": "26082503",
-  "vestingStartBlock": "",
+  "vestingStartBlock": "26112587",
   "waterfallStartBlock": "",
   "polygon": true
 }

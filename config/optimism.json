@@ -1,7 +1,7 @@
 {
   "network": "optimism",
   "splitStartBlock": "24704537",
-  "vestingStartBlock": "",
+  "vestingStartBlock": "24756353",
   "waterfallStartBlock": "",
   "polygon": true
 }
