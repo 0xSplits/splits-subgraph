@@ -58,6 +58,7 @@ type Split implements Account @entity {
   latestBlock: Int!
 
   vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
+  liquidSplit: LiquidSplit @derivedFrom(field: "split")
 }
 
 type Recipient @entity {
@@ -112,6 +113,26 @@ type WaterfallTranche @entity {
   size: BigInt # optional because the residual has no size
   claimedAmount: BigInt!
   recipient: Account!
+}
+
+type LiquidSplit implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  upstream: [Recipient!] @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+
+  distributorFee: BigInt!
+  holders: [Holder!]! @derivedFrom(field: "liquidSplit")
+  latestBlock: Int!
+  split: Split!
+}
+
+type Holder @entity {
+  id: ID! # ${splitId}-${accountId}
+  liquidSplit: LiquidSplit!
+  account: Account!
+  amount: BigInt!
 }
 
 type Transaction @entity {
