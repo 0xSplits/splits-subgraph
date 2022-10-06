@@ -2,6 +2,6 @@
   "network": "mumbai",
   "splitStartBlock": "25258326",
   "vestingStartBlock": "26224690",
-  "waterfallStartBlock": "",
+  "waterfallStartBlock": "28465665",
   "polygon": true
 }

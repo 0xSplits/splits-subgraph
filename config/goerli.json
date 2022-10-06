@@ -2,6 +2,6 @@
   "network": "goerli",
   "splitStartBlock": "6374540",
   "vestingStartBlock": "6839434",
-  "waterfallStartBlock": "7428416",
+  "waterfallStartBlock": "7718183",
   "ethereum": true
 }
