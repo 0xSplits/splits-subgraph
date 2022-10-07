@@ -5,6 +5,7 @@ import {
   TransferSingle,
   LiquidSplit as LiquidSplitContract
 } from "../generated/LiquidSplit/LiquidSplit";
+import { LiquidSplit as LiquidSplitTemplate } from '../generated/templates'
 import {
   LiquidSplit,
   Holder,
@@ -40,6 +41,8 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
 
   liquidSplit.save();
 
+  LiquidSplitTemplate.create(event.address);
+
   // Save event
 }
 
@@ -47,8 +50,7 @@ export function handleCreateLiquidSplitFromFactory(event: CreateLS1155): void {
   // The liquid split was already created from the abstract constructor's event,
   // just need to mark it as factory generated
   let liquidSplitId = event.params.ls.toHexString();
-  let canBeMissing = false;
-  let liquidSplit = getLiquidSplit(liquidSplitId, canBeMissing);
+  let liquidSplit = getLiquidSplit(liquidSplitId);
   if (!liquidSplit) return;
 
   liquidSplit.isFactoryGenerated = true;
@@ -58,9 +60,7 @@ export function handleCreateLiquidSplitFromFactory(event: CreateLS1155): void {
 export function handleTransferSingle1155(event: TransferSingle): void {
   let liquidSplitId = event.address.toHexString();
 
-  // Expected to see this event a bunch from non liquid splits
-  let canBeMissing = true;
-  let liquidSplit = getLiquidSplit(liquidSplitId, canBeMissing);
+  let liquidSplit = getLiquidSplit(liquidSplitId);
   if (!liquidSplit) return;
 
   let fromAddress = event.params.from.toHexString();

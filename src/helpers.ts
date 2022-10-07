@@ -469,7 +469,7 @@ export function getVestingModule(vestingModuleId: string): VestingModule | null 
   return vesting;
 }
 
-export function getLiquidSplit(liquidSplitId: string, allowMissing: boolean): LiquidSplit | null {
+export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
   let liquidSplit = LiquidSplit.load(liquidSplitId);
   if (!liquidSplit) {
     let liquidSplitUser = User.load(liquidSplitId);
@@ -479,7 +479,7 @@ export function getLiquidSplit(liquidSplitId: string, allowMissing: boolean): Li
       return null;
     }
 
-    if (!allowMissing) throw new Error('Liquid split must exist');
+    throw new Error('Liquid split must exist');
   }
 
   return liquidSplit;
