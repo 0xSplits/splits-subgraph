@@ -4,6 +4,7 @@ import {
   CreateVestingStream,
   ReleaseFromVestingStream,
 } from "../generated/VestingModule/VestingModule";
+import { VestingModule as VestingModuleTemplate } from "../generated/templates";
 import {
   Token,
   Transaction,
@@ -40,6 +41,7 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   vestingModule.beneficiary = event.params.beneficiary.toHexString();
   vestingModule.latestBlock = event.block.number.toI32()
   vestingModule.save();
+  VestingModuleTemplate.create(event.params.vestingModule);
 
   // Save event
   let timestamp = event.block.timestamp;

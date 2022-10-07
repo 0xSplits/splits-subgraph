@@ -4,6 +4,7 @@ import {
   WaterfallFunds,
   RecoverNonWaterfallFunds,
 } from "../generated/WaterfallModule/WaterfallModule";
+import { WaterfallModule as WaterfallModuleTemplate } from "../generated/templates";
 import {
   Token,
   User,
@@ -69,6 +70,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
 
   waterfallModule.save();
+  WaterfallModuleTemplate.create(event.params.waterfallModule);
 
   // Save event
   let createWaterfallModuleEventId = createJointId([CREATE_WATERFALL_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
@@ -135,10 +137,6 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   waterfallFundsEvent.account = waterfallModuleId;
   waterfallFundsEvent.amount = totalPayout;
   waterfallFundsEvent.save();
-}
-
-export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds): void {
-
 }
 
 function createWaterfallTranche(waterfallModuleId: string, recipientAddress: string, tranchePosition: string, trancheStart: BigInt, trancheSize: BigInt | null = null): void {

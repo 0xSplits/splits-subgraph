@@ -4,7 +4,7 @@ repository: https://github.com/0xSplits/splits-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
-  - kind: ethereum
+  - kind: ethereum/contract
     name: SplitMain
     network: {{network}}
     source:
@@ -66,7 +66,7 @@ dataSources:
           handler: handleDistributeERC20Call
       {{/ethereum}}
       file: ./src/mapping.ts
-  - kind: ethereum
+  - kind: ethereum/contract
     name: VestingModuleFactory
     network: {{network}}
     source: 
@@ -87,28 +87,7 @@ dataSources:
         - event: CreateVestingModule(indexed address,indexed address,uint256)
           handler: handleCreateVestingModule
       file: ./src/vesting.mapping.ts
-  - kind: ethereum
-    name: VestingModule
-    network: {{network}}
-    source: 
-      abi: VestingModule
-      startBlock: {{vestingStartBlock}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - VestingStream
-      abis:
-        - name: VestingModule
-          file: ./abis/VestingModule.json
-      eventHandlers:
-        - event: CreateVestingStream(indexed uint256,indexed address,uint256)
-          handler: handleCreateVestingStream
-        - event: ReleaseFromVestingStream(indexed uint256,uint256)
-          handler: handleReleaseFromVestingStream
-      file: ./src/vesting.mapping.ts
-  - kind: ethereum
+  - kind: ethereum/contract
     name: WaterfallModuleFactory
     network: {{network}}
     source: 
@@ -128,12 +107,32 @@ dataSources:
         - event: CreateWaterfallModule(indexed address,address,address[],uint256[])
           handler: handleCreateWaterfallModule
       file: ./src/waterfall.mapping.ts
-  - kind: ethereum
+templates:
+  - kind: ethereum/contract
+    name: VestingModule
+    network: {{network}}
+    source: 
+      abi: VestingModule
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - VestingStream
+      abis:
+        - name: VestingModule
+          file: ./abis/VestingModule.json
+      eventHandlers:
+        - event: CreateVestingStream(indexed uint256,indexed address,uint256)
+          handler: handleCreateVestingStream
+        - event: ReleaseFromVestingStream(indexed uint256,uint256)
+          handler: handleReleaseFromVestingStream
+      file: ./src/vesting.mapping.ts
+  - kind: ethereum/contract
     name: WaterfallModule
     network: {{network}}
     source: 
       abi: WaterfallModule
-      startBlock: {{waterfallStartBlock}}
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -146,6 +145,4 @@ dataSources:
       eventHandlers:
         - event: WaterfallFunds(address[],uint256[])
           handler: handleWaterfallFunds
-        - event: RecoverNonWaterfallFunds(address,address,uint256)
-          handler: handleRecoverNonWaterfallFunds
-      file: ./src/waterfall.mapping.ts
+      file: ./src/waterfall.mapping.ts  
