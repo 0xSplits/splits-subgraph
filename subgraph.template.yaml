@@ -107,6 +107,46 @@ dataSources:
         - event: CreateWaterfallModule(indexed address,address,address,address[],uint256[])
           handler: handleCreateWaterfallModule
       file: ./src/waterfall.mapping.ts
+  - kind: ethereum/contract
+    name: LiquidSplitFactory
+    network: {{network}}
+    source: 
+      address: "0xbe2C77c6a7b032E1971F82DB4185c68F161bc273"
+      abi: LiquidSplitFactory
+      startBlock: {{liquidSplitStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - LiquidSplit
+      abis:
+        - name: LiquidSplitFactory
+          file: ./abis/LiquidSplitFactory.json
+      eventHandlers:
+        - event: CreateLS1155(indexed address)
+          handler: handleCreateLiquidSplitFromFactory
+      file: ./src/liquid-split.mapping.ts
+  - kind: ethereum/contract
+    name: LiquidSplit
+    network: {{network}}
+    source: 
+      abi: LiquidSplit
+      startBlock: {{liquidSplitStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - LiquidSplit
+        - Holder
+      abis:
+        - name: LiquidSplit
+          file: ./abis/LiquidSplit.json
+      eventHandlers:
+        - event: CreateLiquidSplit()
+          handler: handleCreateLiquidSplit
+      file: ./src/liquid-split.mapping.ts 
 templates:
   - kind: ethereum/contract
     name: VestingModule
@@ -145,4 +185,23 @@ templates:
       eventHandlers:
         - event: WaterfallFunds(address[],uint256[],uint256)
           handler: handleWaterfallFunds
-      file: ./src/waterfall.mapping.ts  
+      file: ./src/waterfall.mapping.ts
+  - kind: ethereum/contract
+    name: LiquidSplit
+    network: {{network}}
+    source: 
+      abi: LiquidSplit
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - LiquidSplit
+        - Holder
+      abis:
+        - name: LiquidSplit
+          file: ./abis/LiquidSplit.json
+      eventHandlers:
+        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+          handler: handleTransferSingle1155
+      file: ./src/liquid-split.mapping.ts
