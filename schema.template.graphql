@@ -126,6 +126,7 @@ type LiquidSplit implements Account @entity {
   holders: [Holder!]! @derivedFrom(field: "liquidSplit")
   latestBlock: Int!
   split: Split!
+  isFactoryGenerated: Boolean!
 }
 
 type Holder @entity {

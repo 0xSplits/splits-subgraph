@@ -20,11 +20,14 @@ import {
   WithdrawalEvent,
   WaterfallModule,
   VestingModule,
+  LiquidSplit,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
+
+export const ZERO_ADDRESS = Address.zero().toHexString();
 
 export const SET_SPLIT_EVENT_PREFIX = "sse";
 export const ADDED_PREFIX = "add";
@@ -414,6 +417,9 @@ export function createUserIfMissing(
   let vesting = VestingModule.load(accountId);
   if (vesting) return;
 
+  let liquidSplit = LiquidSplit.load(accountId);
+  if (liquidSplit) return;
+
   let user = new User(accountId);
   user.save();
 }
@@ -461,6 +467,22 @@ export function getVestingModule(vestingModuleId: string): VestingModule | null 
   }
 
   return vesting;
+}
+
+export function getLiquidSplit(liquidSplitId: string, allowMissing: boolean): LiquidSplit | null {
+  let liquidSplit = LiquidSplit.load(liquidSplitId);
+  if (!liquidSplit) {
+    let liquidSplitUser = User.load(liquidSplitId);
+    if (liquidSplitUser) {
+      // It's a valid case where the liquid split doesn't exist. Just exit.
+      log.warning('Trying to fetch a liquid split, but a user already exists: {}', [liquidSplitId]);
+      return null;
+    }
+
+    if (!allowMissing) throw new Error('Liquid split must exist');
+  }
+
+  return liquidSplit;
 }
 
 export function createTransactionIfMissing(txHash: string): void {
