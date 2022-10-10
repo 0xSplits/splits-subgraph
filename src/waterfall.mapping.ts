@@ -47,6 +47,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   token.save();
 
   waterfallModule.token = tokenId;
+  waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient;
   waterfallModule.totalClaimedAmount = ZERO;
   waterfallModule.latestBlock = event.block.number.toI32();
 

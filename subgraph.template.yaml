@@ -104,7 +104,7 @@ dataSources:
         - name: WaterfallModuleFactory
           file: ./abis/WaterfallModuleFactory.json
       eventHandlers:
-        - event: CreateWaterfallModule(indexed address,address,address[],uint256[])
+        - event: CreateWaterfallModule(indexed address,address,address,address[],uint256[])
           handler: handleCreateWaterfallModule
       file: ./src/waterfall.mapping.ts
 templates:
