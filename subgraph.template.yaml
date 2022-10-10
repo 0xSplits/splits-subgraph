@@ -143,6 +143,6 @@ templates:
         - name: WaterfallModule
           file: ./abis/WaterfallModule.json
       eventHandlers:
-        - event: WaterfallFunds(address[],uint256[])
+        - event: WaterfallFunds(address[],uint256[],uint256)
           handler: handleWaterfallFunds
       file: ./src/waterfall.mapping.ts  
