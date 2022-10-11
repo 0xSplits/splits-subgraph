@@ -133,7 +133,7 @@ type Holder @entity {
   id: ID! # ${splitId}-${accountId}
   liquidSplit: LiquidSplit!
   account: Account!
-  amount: BigInt!
+  ownership: BigInt!
 }
 
 type Transaction @entity {

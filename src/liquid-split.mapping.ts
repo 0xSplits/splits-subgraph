@@ -11,7 +11,9 @@ import {
   Holder,
   User,
 } from "../generated/schema";
-import { createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, ZERO_ADDRESS } from "./helpers";
+import { createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, ZERO_ADDRESS } from "./helpers";
+
+const FACTORY_GENERATED_TOTAL_SUPPLY = BigInt.fromI64(1e3 as i64);
 
 export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   let liquidSplitId = event.address.toHexString();
@@ -65,15 +67,31 @@ export function handleTransferSingle1155(event: TransferSingle): void {
 
   let fromAddress = event.params.from.toHexString();
   let toAddress = event.params.to.toHexString();
-  if (fromAddress != ZERO_ADDRESS) {
-    let fromHolder = getHolder(fromAddress, liquidSplitId);
-    fromHolder.amount -= event.params.amount;
-    fromHolder.save();
-  }
-  if (toAddress != ZERO_ADDRESS) {
-    let toHolder = getHolder(toAddress, liquidSplitId);
-    toHolder.amount += event.params.amount;
-    toHolder.save();
+  if (liquidSplit.isFactoryGenerated) {
+    if (fromAddress != ZERO_ADDRESS) {
+      let fromHolder = getHolder(fromAddress, liquidSplitId);
+      fromHolder.ownership -= event.params.amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
+      fromHolder.save();
+    }
+    if (toAddress != ZERO_ADDRESS) {
+      let toHolder = getHolder(toAddress, liquidSplitId);
+      toHolder.ownership += event.params.amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
+      toHolder.save();
+    }
+  } else {
+    log.warning('Non factory generated liqudi split', []);
+    // Need to call scaledPercentBalanceOf for from and to
+    // let liquidSplitContract = LiquidSplitContract.bind(event.address);
+    // if (fromAddress != ZERO_ADDRESS) {
+    //   let fromHolder = getHolder(fromAddress, liquidSplitId);
+    //   fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress);
+    //   fromHolder.save();
+    // }
+    // if (toAddress != ZERO_ADDRESS) {
+    //   let toHolder = getHolder(toAddress, liquidSplitId);
+    //   toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress);
+    //   toHolder.save();
+    // }
   }
 
   // Save event
@@ -87,7 +105,6 @@ function getHolder(accountId: string, liquidSplitId: string): Holder {
     holder = new Holder(holderId);
     holder.liquidSplit = liquidSplitId;
     holder.account = accountId;
-    holder.amount = new BigInt(0);
   }
   
   return holder;
