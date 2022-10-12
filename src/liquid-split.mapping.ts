@@ -98,16 +98,18 @@ export function handleTransferBatch1155(event: TransferBatch): void {
   if (liquidSplit.isFactoryGenerated) {
     if (fromAddress != ZERO_ADDRESS) {
       let fromHolder = getHolder(fromAddress, liquidSplitId);
-      event.params.amounts.forEach((amount) => {
+      for (let i: i32 = 0; i < event.params.amounts.length; i++) {
+        let amount = event.params.amounts[i];
         fromHolder.ownership -= amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;  
-      })
+      }
       fromHolder.save();
     }
     if (toAddress != ZERO_ADDRESS) {
       let toHolder = getHolder(toAddress, liquidSplitId);
-      event.params.amounts.forEach((amount) => {
+      for (let i: i32 = 0; i < event.params.amounts.length; i++) {
+        let amount = event.params.amounts[i];
         toHolder.ownership += amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
-      })
+      }
       toHolder.save();
     }
   } else {
@@ -134,6 +136,7 @@ function getHolder(accountId: string, liquidSplitId: string): Holder {
     holder = new Holder(holderId);
     holder.liquidSplit = liquidSplitId;
     holder.account = accountId;
+    holder.ownership = BigInt.fromI64(0);
   }
   
   return holder;
