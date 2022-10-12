@@ -1,9 +1,10 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, log } from "@graphprotocol/graph-ts";
 import { CreateLS1155 } from "../generated/LiquidSplitFactory/LiquidSplitFactory";
 import {
   CreateLiquidSplit,
   TransferSingle,
-  LiquidSplit as LiquidSplitContract
+  LiquidSplit as LiquidSplitContract,
+  TransferBatch
 } from "../generated/LiquidSplit/LiquidSplit";
 import { LiquidSplit as LiquidSplitTemplate } from '../generated/templates'
 import {
@@ -79,22 +80,38 @@ export function handleTransferSingle1155(event: TransferSingle): void {
       toHolder.save();
     }
   } else {
-    log.warning('Non factory generated liqudi split', []);
-    // Need to call scaledPercentBalanceOf for from and to
-    // let liquidSplitContract = LiquidSplitContract.bind(event.address);
-    // if (fromAddress != ZERO_ADDRESS) {
-    //   let fromHolder = getHolder(fromAddress, liquidSplitId);
-    //   fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress);
-    //   fromHolder.save();
-    // }
-    // if (toAddress != ZERO_ADDRESS) {
-    //   let toHolder = getHolder(toAddress, liquidSplitId);
-    //   toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress);
-    //   toHolder.save();
-    // }
+    // updateHolderOwnershipNonFactoryLiquidSplit(event.address, fromAddress, toAddress);
   }
 
   // Save event
+}
+
+export function handleTransferBatch1155(event: TransferBatch): void {
+  let liquidSplitId = event.address.toHexString();
+
+  let liquidSplit = getLiquidSplit(liquidSplitId);
+  if (!liquidSplit) return;
+
+  let fromAddress = event.params.from.toHexString();
+  let toAddress = event.params.to.toHexString();
+  if (liquidSplit.isFactoryGenerated) {
+    if (fromAddress != ZERO_ADDRESS) {
+      let fromHolder = getHolder(fromAddress, liquidSplitId);
+      event.params.amounts.forEach((amount) => {
+        fromHolder.ownership -= amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;  
+      })
+      fromHolder.save();
+    }
+    if (toAddress != ZERO_ADDRESS) {
+      let toHolder = getHolder(toAddress, liquidSplitId);
+      event.params.amounts.forEach((amount) => {
+        toHolder.ownership += amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
+      })
+      toHolder.save();
+    }
+  } else {
+    // updateHolderOwnershipNonFactoryLiquidSplit(event.address, fromAddress, toAddress);
+  }
 }
 
 function getHolder(accountId: string, liquidSplitId: string): Holder {
@@ -108,4 +125,19 @@ function getHolder(accountId: string, liquidSplitId: string): Holder {
   }
   
   return holder;
+}
+
+function updateHolderOwnershipNonFactoryLiquidSplit(liquidSplitAddress: Address, fromAddress: string, toAddress: string) {
+  let liquidSplitContract = LiquidSplitContract.bind(liquidSplitAddress);
+  let liquidSplitId = liquidSplitAddress.toHexString();
+  if (fromAddress != ZERO_ADDRESS) {
+    let fromHolder = getHolder(fromAddress, liquidSplitId);
+    fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress);
+    fromHolder.save();
+  }
+  if (toAddress != ZERO_ADDRESS) {
+    let toHolder = getHolder(toAddress, liquidSplitId);
+    toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress);
+    toHolder.save();
+  }
 }
