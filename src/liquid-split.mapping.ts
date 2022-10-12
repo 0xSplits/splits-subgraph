@@ -3,9 +3,10 @@ import { CreateLS1155 } from "../generated/LiquidSplitFactory/LiquidSplitFactory
 import {
   CreateLiquidSplit,
   TransferSingle,
-  LiquidSplit as LiquidSplitContract,
-  TransferBatch
-} from "../generated/LiquidSplit/LiquidSplit";
+  FullLiquidSplit as LiquidSplitContract,
+  TransferBatch,
+  Transfer
+} from "../generated/LiquidSplit/FullLiquidSplit";
 import { LiquidSplit as LiquidSplitTemplate } from '../generated/templates'
 import {
   LiquidSplit,
@@ -112,6 +113,17 @@ export function handleTransferBatch1155(event: TransferBatch): void {
   } else {
     // updateHolderOwnershipNonFactoryLiquidSplit(event.address, fromAddress, toAddress);
   }
+}
+
+export function handleTransfer721(event: Transfer): void {
+  let liquidSplitId = event.address.toHexString();
+
+  let liquidSplit = getLiquidSplit(liquidSplitId);
+  if (!liquidSplit) return;
+
+  let fromAddress = event.params.from.toHexString();
+  let toAddress = event.params.to.toHexString();
+  // updateHolderOwnershipNonFactoryLiquidSplit(event.address, fromAddress, toAddress);
 }
 
 function getHolder(accountId: string, liquidSplitId: string): Holder {

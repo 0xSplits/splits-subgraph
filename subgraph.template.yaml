@@ -206,4 +206,6 @@ templates:
           handler: handleTransferSingle1155
         - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
           handler: handleTransferBatch1155
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer721
       file: ./src/liquid-split.mapping.ts
