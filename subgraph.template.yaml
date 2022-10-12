@@ -131,7 +131,7 @@ dataSources:
     name: LiquidSplit
     network: {{network}}
     source: 
-      abi: LiquidSplit
+      abi: FullLiquidSplit
       startBlock: {{liquidSplitStartBlock}}
     mapping:
       kind: ethereum/events
@@ -141,8 +141,8 @@ dataSources:
         - LiquidSplit
         - Holder
       abis:
-        - name: LiquidSplit
-          file: ./abis/LiquidSplit.json
+        - name: FullLiquidSplit
+          file: ./abis/FullLiquidSplit.json
       eventHandlers:
         - event: CreateLiquidSplit()
           handler: handleCreateLiquidSplit
@@ -190,7 +190,7 @@ templates:
     name: LiquidSplit
     network: {{network}}
     source: 
-      abi: LiquidSplit
+      abi: FullLiquidSplit
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.6
@@ -199,8 +199,8 @@ templates:
         - LiquidSplit
         - Holder
       abis:
-        - name: LiquidSplit
-          file: ./abis/LiquidSplit.json
+        - name: FullLiquidSplit
+          file: ./abis/FullLiquidSplit.json
       eventHandlers:
         - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleTransferSingle1155
