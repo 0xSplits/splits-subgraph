@@ -498,6 +498,9 @@ function _updateSplit(
   ) as SetSplitEvent;
   let logIdx = setSplitEvent.logIndex;
 
+  let eventsAccountId = getAccountIdForSplitEvents(splitId);
+  let shouldSaveRecipientEvents = eventsAccountId == splitId;
+
   let newRecipientIdSet = new Set<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i];
@@ -513,7 +516,7 @@ function _updateSplit(
     recipient.save();
     newRecipientIds.push(recipientId);
 
-    if (!oldRecipientIds.includes(recipientId)) {
+    if (shouldSaveRecipientEvents && !oldRecipientIds.includes(recipientId)) {
       saveSplitRecipientAddedEvent(
         timestamp,
         txHash,
@@ -529,7 +532,7 @@ function _updateSplit(
     // remove recipients no longer in split
     if (!newRecipientIdSet.has(recipientId)) {
       let removedRecipient = Recipient.load(recipientId);
-      if (removedRecipient)
+      if (shouldSaveRecipientEvents && removedRecipient)
         saveSplitRecipientRemovedEvent(
           timestamp,
           txHash,

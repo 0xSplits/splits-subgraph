@@ -22,6 +22,7 @@ import {
   saveSplitRecipientAddedEvent,
   saveSplitRecipientRemovedEvent,
   getSplit,
+  getAccountIdForSplitEvents,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -214,6 +215,9 @@ export function handleUpdateSplit(event: UpdateSplit): void {
   let split = getSplit(splitId);
   if (!split) return;
 
+  let eventsAccountId = getAccountIdForSplitEvents(splitId);
+  let shouldSaveRecipientEvents = eventsAccountId == splitId;
+
   split.latestBlock = event.block.number.toI32();
   split.distributorFee = event.params.distributorFee;
   let oldRecipientIds = split.recipients;
@@ -235,7 +239,7 @@ export function handleUpdateSplit(event: UpdateSplit): void {
     recipient.save();
     newRecipientIds.push(recipientId);
 
-    if (!oldRecipientIds.includes(recipientId)) {
+    if (shouldSaveRecipientEvents && !oldRecipientIds.includes(recipientId)) {
       saveSplitRecipientAddedEvent(
         timestamp,
         txHash,
@@ -251,7 +255,7 @@ export function handleUpdateSplit(event: UpdateSplit): void {
     // remove recipients no longer in split
     if (!newRecipientIdSet.has(recipientId)) {
       let removedRecipient = Recipient.load(recipientId);
-      if (removedRecipient)
+      if (shouldSaveRecipientEvents && removedRecipient)
         saveSplitRecipientRemovedEvent(
           timestamp,
           txHash,
