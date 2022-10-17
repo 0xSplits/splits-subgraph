@@ -58,6 +58,7 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   createLiquidSplitEvent.timestamp = timestamp;
   createLiquidSplitEvent.transaction = txHash;
   createLiquidSplitEvent.account = liquidSplitId;
+  createLiquidSplitEvent.logIndex = logIdx;
   createLiquidSplitEvent.save();
 }
 
@@ -193,6 +194,7 @@ function saveTransferEvents(
   nftTransferEvent.timestamp = timestamp;
   nftTransferEvent.transaction = txHash;
   nftTransferEvent.account = liquidSplitId;
+  nftTransferEvent.logIndex = logIdx;
   nftTransferEvent.transferType = getTransferType(fromAddress, toAddress);
   if (amount) {
     nftTransferEvent.amount = amount;
@@ -204,6 +206,7 @@ function saveTransferEvents(
     let nftAddedEvent = new LiquidSplitNFTAddedEvent(nftAddedEventId);
     nftAddedEvent.timestamp = timestamp;
     nftAddedEvent.account = toAddress;
+    nftAddedEvent.logIndex = logIdx;
     nftAddedEvent.nftTransferEvent = nftTransferEventId;
     nftAddedEvent.save();
   }
@@ -213,6 +216,7 @@ function saveTransferEvents(
     let nftRemovedEvent = new LiquidSplitNFTRemovedEvent(nftRemovedEventId);
     nftRemovedEvent.timestamp = timestamp;
     nftRemovedEvent.account = fromAddress;
+    nftRemovedEvent.logIndex = logIdx;
     nftRemovedEvent.nftTransferEvent = nftTransferEventId;
     nftRemovedEvent.save();
   }

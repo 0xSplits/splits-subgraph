@@ -53,6 +53,7 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   let createVestingModuleEvent = new CreateVestingModuleEvent(createVestingModuleEventId);
   createVestingModuleEvent.timestamp = timestamp;
   createVestingModuleEvent.transaction = txHash;
+  createVestingModuleEvent.logIndex = logIdx;
   createVestingModuleEvent.account = vestingModuleId;
   createVestingModuleEvent.save();
 }
@@ -98,6 +99,7 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
   createVestingStreamEvent.timestamp = timestamp;
   createVestingStreamEvent.transaction = txHash;
   createVestingStreamEvent.account = vestingModuleId;
+  createVestingStreamEvent.logIndex = logIdx;
   createVestingStreamEvent.token = tokenId;
   createVestingStreamEvent.amount = totalAmount;
   createVestingStreamEvent.save();
@@ -135,6 +137,7 @@ export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream):
   releaseVestingFundsEvent.timestamp = timestamp;
   releaseVestingFundsEvent.transaction = txHash;
   releaseVestingFundsEvent.account = vestingModuleId;
+  releaseVestingFundsEvent.logIndex = logIdx;
   releaseVestingFundsEvent.token = vestingStream.token;
   releaseVestingFundsEvent.amount = transferAmount;
   releaseVestingFundsEvent.save();

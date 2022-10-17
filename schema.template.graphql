@@ -148,6 +148,7 @@ interface AccountEvent {
   id: ID! # ${prefix}-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 }
 
 enum SetSplitType {
@@ -159,9 +160,9 @@ type SetSplitEvent implements AccountEvent @entity {
   id: ID! # sse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
-  logIndex: BigInt!
   type: SetSplitType
 
   recipientAddedEvents: [RecipientAddedEvent!] @derivedFrom(field: "setSplitEvent")
@@ -172,6 +173,7 @@ type RecipientAddedEvent implements AccountEvent @entity {
   id: ID!
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   setSplitEvent: SetSplitEvent!
 }
@@ -180,6 +182,7 @@ type RecipientRemovedEvent implements AccountEvent @entity {
   id: ID!
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   setSplitEvent: SetSplitEvent!
 }
@@ -188,9 +191,9 @@ type DistributionEvent implements AccountEvent @entity {
   id: ID! # de-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
-  logIndex: BigInt!
   token: Token!
   amount: BigInt!
 
@@ -202,6 +205,7 @@ type ReceiveDistributionEvent implements AccountEvent @entity {
   id: ID! # r-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   token: Token!
   amount: BigInt!
@@ -212,6 +216,7 @@ type DistributeDistributionEvent implements AccountEvent @entity {
   id: ID! # d-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   token: Token!
   amount: BigInt!
@@ -222,6 +227,7 @@ type WithdrawalEvent implements AccountEvent @entity {
   id: ID! # we-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
   tokenWithdrawalEvents: [TokenWithdrawalEvent!]! @derivedFrom(field: "withdrawalEvent")
@@ -244,6 +250,7 @@ type ControlTransferEvent implements AccountEvent @entity {
   id: ID! # ct-{txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   type: ControlTransferType
   transaction: Transaction!
@@ -255,6 +262,7 @@ type FromUserControlTransferEvent implements AccountEvent @entity {
   id: ID! # fu-ct-{txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   controlTransferEvent: ControlTransferEvent!
 }
@@ -263,6 +271,7 @@ type ToUserControlTransferEvent implements AccountEvent @entity {
   id: ID! # tu-ct-{txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   controlTransferEvent: ControlTransferEvent!
 }
@@ -271,6 +280,7 @@ type CreateVestingModuleEvent implements AccountEvent @entity {
   id: ID! # cvme-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
 }
@@ -279,6 +289,7 @@ type CreateVestingStreamEvent implements AccountEvent @entity {
   id: ID! # cvse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
   token: Token!
@@ -289,6 +300,7 @@ type ReleaseVestingFundsEvent implements AccountEvent @entity {
   id: ID!
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
   token: Token!
@@ -299,6 +311,7 @@ type CreateWaterfallModuleEvent implements AccountEvent @entity {
   id: ID! # cwme-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
   
@@ -309,6 +322,7 @@ type WaterfallRecipientAddedEvent implements AccountEvent @entity {
   id: ID!
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   createWaterfallEvent: CreateWaterfallModuleEvent!
 }
@@ -317,6 +331,7 @@ type WaterfallFundsEvent implements AccountEvent @entity {
   id: ID! # wfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
   amount: BigInt!
@@ -328,6 +343,7 @@ type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
   id: ID! # r-wfe-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   amount: BigInt!
   waterfallFundsEvent: WaterfallFundsEvent!
@@ -337,6 +353,7 @@ type CreateLiquidSplitEvent implements AccountEvent @entity {
   id: ID! # clse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   transaction: Transaction!
 }
@@ -351,6 +368,7 @@ type LiquidSplitNFTTransferEvent implements AccountEvent @entity {
   id: ID! # nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   amount: BigInt # not required right now for non-factory generated liquid splits. Maybe this should be ownership?
   transaction: Transaction!
@@ -364,6 +382,7 @@ type LiquidSplitNFTAddedEvent implements AccountEvent @entity {
   id: ID! # add-nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   nftTransferEvent: LiquidSplitNFTTransferEvent!
 }
@@ -372,6 +391,7 @@ type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
   id: ID! # rem-nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
+  logIndex: BigInt!
 
   nftTransferEvent: LiquidSplitNFTTransferEvent!
 }

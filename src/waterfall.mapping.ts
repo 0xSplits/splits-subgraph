@@ -78,6 +78,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   let createWaterfallModuleEvent = new CreateWaterfallModuleEvent(createWaterfallModuleEventId);
   createWaterfallModuleEvent.timestamp = timestamp;
   createWaterfallModuleEvent.transaction = txHash;
+  createWaterfallModuleEvent.logIndex = logIdx;
   createWaterfallModuleEvent.account = waterfallModuleId;
   createWaterfallModuleEvent.save();
 }
@@ -136,6 +137,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   waterfallFundsEvent.timestamp = timestamp;
   waterfallFundsEvent.transaction = txHash;
   waterfallFundsEvent.account = waterfallModuleId;
+  waterfallFundsEvent.logIndex = logIdx;
   waterfallFundsEvent.amount = totalPayout;
   waterfallFundsEvent.save();
 }
@@ -194,6 +196,7 @@ function saveWaterfallRecipientAddedEvent(
   let recipientAddedEvent = new WaterfallRecipientAddedEvent(recipientAddedEventId);
   recipientAddedEvent.timestamp = timestamp;
   recipientAddedEvent.account = accountId;
+  recipientAddedEvent.logIndex = logIdx;
   recipientAddedEvent.createWaterfallEvent = createWaterfallModuleEventId;
   recipientAddedEvent.save();
 }
@@ -216,6 +219,7 @@ function saveWaterfallRecipientReceivedFundsEvent(
   );
   receiveWaterfallFundsEvent.timestamp = timestamp;
   receiveWaterfallFundsEvent.account = accountId;
+  receiveWaterfallFundsEvent.logIndex = logIdx;
   receiveWaterfallFundsEvent.amount = amount;
   receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId;
   receiveWaterfallFundsEvent.save();

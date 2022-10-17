@@ -111,6 +111,7 @@ export function saveSplitRecipientAddedEvent(
   let recipientAddedEvent = new RecipientAddedEvent(recipientAddedEventId);
   recipientAddedEvent.timestamp = timestamp;
   recipientAddedEvent.account = accountId;
+  recipientAddedEvent.logIndex = logIdx;
   recipientAddedEvent.setSplitEvent = setSplitEventId;
   recipientAddedEvent.save();
 }
@@ -127,6 +128,7 @@ export function saveSplitRecipientRemovedEvent(
   let recipientRemovedEvent = new RecipientRemovedEvent(recipientRemovedEventId);
   recipientRemovedEvent.timestamp = timestamp;
   recipientRemovedEvent.account = accountId;
+  recipientRemovedEvent.logIndex = logIdx;
   recipientRemovedEvent.setSplitEvent = setSplitEventId;
   recipientRemovedEvent.save();
 }
@@ -263,6 +265,7 @@ export function distributeSplit(
       );
       distributeDistributionEvent.timestamp = timestamp;
       distributeDistributionEvent.account = distributorAddressString;
+      distributeDistributionEvent.logIndex = logIdx;
       distributeDistributionEvent.token = tokenId;
       distributeDistributionEvent.amount = distributorAmount;
       distributeDistributionEvent.distributionEvent = distributionEventId;
@@ -289,6 +292,7 @@ export function distributeSplit(
     );
     receiveDistributionEvent.timestamp = timestamp;
     receiveDistributionEvent.account = recipient.account;
+    receiveDistributionEvent.logIndex = logIdx;
     receiveDistributionEvent.token = tokenId;
     receiveDistributionEvent.amount = recipientAmount;
     receiveDistributionEvent.distributionEvent = distributionEventId;
@@ -315,6 +319,7 @@ export function saveWithdrawalEvent(
   let withdrawalEvent = new WithdrawalEvent(withdrawalEventId);
   withdrawalEvent.timestamp = timestamp;
   withdrawalEvent.account = accountId;
+  withdrawalEvent.logIndex = logIdx;
   withdrawalEvent.transaction = txHash;
   withdrawalEvent.save();
 
@@ -342,6 +347,7 @@ export function saveControlTransferEvents(
   let controlTransferEvent = new ControlTransferEvent(controlTransferEventId);
   controlTransferEvent.timestamp = timestamp;
   controlTransferEvent.account = splitId;
+  controlTransferEvent.logIndex = logIdx;
   controlTransferEvent.type = type;
   controlTransferEvent.transaction = txHash;
   controlTransferEvent.save();
@@ -354,6 +360,7 @@ export function saveControlTransferEvents(
   let fromUserControlTransferEvent = new FromUserControlTransferEvent(fromUserControlTransferEventId);
   fromUserControlTransferEvent.timestamp = timestamp;
   fromUserControlTransferEvent.account = fromUserId;
+  fromUserControlTransferEvent.logIndex = logIdx;
   fromUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
   fromUserControlTransferEvent.save();
   
@@ -366,6 +373,7 @@ export function saveControlTransferEvents(
     let toUserControlTransferEvent = new ToUserControlTransferEvent(toUserControlTransferEventId);
     toUserControlTransferEvent.timestamp = timestamp;
     toUserControlTransferEvent.account = toUserId;
+    toUserControlTransferEvent.logIndex = logIdx;
     toUserControlTransferEvent.controlTransferEvent = controlTransferEventId;
     toUserControlTransferEvent.save();
   }
