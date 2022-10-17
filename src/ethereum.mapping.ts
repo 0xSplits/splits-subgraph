@@ -35,6 +35,7 @@ import {
   saveControlTransferEvents,
   saveWithdrawalEvent,
   getSplit,
+  getAccountIdForDistributionEvent,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -251,6 +252,7 @@ function _getDistributionEvent(
   splitId: string,
   tokenId: string
 ): DistributionEvent | null {
+  let accountId = getAccountIdForDistributionEvent(splitId);
   // must exist (event handlers fire before call handlers)
   let tx = Transaction.load(txHash) as Transaction;
   // must exist (event handlers fire before call handlers)
@@ -262,7 +264,7 @@ function _getDistributionEvent(
     // note: if we want to support txns that distribute the same token for the
     // same split twice, will need to add some kind of 'processed' boolean to
     // event
-    if (distEvent.account == splitId && distEvent.token == tokenId) {
+    if (distEvent.account == accountId && distEvent.token == tokenId) {
       return distEvent;
     }
   }

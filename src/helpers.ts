@@ -131,6 +131,24 @@ export function saveSplitRecipientRemovedEvent(
   recipientRemovedEvent.save();
 }
 
+export function getAccountIdForDistributionEvent(
+  splitId: string
+): string {
+  // If the split is downstream of a liquid split, save the distribution event
+  // on the liquid split
+  let split = getSplit(splitId);
+  if (!split) return splitId;
+
+  if (split.controller.toHexString() != ZERO_ADDRESS) {
+    let liquidSplit = LiquidSplit.load(split.controller.toHexString());
+    if (liquidSplit) {
+      return split.controller.toHexString();
+    }
+  }
+
+  return splitId;
+}
+
 export function saveDistributeEvent(
   timestamp: BigInt,
   txHash: string,
@@ -138,18 +156,21 @@ export function saveDistributeEvent(
   splitId: string,
   tokenId: string,
   amount: BigInt
-): void {
+): string {
   let tx = Transaction.load(txHash);
   if (!tx) tx = new Transaction(txHash);
   let distEvents = tx.distributionEvents;
   if (!distEvents) distEvents = new Array<string>();
+
+  // Handle regular split vs liquid split
+  let accountId = getAccountIdForDistributionEvent(splitId);
 
   let distEventId = createJointId([DISTRIBUTION_EVENT_PREFIX, txHash, logIdx.toString()]);
   let distEvent = new DistributionEvent(distEventId);
   distEvent.timestamp = timestamp;
   distEvent.transaction = txHash;
   distEvent.logIndex = logIdx;
-  distEvent.account = splitId;
+  distEvent.account = accountId;
   distEvent.amount = amount;
   distEvent.token = tokenId;
   distEvent.save();
@@ -157,6 +178,8 @@ export function saveDistributeEvent(
 
   tx.distributionEvents = distEvents;
   tx.save();
+
+  return accountId;
 }
 
 export function distributeSplit(
