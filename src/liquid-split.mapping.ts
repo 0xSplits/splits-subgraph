@@ -12,10 +12,16 @@ import {
   LiquidSplit,
   Holder,
   User,
+  CreateLiquidSplitEvent,
+  LiquidSplitNFTTransferEvent,
+  LiquidSplitNFTAddedEvent,
+  LiquidSplitNFTRemovedEvent
 } from "../generated/schema";
-import { createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, ZERO_ADDRESS } from "./helpers";
+import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, REMOVED_PREFIX, ZERO_ADDRESS } from "./helpers";
 
 const FACTORY_GENERATED_TOTAL_SUPPLY = BigInt.fromI64(1e3 as i64);
+const CREATE_LIQUID_SPLIT_EVENT_PREFIX = "clse";
+const TRANSFER_NFT_EVENT_PREFIX = "tne";
 
 export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   let liquidSplitId = event.address.toHexString();
@@ -44,10 +50,15 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   liquidSplit.split = liquidSplitContract.payoutSplit().toHexString();
 
   liquidSplit.save();
-
   LiquidSplitTemplate.create(event.address);
 
   // Save event
+  let createLiquidSplitEventId = createJointId([CREATE_LIQUID_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let createLiquidSplitEvent = new CreateLiquidSplitEvent(createLiquidSplitEventId);
+  createLiquidSplitEvent.timestamp = timestamp;
+  createLiquidSplitEvent.transaction = txHash;
+  createLiquidSplitEvent.account = liquidSplitId;
+  createLiquidSplitEvent.save();
 }
 
 export function handleCreateLiquidSplitFromFactory(event: CreateLS1155): void {
@@ -85,6 +96,15 @@ export function handleTransferSingle1155(event: TransferSingle): void {
   }
 
   // Save event
+  saveTransferEvents(
+    liquidSplitId,
+    fromAddress,
+    toAddress,
+    event.params.amount,
+    event.block.timestamp,
+    event.transaction.hash.toHexString(),
+    event.logIndex
+  );
 }
 
 export function handleTransferBatch1155(event: TransferBatch): void {
@@ -155,4 +175,56 @@ function updateHolderOwnershipNonFactoryLiquidSplit(liquidSplitAddress: Address,
     toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress);
     toHolder.save();
   }
+}
+
+function saveTransferEvents(
+  liquidSplitId: string,
+  fromAddress: string,
+  toAddress: string,
+  amount: BigInt | null,
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt
+): void {
+  createTransactionIfMissing(txHash);
+
+  let nftTransferEventId = createJointId([TRANSFER_NFT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let nftTransferEvent = new LiquidSplitNFTTransferEvent(nftTransferEventId);
+  nftTransferEvent.timestamp = timestamp;
+  nftTransferEvent.transaction = txHash;
+  nftTransferEvent.account = liquidSplitId;
+  nftTransferEvent.transferType = getTransferType(fromAddress, toAddress);
+  if (amount) {
+    nftTransferEvent.amount = amount;
+  }
+  nftTransferEvent.save();
+
+  if (toAddress != ZERO_ADDRESS) {
+    let nftAddedEventId = createJointId([ADDED_PREFIX, nftTransferEventId]);
+    let nftAddedEvent = new LiquidSplitNFTAddedEvent(nftAddedEventId);
+    nftAddedEvent.timestamp = timestamp;
+    nftAddedEvent.account = toAddress;
+    nftAddedEvent.nftTransferEvent = nftTransferEventId;
+    nftAddedEvent.save();
+  }
+
+  if (fromAddress != ZERO_ADDRESS) {
+    let nftRemovedEventId = createJointId([REMOVED_PREFIX, nftTransferEventId]);
+    let nftRemovedEvent = new LiquidSplitNFTRemovedEvent(nftRemovedEventId);
+    nftRemovedEvent.timestamp = timestamp;
+    nftRemovedEvent.account = fromAddress;
+    nftRemovedEvent.nftTransferEvent = nftTransferEventId;
+    nftRemovedEvent.save();
+  }
+}
+
+function getTransferType(fromAddress: string, toAddress: string): string {
+  if (fromAddress == ZERO_ADDRESS) {
+    return 'mint'
+  }
+  if (toAddress === ZERO_ADDRESS) {
+    return 'burn'
+  }
+
+  return 'transfer'
 }

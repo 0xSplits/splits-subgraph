@@ -19,8 +19,8 @@ import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMi
 
 export const ZERO = BigInt.fromI32(0);
 
-export const CREATE_WATERFALL_MODULE_EVENT_PREFIX = "cwme";
-export const WATERFALL_FUNDS_EVENT_PREFIX = "wfe";
+const CREATE_WATERFALL_MODULE_EVENT_PREFIX = "cwme";
+const WATERFALL_FUNDS_EVENT_PREFIX = "wfe";
 
 export function handleCreateWaterfallModule(event: CreateWaterfallModule): void {
   // Save module

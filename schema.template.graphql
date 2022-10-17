@@ -332,3 +332,46 @@ type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
   amount: BigInt!
   waterfallFundsEvent: WaterfallFundsEvent!
 }
+
+type CreateLiquidSplitEvent implements AccountEvent @entity {
+  id: ID! # clse-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  transaction: Transaction!
+}
+
+enum NFTTransferType {
+  transfer
+  mint
+  burn
+}
+
+type LiquidSplitNFTTransferEvent implements AccountEvent @entity {
+  id: ID! # nte-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  amount: BigInt # not required right now for non-factory generated liquid splits. Maybe this should be ownership?
+  transaction: Transaction!
+  transferType: NFTTransferType
+
+  nftAddedEvent: LiquidSplitNFTAddedEvent @derivedFrom(field: "nftTransferEvent")
+  nftRemovedEvent: LiquidSplitNFTRemovedEvent @derivedFrom(field: "nftTransferEvent")
+}
+
+type LiquidSplitNFTAddedEvent implements AccountEvent @entity {
+  id: ID! # add-nte-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  nftTransferEvent: LiquidSplitNFTTransferEvent!
+}
+
+type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
+  id: ID! # rem-nte-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+
+  nftTransferEvent: LiquidSplitNFTTransferEvent!
+}
