@@ -131,7 +131,7 @@ export function saveSplitRecipientRemovedEvent(
   recipientRemovedEvent.save();
 }
 
-export function getAccountIdForDistributionEvent(
+export function getAccountIdForSplitEvents(
   splitId: string
 ): string {
   // If the split is downstream of a liquid split, save the distribution event
@@ -163,7 +163,7 @@ export function saveDistributeEvent(
   if (!distEvents) distEvents = new Array<string>();
 
   // Handle regular split vs liquid split
-  let accountId = getAccountIdForDistributionEvent(splitId);
+  let accountId = getAccountIdForSplitEvents(splitId);
 
   let distEventId = createJointId([DISTRIBUTION_EVENT_PREFIX, txHash, logIdx.toString()]);
   let distEvent = new DistributionEvent(distEventId);

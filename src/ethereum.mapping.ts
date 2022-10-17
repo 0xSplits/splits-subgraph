@@ -35,7 +35,7 @@ import {
   saveControlTransferEvents,
   saveWithdrawalEvent,
   getSplit,
-  getAccountIdForDistributionEvent,
+  getAccountIdForSplitEvents,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -252,7 +252,7 @@ function _getDistributionEvent(
   splitId: string,
   tokenId: string
 ): DistributionEvent | null {
-  let accountId = getAccountIdForDistributionEvent(splitId);
+  let accountId = getAccountIdForSplitEvents(splitId);
   // must exist (event handlers fire before call handlers)
   let tx = Transaction.load(txHash) as Transaction;
   // must exist (event handlers fire before call handlers)
