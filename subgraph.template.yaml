@@ -124,7 +124,7 @@ dataSources:
         - name: FullLiquidSplit
           file: ./abis/FullLiquidSplit.json
       eventHandlers:
-        - event: CreateLiquidSplit()
+        - event: CreateLiquidSplit(indexed address)
           handler: handleCreateLiquidSplit
       file: ./src/liquid-split.mapping.ts 
   - kind: ethereum/contract

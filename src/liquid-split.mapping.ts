@@ -15,7 +15,8 @@ import {
   CreateLiquidSplitEvent,
   LiquidSplitNFTTransferEvent,
   LiquidSplitNFTAddedEvent,
-  LiquidSplitNFTRemovedEvent
+  LiquidSplitNFTRemovedEvent,
+  Split
 } from "../generated/schema";
 import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, REMOVED_PREFIX, ZERO_ADDRESS } from "./helpers";
 
@@ -25,6 +26,15 @@ const TRANSFER_NFT_EVENT_PREFIX = "tne";
 
 export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   let isFactoryGenerated = false;
+
+  // If the event has a payoutSplit arg and it's a valid split id, we're going to
+  // assume it's a legit liquid split that is extending our abstract contract. If this
+  // ever breaks, we'll need to update to verify that the contract has a valid
+  // scaledPercentBalanceOf function.
+  let payoutSplitId = event.params.payoutSplit.toHexString();
+  let payoutSplit = Split.load(payoutSplitId);
+  if (!payoutSplit) return;
+
   handleLiquidSplitCreation(
     event.address,
     isFactoryGenerated,
