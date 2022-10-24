@@ -2,8 +2,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 import { CreateWaterfallModule } from "../generated/WaterfallModuleFactory/WaterfallModuleFactory";
 import {
   WaterfallFunds,
-  RecoverNonWaterfallFunds,
-} from "../generated/WaterfallModule/WaterfallModule";
+} from "../generated/templates/WaterfallModule/WaterfallModule";
 import { WaterfallModule as WaterfallModuleTemplate } from "../generated/templates";
 import {
   Token,

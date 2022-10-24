@@ -3,7 +3,7 @@ import {  CreateVestingModule } from "../generated/VestingModuleFactory/VestingM
 import {
   CreateVestingStream,
   ReleaseFromVestingStream,
-} from "../generated/VestingModule/VestingModule";
+} from "../generated/templates/VestingModule/VestingModule";
 import { VestingModule as VestingModuleTemplate } from "../generated/templates";
 import {
   Token,

@@ -141,6 +141,8 @@ dataSources:
       entities:
         - LiquidSplit
       abis:
+        - name: FullLiquidSplit
+          file: ./abis/FullLiquidSplit.json
         - name: LiquidSplitFactory
           file: ./abis/LiquidSplitFactory.json
       eventHandlers:
