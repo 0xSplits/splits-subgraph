@@ -3,5 +3,6 @@
   "splitStartBlock": "26082503",
   "vestingStartBlock": "26112587",
   "waterfallStartBlock": "",
+  "liquidSplitStartBlock": "",
   "polygon": true
 }

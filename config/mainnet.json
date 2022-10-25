@@ -3,5 +3,6 @@
   "splitStartBlock": "14206768",
   "vestingStartBlock": "14722373",
   "waterfallStartBlock": "15684597",
+  "liquidSplitStartBlock": "15822543",
   "ethereum": true
 }

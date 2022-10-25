@@ -131,7 +131,7 @@ dataSources:
     name: LiquidSplitFactory
     network: {{network}}
     source: 
-      address: "0xbe2C77c6a7b032E1971F82DB4185c68F161bc273"
+      address: "0xdEcd8B99b7F763e16141450DAa5EA414B7994831"
       abi: LiquidSplitFactory
       startBlock: {{liquidSplitStartBlock}}
     mapping:
