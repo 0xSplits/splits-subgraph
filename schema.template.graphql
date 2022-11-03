@@ -349,6 +349,28 @@ type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
   waterfallFundsEvent: WaterfallFundsEvent!
 }
 
+type RecoverNonWaterfallFundsEvent implements AccountEvent @entity {
+  id: ID! # rnwfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+  amount: BigInt!
+  nonWaterfallToken: Token!
+
+  receiveNonWaterfallFundsEvent: ReceiveNonWaterfallFundsEvent! @derivedFrom(field: "recoverNonWaterfallFundsEvent")
+}
+
+type ReceiveNonWaterfallFundsEvent implements AccountEvent @entity {
+  id: ID! # r-rnwfe-${txHash}-${logIdx}-${accountId}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  recoverNonWaterfallFundsEvent: RecoverNonWaterfallFundsEvent!
+}
+
 type CreateLiquidSplitEvent implements AccountEvent @entity {
   id: ID! # clse-${txHash}-${logIdx}
   timestamp: BigInt!

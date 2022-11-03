@@ -189,6 +189,8 @@ templates:
       eventHandlers:
         - event: WaterfallFunds(address[],uint256[],uint256)
           handler: handleWaterfallFunds
+        - event: RecoverNonWaterfallFunds(address,address,uint256)
+          handler: handleRecoverNonWaterfallFunds
       file: ./src/waterfall.mapping.ts
   - kind: ethereum/contract
     name: LiquidSplit

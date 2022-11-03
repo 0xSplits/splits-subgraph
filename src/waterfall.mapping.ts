@@ -2,6 +2,7 @@ import { BigInt, log } from "@graphprotocol/graph-ts";
 import { CreateWaterfallModule } from "../generated/WaterfallModuleFactory/WaterfallModuleFactory";
 import {
   WaterfallFunds,
+  RecoverNonWaterfallFunds,
 } from "../generated/templates/WaterfallModule/WaterfallModule";
 import { WaterfallModule as WaterfallModuleTemplate } from "../generated/templates";
 import {
@@ -13,6 +14,8 @@ import {
   WaterfallRecipientAddedEvent,
   WaterfallFundsEvent,
   ReceiveWaterfallFundsEvent,
+  RecoverNonWaterfallFundsEvent,
+  ReceiveNonWaterfallFundsEvent,
 } from "../generated/schema";
 import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getWaterfallModule, RECEIVE_PREFIX } from "./helpers";
 
@@ -20,6 +23,7 @@ export const ZERO = BigInt.fromI32(0);
 
 const CREATE_WATERFALL_MODULE_EVENT_PREFIX = "cwme";
 const WATERFALL_FUNDS_EVENT_PREFIX = "wfe";
+const RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX = "rnwfe";
 
 export function handleCreateWaterfallModule(event: CreateWaterfallModule): void {
   // Save module
@@ -139,6 +143,45 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   waterfallFundsEvent.logIndex = logIdx;
   waterfallFundsEvent.amount = totalPayout;
   waterfallFundsEvent.save();
+}
+
+export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds): void {
+  // No subgraph data to update, just need to create the events
+  let waterfallModuleId = event.address.toHexString();
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
+
+  let tokenId = event.params.nonWaterfallToken.toHexString();
+  let token = new Token(tokenId);
+  token.save();
+
+  let recoverNonWaterfallFundsEventId = createJointId([RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let recoverNonWaterfallFundsEvent = new RecoverNonWaterfallFundsEvent(recoverNonWaterfallFundsEventId);
+  recoverNonWaterfallFundsEvent.timestamp = timestamp;
+  recoverNonWaterfallFundsEvent.transaction = txHash;
+  recoverNonWaterfallFundsEvent.account = waterfallModuleId;
+  recoverNonWaterfallFundsEvent.logIndex = logIdx;
+  recoverNonWaterfallFundsEvent.amount = event.params.amount;
+  recoverNonWaterfallFundsEvent.nonWaterfallToken = tokenId;
+  recoverNonWaterfallFundsEvent.save();
+
+  let accountId = event.params.recipient.toHexString();
+  let receiveNonWaterfallFundsEventId = createJointId([
+    RECEIVE_PREFIX,
+    recoverNonWaterfallFundsEventId,
+    accountId
+  ]);
+  let receiveNonWaterfallFundsEvent = new ReceiveNonWaterfallFundsEvent(
+    receiveNonWaterfallFundsEventId
+  );
+  receiveNonWaterfallFundsEvent.timestamp = timestamp;
+  receiveNonWaterfallFundsEvent.account = accountId;
+  receiveNonWaterfallFundsEvent.logIndex = logIdx;
+  receiveNonWaterfallFundsEvent.recoverNonWaterfallFundsEvent = recoverNonWaterfallFundsEventId;
+  receiveNonWaterfallFundsEvent.save();
 }
 
 function createWaterfallTranche(waterfallModuleId: string, recipientAddress: string, tranchePosition: string, trancheStart: BigInt, trancheSize: BigInt | null = null): void {
