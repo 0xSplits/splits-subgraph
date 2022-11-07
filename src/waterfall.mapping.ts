@@ -146,9 +146,17 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 }
 
 export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds): void {
-  // No subgraph data to update, just need to create the events
   let waterfallModuleId = event.address.toHexString();
-
+  let waterfallModule = getWaterfallModule(waterfallModuleId);
+  if (!waterfallModule) return;
+  
+  // Update latest block
+  if (event.block.number.toI32() > waterfallModule.latestBlock) {
+    waterfallModule.latestBlock = event.block.number.toI32();
+    waterfallModule.save();
+  }
+  
+  // Save events
   let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   createTransactionIfMissing(txHash);

@@ -13,9 +13,10 @@ import {
   CreateVestingModuleEvent,
   CreateVestingStreamEvent,
   ReleaseVestingFundsEvent,
+  ReceiveVestedFundsEvent,
   User,
 } from "../generated/schema";
-import { createJointId, createTransactionIfMissing, getVestingModule } from "./helpers";
+import { createJointId, createTransactionIfMissing, getVestingModule, RECEIVE_PREFIX } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
@@ -141,4 +142,12 @@ export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream):
   releaseVestingFundsEvent.token = vestingStream.token;
   releaseVestingFundsEvent.amount = transferAmount;
   releaseVestingFundsEvent.save();
+
+  let receiveVestedFundsEventId = createJointId([RECEIVE_PREFIX, releaseVestingFundsEventId, vestingModule.beneficiary]);
+  let receiveVestedFundsEvent = new ReceiveVestedFundsEvent(receiveVestedFundsEventId);
+  receiveVestedFundsEvent.timestamp = timestamp;
+  receiveVestedFundsEvent.account = vestingModule.beneficiary;
+  receiveVestedFundsEvent.logIndex = logIdx;
+  receiveVestedFundsEvent.releaseVestingFundsEvent = releaseVestingFundsEventId;
+  receiveVestedFundsEvent.save();
 }

@@ -307,6 +307,15 @@ type ReleaseVestingFundsEvent implements AccountEvent @entity {
   amount: BigInt!
 }
 
+type ReceiveVestedFundsEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  releaseVestingFundsEvent: ReleaseVestingFundsEvent!
+}
+
 type CreateWaterfallModuleEvent implements AccountEvent @entity {
   id: ID! # cwme-${txHash}-${logIdx}
   timestamp: BigInt!
