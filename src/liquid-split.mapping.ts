@@ -16,7 +16,9 @@ import {
   LiquidSplitNFTTransferEvent,
   LiquidSplitNFTAddedEvent,
   LiquidSplitNFTRemovedEvent,
-  Split
+  Split,
+  Transaction,
+  SetSplitEvent
 } from "../generated/schema";
 import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, REMOVED_PREFIX, ZERO_ADDRESS } from "./helpers";
 
@@ -31,15 +33,35 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   // assume it's a legit liquid split that is extending our abstract contract. If this
   // ever breaks, we'll need to update to verify that the contract has a valid
   // scaledPercentBalanceOf function.
+  let txHash = event.transaction.hash.toHexString();
+  let transaction = Transaction.load(txHash);
+  if (!transaction) return;
+  if (!transaction.setSplitEvents) return;
+  let setSplitEvents = transaction.setSplitEvents as string[];
+  if (setSplitEvents.length < 1) return;
+
+  // Need to look for the set split event in the transaction. The create split call handler is what
+  // actually creates the split, but that gets executed after all event handlers so it runs
+  // after this. The set split event is created in the event handler though.
   let payoutSplitId = event.params.payoutSplit.toHexString();
-  let payoutSplit = Split.load(payoutSplitId);
-  if (!payoutSplit) return;
+  let payoutSplitFound = false;
+  for (let i: i32 = 0; i < setSplitEvents.length; i++) {
+    let setSplitEventId = setSplitEvents[i];
+    let setSplitEvent = SetSplitEvent.load(setSplitEventId);
+
+    if (setSplitEvent && setSplitEvent.type == 'create' && setSplitEvent.account == payoutSplitId) {
+      payoutSplitFound = true;
+      break;
+    }
+  }
+
+  if (!payoutSplitFound) return;
 
   handleLiquidSplitCreation(
     event.address,
     isFactoryGenerated,
     event.block.timestamp,
-    event.transaction.hash.toHexString(),
+    txHash,
     event.logIndex,
     event.block.number.toI32()
   );
