@@ -27,6 +27,8 @@ export const RELEASE_VESTING_FUNDS_EVENT_PREFIX = "rvfe";
 export function handleCreateVestingModule(event: CreateVestingModule): void {
   // Save module
   let vestingModuleId = event.params.vestingModule.toHexString();
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
 
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
@@ -40,12 +42,13 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   let vestingModule = new VestingModule(vestingModuleId);
   vestingModule.vestingPeriod = event.params.vestingPeriod;
   vestingModule.beneficiary = event.params.beneficiary.toHexString();
-  vestingModule.latestBlock = event.block.number.toI32()
+  vestingModule.createdBlock = blockNumber;
+  vestingModule.latestBlock = blockNumber;
+  vestingModule.latestActivity = timestamp;
   vestingModule.save();
   VestingModuleTemplate.create(event.params.vestingModule);
 
   // Save event
-  let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   createTransactionIfMissing(txHash);
   let logIdx = event.logIndex;
@@ -68,6 +71,7 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
 
   if (event.block.number.toI32() > vestingModule.latestBlock) {
     vestingModule.latestBlock = event.block.number.toI32();
+    vestingModule.latestActivity = event.block.timestamp;
     vestingModule.save();
   }
 
@@ -115,6 +119,7 @@ export function handleReleaseFromVestingStream(event: ReleaseFromVestingStream):
 
   if (event.block.number.toI32() > vestingModule.latestBlock) {
     vestingModule.latestBlock = event.block.number.toI32();
+    vestingModule.latestActivity = event.block.timestamp;
     vestingModule.save();
   }
 

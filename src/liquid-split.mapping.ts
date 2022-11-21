@@ -96,21 +96,24 @@ export function handleTransferSingle1155(event: TransferSingle): void {
   let liquidSplit = getLiquidSplit(liquidSplitId);
   if (!liquidSplit) return;
 
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+
   let fromAddressString = event.params.from.toHexString();
   let toAddressString = event.params.to.toHexString();
   if (liquidSplit.isFactoryGenerated) {
     if (fromAddressString != ZERO_ADDRESS) {
-      let fromHolder = getHolder(fromAddressString, liquidSplitId);
+      let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp);
       fromHolder.ownership -= event.params.amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
       fromHolder.save();
     }
     if (toAddressString != ZERO_ADDRESS) {
-      let toHolder = getHolder(toAddressString, liquidSplitId);
+      let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp);
       toHolder.ownership += event.params.amount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
       toHolder.save();
     }
   } else {
-    updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to);
+    updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to, blockNumber, timestamp);
   }
 
   // Save event
@@ -138,19 +141,21 @@ export function handleTransferBatch1155(event: TransferBatch): void {
     totalAmount += event.params.amounts[i];
   }
 
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
   if (liquidSplit.isFactoryGenerated) {
     if (fromAddressString != ZERO_ADDRESS) {
-      let fromHolder = getHolder(fromAddressString, liquidSplitId);
+      let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp);
       fromHolder.ownership -= totalAmount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
       fromHolder.save();
     }
     if (toAddressString != ZERO_ADDRESS) {
-      let toHolder = getHolder(toAddressString, liquidSplitId);
+      let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp);
       toHolder.ownership += totalAmount * PERCENTAGE_SCALE / FACTORY_GENERATED_TOTAL_SUPPLY;
       toHolder.save();
     }
   } else {
-    updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to);
+    updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to, blockNumber, timestamp);
   }
 
   // Save event
@@ -171,7 +176,10 @@ export function handleTransfer721(event: Transfer): void {
   let liquidSplit = getLiquidSplit(liquidSplitId);
   if (!liquidSplit) return;
 
-  updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to);
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+
+  updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to, blockNumber, timestamp);
 }
 
 function handleLiquidSplitCreation(
@@ -195,7 +203,9 @@ function handleLiquidSplitCreation(
   }
 
   let liquidSplit = new LiquidSplit(liquidSplitId);
+  liquidSplit.createdBlock = blockNumber;
   liquidSplit.latestBlock = blockNumber;
+  liquidSplit.latestActivity = timestamp;
   liquidSplit.isFactoryGenerated = isFactoryGenerated;
 
   // Fetch distributor fee and payout split
@@ -216,11 +226,11 @@ function handleLiquidSplitCreation(
   createLiquidSplitEvent.save();
 }
 
-function getHolder(accountId: string, liquidSplitId: string): Holder {
+function getHolder(accountId: string, liquidSplitId: string, blockNumber: i32, timestamp: BigInt): Holder {
   let holderId = createJointId([liquidSplitId, accountId]);
   let holder = Holder.load(holderId);
   if (!holder) {
-    createUserIfMissing(accountId);
+    createUserIfMissing(accountId, blockNumber, timestamp);
     holder = new Holder(holderId);
     holder.liquidSplit = liquidSplitId;
     holder.account = accountId;
@@ -230,20 +240,26 @@ function getHolder(accountId: string, liquidSplitId: string): Holder {
   return holder;
 }
 
-function updateHolderOwnershipNonFactoryLiquidSplit(liquidSplitAddress: Address, fromAddress: Address, toAddress: Address): void {
+function updateHolderOwnershipNonFactoryLiquidSplit(
+  liquidSplitAddress: Address,
+  fromAddress: Address,
+  toAddress: Address,
+  blockNumber: i32,
+  timestamp: BigInt
+): void {
   let liquidSplitContract = LiquidSplitContract.bind(liquidSplitAddress);
   let liquidSplitId = liquidSplitAddress.toHexString();
 
   let fromAddressString = fromAddress.toHexString();
   if (fromAddressString != ZERO_ADDRESS) {
-    let fromHolder = getHolder(fromAddressString, liquidSplitId);
+    let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp);
     fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress);
     fromHolder.save();
   }
 
   let toAddressString = toAddress.toHexString();
   if (toAddressString != ZERO_ADDRESS) {
-    let toHolder = getHolder(toAddressString, liquidSplitId);
+    let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp);
     toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress);
     toHolder.save();
   }

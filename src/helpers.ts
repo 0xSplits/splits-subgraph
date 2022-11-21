@@ -235,7 +235,10 @@ export function distributeSplit(
 
   if (blockNumber > split.latestBlock) {
     split.latestBlock = blockNumber;
+    split.latestActivity = timestamp;
     split.save();
+
+
   }
 
   // doesn't know msg.sender; only affects advance users distributing from contracts
@@ -251,7 +254,7 @@ export function distributeSplit(
       let distributorAddressString = distributorAddress.toHexString();
 
       // 'Create' the user in case they don't exist yet
-      createUserIfMissing(distributorAddressString);
+      createUserIfMissing(distributorAddressString, blockNumber, timestamp);
 
       addBalanceToUser(distributorAddressString, tokenId, distributorAmount);
 
@@ -384,7 +387,9 @@ export function handleTokenWithdrawal(
   accountId: string,
   tokenId: string,
   amount: BigInt,
-  resetBalance: boolean
+  resetBalance: boolean,
+  blockNumber: i32,
+  timestamp: BigInt
 ): void {
   let tokenBalanceId = createJointId([accountId, tokenId]);
 
@@ -433,10 +438,21 @@ export function handleTokenWithdrawal(
   tokenWithdrawalEvent.amount = amount;
   tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
   tokenWithdrawalEvent.save();
+
+  let user = User.load(accountId);
+  if (user) {
+    if (blockNumber > user.latestBlock) {
+      user.latestBlock = blockNumber;
+      user.latestActivity= timestamp;
+      user.save();
+    }
+  }
 }
 
 export function createUserIfMissing(
   accountId: string,
+  blockNumber: i32,
+  timestamp: BigInt
 ): void {
   // only create a User if accountId doesn't point to another module
   let split = Split.load(accountId);
@@ -452,6 +468,9 @@ export function createUserIfMissing(
   if (liquidSplit) return;
 
   let user = new User(accountId);
+  user.createdBlock = blockNumber;
+  user.latestBlock = blockNumber;
+  user.latestActivity = timestamp;
   user.save();
 }
 

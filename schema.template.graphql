@@ -4,6 +4,9 @@ interface Account {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
 }
 
 type Token @entity {
@@ -39,6 +42,9 @@ type User implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
 }
 
 type Split implements Account @entity {
@@ -47,6 +53,9 @@ type Split implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
 
   controller: Bytes!
   newPotentialController: Bytes!
@@ -54,8 +63,6 @@ type Split implements Account @entity {
   # can't use derived relations inside mapping.ts
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
-  createdBlock: Int!
-  latestBlock: Int!
 
   vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
   liquidSplit: LiquidSplit @derivedFrom(field: "split")
@@ -74,11 +81,13 @@ type VestingModule implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
   
   vestingPeriod: BigInt!
   beneficiary: Split!
   streams: [VestingStream!] @derivedFrom(field: "account")
-  latestBlock: Int!
 }
 
 type VestingStream @entity {
@@ -98,12 +107,14 @@ type WaterfallModule implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
 
   token: Token!
   tranches: [WaterfallTranche!] @derivedFrom(field: "account")
   nonWaterfallRecipient: Bytes!
   totalClaimedAmount: BigInt!
-  latestBlock: Int!
 }
 
 type WaterfallTranche @entity {
@@ -121,10 +132,12 @@ type LiquidSplit implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
 
   distributorFee: BigInt!
   holders: [Holder!]! @derivedFrom(field: "liquidSplit")
-  latestBlock: Int!
   split: Split!
   isFactoryGenerated: Boolean!
 }

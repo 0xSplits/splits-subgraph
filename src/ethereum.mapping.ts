@@ -107,6 +107,7 @@ export function handleCreateSplit(event: CreateSplit): void {
 export function handleCreateSplitCall(call: CreateSplitCall): void {
   let splitId = call.outputs.split.toHexString();
   let blockNumber = call.block.number.toI32();
+  let timestamp = call.block.timestamp;
   
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
@@ -117,11 +118,12 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
     return;
   }
 
-  createUserIfMissing(call.inputs.controller.toHexString());
+  createUserIfMissing(call.inputs.controller.toHexString(), blockNumber, timestamp);
 
   let split = new Split(splitId);
   split.createdBlock = blockNumber;
   split.latestBlock = blockNumber;
+  split.latestActivity = timestamp;
   split.controller = call.inputs.controller;
   split.newPotentialController = Address.zero();
   split.distributorFee = call.inputs.distributorFee;
@@ -130,7 +132,6 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
   let percentAllocations = call.inputs.percentAllocations;
   let recipientIds = new Array<string>();
 
-  let timestamp = call.block.timestamp;
   let txHash = call.transaction.hash.toHexString();
 
   let setSplitEvent = _getSetSplitEvent(
@@ -141,7 +142,7 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
 
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();
-    createUserIfMissing(accountId);
+    createUserIfMissing(accountId, blockNumber, timestamp);
 
     let recipientId = createJointId([splitId, accountId]);
     let recipient = new Recipient(recipientId);
@@ -300,12 +301,13 @@ export function handleInitiateControlTransfer(
   let split = getSplit(splitId);
   if (!split) return;
 
-  createUserIfMissing(event.params.newPotentialController.toHexString());
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+  createUserIfMissing(event.params.newPotentialController.toHexString(), blockNumber, timestamp);
 
   split.newPotentialController = event.params.newPotentialController;
   split.save();
 
-  let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
 
@@ -438,6 +440,7 @@ export function handleUpdateAndDistributeERC20Call(
 }
 
 export function handleWithdrawal(event: Withdrawal): void {
+  let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
@@ -459,7 +462,9 @@ export function handleWithdrawal(event: Withdrawal): void {
       account,
       Address.zero().toHexString(),
       ethAmount,
-      false
+      false,
+      blockNumber,
+      timestamp
     );
   }
 
@@ -469,7 +474,9 @@ export function handleWithdrawal(event: Withdrawal): void {
       account,
       tokens[i].toHexString(),
       tokenAmounts[i],
-      false
+      false,
+      blockNumber,
+      timestamp
     );
   }
 }
@@ -488,6 +495,7 @@ function _updateSplit(
   if (!split) return;
 
   split.latestBlock = blockNumber;
+  split.latestActivity = timestamp;
   split.distributorFee = distributorFee;
   let oldRecipientIds = split.recipients;
   let newRecipientIds = new Array<string>();
@@ -505,7 +513,7 @@ function _updateSplit(
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i];
     // only create a User if accountId doesn't point to a Split
-    createUserIfMissing(accountId);
+    createUserIfMissing(accountId, blockNumber, timestamp);
 
     let recipientId = createJointId([splitId, accountId]);
     newRecipientIdSet.add(recipientId);

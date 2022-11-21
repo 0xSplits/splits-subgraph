@@ -38,6 +38,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
     return;
   }
 
+  let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   createTransactionIfMissing(txHash);
@@ -52,7 +53,9 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   waterfallModule.token = tokenId;
   waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient;
   waterfallModule.totalClaimedAmount = ZERO;
-  waterfallModule.latestBlock = event.block.number.toI32();
+  waterfallModule.createdBlock = blockNumber;
+  waterfallModule.latestBlock = blockNumber;
+  waterfallModule.latestActivity = timestamp;
 
   let waterfallTrancheRecipients = event.params.recipients;
   let waterfallTrancheThresholds = event.params.thresholds;
@@ -62,7 +65,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   for (; i < waterfallTrancheThresholds.length; i++) {
     let currentTrancheAmount = waterfallTrancheThresholds[i] - previousThreshold;
     let accountId = waterfallTrancheRecipients[i].toHexString();
-    createWaterfallTranche(waterfallModuleId, accountId, i.toString(), previousThreshold, currentTrancheAmount);
+    createWaterfallTranche(waterfallModuleId, blockNumber, timestamp, accountId, i.toString(), previousThreshold, currentTrancheAmount);
     saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
 
     previousThreshold = waterfallTrancheThresholds[i];
@@ -70,7 +73,7 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
 
   // One more create call for the residual recipient
   let accountId = waterfallTrancheRecipients[i].toHexString();
-  createWaterfallTranche(waterfallModuleId, accountId, i.toString(), previousThreshold);
+  createWaterfallTranche(waterfallModuleId, blockNumber, timestamp, accountId, i.toString(), previousThreshold);
   saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
 
   waterfallModule.save();
@@ -99,6 +102,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
     waterfallModule.latestBlock = event.block.number.toI32();
+    waterfallModule.latestActivity = event.block.timestamp;
   }
 
   let payoutAmounts = event.params.payouts;
@@ -153,6 +157,7 @@ export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds):
   // Update latest block
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
     waterfallModule.latestBlock = event.block.number.toI32();
+    waterfallModule.latestActivity = event.block.timestamp;
     waterfallModule.save();
   }
   
@@ -192,7 +197,15 @@ export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds):
   receiveNonWaterfallFundsEvent.save();
 }
 
-function createWaterfallTranche(waterfallModuleId: string, recipientAddress: string, tranchePosition: string, trancheStart: BigInt, trancheSize: BigInt | null = null): void {
+function createWaterfallTranche(
+  waterfallModuleId: string,
+  blockNumber: i32,
+  timestamp: BigInt,
+  recipientAddress: string,
+  tranchePosition: string,
+  trancheStart: BigInt,
+  trancheSize: BigInt | null = null
+): void {
   let waterfallTrancheId = createJointId([waterfallModuleId, tranchePosition]);
   let waterfallTranche = new WaterfallTranche(waterfallTrancheId);
 
@@ -203,7 +216,7 @@ function createWaterfallTranche(waterfallModuleId: string, recipientAddress: str
   }
   waterfallTranche.claimedAmount = ZERO;
 
-  createUserIfMissing(recipientAddress);
+  createUserIfMissing(recipientAddress, blockNumber, timestamp);
   waterfallTranche.recipient = recipientAddress;
 
   waterfallTranche.save();
