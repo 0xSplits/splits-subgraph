@@ -8,7 +8,7 @@ dataSources:
     name: SplitMain
     network: {{network}}
     source:
-      address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
+      address: "0x3c4b7a091647aBBD2F737f33766c9eFD520B1C78"
       abi: SplitMain
       startBlock: {{splitStartBlock}}
     mapping:
@@ -70,7 +70,7 @@ dataSources:
     name: VestingModuleFactory
     network: {{network}}
     source: 
-      address: "0x0a2841630f198745a55c4dab3fe98f77271949e5"
+      address: "0x445cbef6Ad25daa91dA27CD1BaCb6D59d2fbD52a"
       abi: VestingModuleFactory
       startBlock: {{vestingStartBlock}}
     mapping:
@@ -91,7 +91,7 @@ dataSources:
     name: WaterfallModuleFactory
     network: {{network}}
     source: 
-      address: "0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6"
+      address: "0x5DF044Ff0Bf4d960aB9A299C07Cf4b7F6B3552df"
       abi: WaterfallModuleFactory
       startBlock: {{waterfallStartBlock}}
     mapping:
@@ -107,50 +107,50 @@ dataSources:
         - event: CreateWaterfallModule(indexed address,address,address,address[],uint256[])
           handler: handleCreateWaterfallModule
       file: ./src/waterfall.mapping.ts
-  - kind: ethereum/contract
-    name: LiquidSplit
-    network: {{network}}
-    source: 
-      abi: FullLiquidSplit
-      startBlock: {{liquidSplitStartBlock}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - LiquidSplit
-        - Holder
-      abis:
-        - name: FullLiquidSplit
-          file: ./abis/FullLiquidSplit.json
-      eventHandlers:
-        - event: CreateLiquidSplit(indexed address)
-          handler: handleCreateLiquidSplit
-      file: ./src/liquid-split.mapping.ts 
-  - kind: ethereum/contract
-    name: LiquidSplitFactory
-    network: {{network}}
-    source: 
-      address: "0xdEcd8B99b7F763e16141450DAa5EA414B7994831"
-      abi: LiquidSplitFactory
-      startBlock: {{liquidSplitStartBlock}}
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - LiquidSplit
-      abis:
-        - name: FullLiquidSplit
-          file: ./abis/FullLiquidSplit.json
-        - name: LiquidSplitFactory
-          file: ./abis/LiquidSplitFactory.json
-      eventHandlers:
-        - event: CreateLS1155(indexed address)
-          handler: handleCreateLiquidSplitFromFactory
-        - event: CreateLS1155Clone(indexed address)
-          handler: handleCreateLiquidSplitClone
-      file: ./src/liquid-split.mapping.ts
+  # - kind: ethereum/contract
+    # name: LiquidSplit
+    # network: {{network}}
+    # source: 
+    #   abi: FullLiquidSplit
+    #   startBlock: {{liquidSplitStartBlock}}
+    # mapping:
+    #   kind: ethereum/events
+    #   apiVersion: 0.0.6
+    #   language: wasm/assemblyscript
+    #   entities:
+    #     - LiquidSplit
+    #     - Holder
+    #   abis:
+    #     - name: FullLiquidSplit
+    #       file: ./abis/FullLiquidSplit.json
+    #   eventHandlers:
+    #     - event: CreateLiquidSplit(indexed address)
+    #       handler: handleCreateLiquidSplit
+    #   file: ./src/liquid-split.mapping.ts 
+  # - kind: ethereum/contract
+  #   name: LiquidSplitFactory
+  #   network: {{network}}
+  #   source: 
+  #     address: "0xdEcd8B99b7F763e16141450DAa5EA414B7994831" # todo
+  #     abi: LiquidSplitFactory
+  #     startBlock: {{liquidSplitStartBlock}}
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - LiquidSplit
+  #     abis:
+  #       - name: FullLiquidSplit
+  #         file: ./abis/FullLiquidSplit.json
+  #       - name: LiquidSplitFactory
+  #         file: ./abis/LiquidSplitFactory.json
+  #     eventHandlers:
+  #       - event: CreateLS1155(indexed address)
+  #         handler: handleCreateLiquidSplitFromFactory
+  #       - event: CreateLS1155Clone(indexed address)
+  #         handler: handleCreateLiquidSplitClone
+  #     file: ./src/liquid-split.mapping.ts
 templates:
   - kind: ethereum/contract
     name: VestingModule
@@ -192,26 +192,26 @@ templates:
         - event: RecoverNonWaterfallFunds(address,address,uint256)
           handler: handleRecoverNonWaterfallFunds
       file: ./src/waterfall.mapping.ts
-  - kind: ethereum/contract
-    name: LiquidSplit
-    network: {{network}}
-    source: 
-      abi: FullLiquidSplit
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.6
-      language: wasm/assemblyscript
-      entities:
-        - LiquidSplit
-        - Holder
-      abis:
-        - name: FullLiquidSplit
-          file: ./abis/FullLiquidSplit.json
-      eventHandlers:
-        - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
-          handler: handleTransferSingle1155
-        - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
-          handler: handleTransferBatch1155
-        - event: Transfer(indexed address,indexed address,indexed uint256)
-          handler: handleTransfer721
-      file: ./src/liquid-split.mapping.ts
+  # - kind: ethereum/contract
+  #   name: LiquidSplit
+  #   network: {{network}}
+  #   source: 
+  #     abi: FullLiquidSplit
+  #   mapping:
+  #     kind: ethereum/events
+  #     apiVersion: 0.0.6
+  #     language: wasm/assemblyscript
+  #     entities:
+  #       - LiquidSplit
+  #       - Holder
+  #     abis:
+  #       - name: FullLiquidSplit
+  #         file: ./abis/FullLiquidSplit.json
+  #     eventHandlers:
+  #       - event: TransferSingle(indexed address,indexed address,indexed address,uint256,uint256)
+  #         handler: handleTransferSingle1155
+  #       - event: TransferBatch(indexed address,indexed address,indexed address,uint256[],uint256[])
+  #         handler: handleTransferBatch1155
+  #       - event: Transfer(indexed address,indexed address,indexed uint256)
+  #         handler: handleTransfer721
+  #     file: ./src/liquid-split.mapping.ts

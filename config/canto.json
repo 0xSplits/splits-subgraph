@@ -1,0 +1,8 @@
+{
+	"network": "mainnet",
+  "splitStartBlock": "1775176",
+  "vestingStartBlock": "1776291",
+  "waterfallStartBlock": "1776344",
+  "liquidSplitStartBlock": "-1",
+  "polygon": true
+}
