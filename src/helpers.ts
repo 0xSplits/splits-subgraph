@@ -443,7 +443,7 @@ export function handleTokenWithdrawal(
   if (user) {
     if (blockNumber > user.latestBlock) {
       user.latestBlock = blockNumber;
-      user.latestActivity= timestamp;
+      user.latestActivity = timestamp;
       user.save();
     }
   }

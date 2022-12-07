@@ -16,8 +16,18 @@ import {
   ReceiveWaterfallFundsEvent,
   RecoverNonWaterfallFundsEvent,
   ReceiveNonWaterfallFundsEvent,
+  TokenWithdrawal,
 } from "../generated/schema";
-import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getWaterfallModule, RECEIVE_PREFIX } from "./helpers";
+import {
+  ADDED_PREFIX,
+  createJointId,
+  createTransactionIfMissing,
+  createUserIfMissing,
+  getAccount,
+  getWaterfallModule,
+  RECEIVE_PREFIX,
+  TOKEN_WITHDRAWAL_USER_PREFIX
+} from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
@@ -125,10 +135,11 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
     // Nothing to save if the remaining payout didn't change, just skipped a filled tranche
     if (!oldRemainingPayout.equals(remainingPayout)) {
       let recipientPayout = oldRemainingPayout.minus(remainingPayout)
-      saveWaterfallRecipientReceivedFundsEvent(
+      saveWaterfallRecipientReceivedFunds(
         timestamp,
         txHash,
         logIdx,
+        waterfallModule.token,
         waterfallTranche.recipient,
         recipientPayout,
       )
@@ -264,13 +275,34 @@ function saveWaterfallRecipientAddedEvent(
   recipientAddedEvent.save();
 }
 
-function saveWaterfallRecipientReceivedFundsEvent(
+function saveWaterfallRecipientReceivedFunds(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
+  tokenId: string,
   accountId: string,
   amount: BigInt,
 ): void {
+  // Only need to update withdrawn for users. For all modules, waterfall'd funds
+  // will show up in their active balances.
+  let user = User.load(accountId);
+  if (user) {
+    let tokenBalanceId = createJointId([accountId, tokenId]);
+    let tokenWithdrawalId = createJointId([
+      TOKEN_WITHDRAWAL_USER_PREFIX,
+      tokenBalanceId
+    ]);
+    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
+    if (!tokenWithdrawal) {
+      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
+      tokenWithdrawal.account = accountId;
+      tokenWithdrawal.token = tokenId;
+    }
+    tokenWithdrawal.amount += amount;
+    tokenWithdrawal.save();
+  }
+
+  // Save event
   let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
   let receiveWaterfallFundsEventId = createJointId([
     RECEIVE_PREFIX,
