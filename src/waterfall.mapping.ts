@@ -23,7 +23,6 @@ import {
   createJointId,
   createTransactionIfMissing,
   createUserIfMissing,
-  getAccount,
   getWaterfallModule,
   RECEIVE_PREFIX,
   TOKEN_WITHDRAWAL_USER_PREFIX
