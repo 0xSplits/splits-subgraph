@@ -2,11 +2,13 @@ interface Account {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
 type Token @entity {
@@ -40,18 +42,19 @@ type User implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
 type Split implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -64,8 +67,11 @@ type Split implements Account @entity {
   # recipients: [Recipient!]! @derivedFrom(field: "split")
   recipients: [Recipient!]!
 
-  vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
   liquidSplit: LiquidSplit @derivedFrom(field: "split")
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
+  vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
 }
 
 type Recipient @entity {
@@ -79,7 +85,6 @@ type VestingModule implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -88,6 +93,9 @@ type VestingModule implements Account @entity {
   vestingPeriod: BigInt!
   beneficiary: Split!
   streams: [VestingStream!] @derivedFrom(field: "account")
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
 type VestingStream @entity {
@@ -105,7 +113,6 @@ type WaterfallModule implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -115,6 +122,9 @@ type WaterfallModule implements Account @entity {
   tranches: [WaterfallTranche!] @derivedFrom(field: "account")
   nonWaterfallRecipient: Bytes!
   totalClaimedAmount: BigInt!
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
 type WaterfallTranche @entity {
@@ -130,7 +140,6 @@ type LiquidSplit implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
-  upstream: [Recipient!] @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -140,6 +149,9 @@ type LiquidSplit implements Account @entity {
   holders: [Holder!]! @derivedFrom(field: "liquidSplit")
   split: Split!
   isFactoryGenerated: Boolean!
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
 type Holder @entity {
