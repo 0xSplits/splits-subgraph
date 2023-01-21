@@ -4,6 +4,31 @@ repository: https://github.com/0xSplits/splits-subgraph
 schema:
   file: ./schema.graphql
 dataSources:
+  {{#ethereum}}
+  - kind: ethereum/contract
+    name: Chaos
+    network: {{network}}
+    source:
+      address: "0x8427e46826a520b1264B55f31fCB5DDFDc31E349"
+      abi: ChaosSplit
+      startBlock: 14891074
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - LiquidSplit
+        - Holder
+      abis:
+        - name: ChaosSplit
+          file: ./abis/ChaosSplit.json
+        - name: FullLiquidSplit
+          file: ./abis/FullLiquidSplit.json
+      eventHandlers:
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransferChaos721
+      file: ./src/liquid-split.mapping.ts
+  {{/ethereum}}
   - kind: ethereum/contract
     name: SplitMain
     network: {{network}}

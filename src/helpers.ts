@@ -449,6 +449,7 @@ export function handleTokenWithdrawal(
   }
 }
 
+const CHAOS_LIQUID_SPLIT = "0x8427e46826a520b1264b55f31fcb5ddfdc31e349";
 export function createUserIfMissing(
   accountId: string,
   blockNumber: i32,
@@ -466,6 +467,12 @@ export function createUserIfMissing(
 
   let liquidSplit = LiquidSplit.load(accountId);
   if (liquidSplit) return;
+
+  // Don't allow this for the chaos liquid split. The liquid split is the controller
+  // of the payout split, but there's no event to create the liquid split before the
+  // payout split. We can't create the user first because that blocks us from creating
+  // the liquid split.
+  if (accountId == CHAOS_LIQUID_SPLIT) return;
 
   let user = new User(accountId);
   user.createdBlock = blockNumber;

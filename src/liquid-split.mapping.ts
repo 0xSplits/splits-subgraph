@@ -7,6 +7,10 @@ import {
   TransferBatch,
   Transfer
 } from "../generated/LiquidSplit/FullLiquidSplit";
+import {
+  ChaosSplit,
+  Transfer as TransferChaos
+} from "../generated/Chaos/ChaosSplit";
 import { LiquidSplit as LiquidSplitTemplate } from '../generated/templates'
 import {
   LiquidSplit,
@@ -16,19 +20,18 @@ import {
   LiquidSplitNFTTransferEvent,
   LiquidSplitNFTAddedEvent,
   LiquidSplitNFTRemovedEvent,
-  Split,
   Transaction,
   SetSplitEvent
 } from "../generated/schema";
 import { ADDED_PREFIX, createJointId, createTransactionIfMissing, createUserIfMissing, getLiquidSplit, PERCENTAGE_SCALE, REMOVED_PREFIX, ZERO_ADDRESS } from "./helpers";
 
 const FACTORY_GENERATED_TOTAL_SUPPLY = BigInt.fromI64(1e3 as i64);
+const CHAOS_MULTIPLIER = BigInt.fromI64(1e6 as i64);
+const CHAOS_TOTAL_SUPPLY = BigInt.fromI64(1e3 as i64);
 const CREATE_LIQUID_SPLIT_EVENT_PREFIX = "clse";
 const TRANSFER_NFT_EVENT_PREFIX = "tne";
 
 export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
-  let isFactoryGenerated = false;
-
   // If the event has a payoutSplit arg and it's a valid split id, we're going to
   // assume it's a legit liquid split that is extending our abstract contract. If this
   // ever breaks, we'll need to update to verify that the contract has a valid
@@ -57,25 +60,30 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
 
   if (!payoutSplitFound) return;
 
+  let isFactoryGenerated = false;
+  let isChaosSplit = false;
   handleLiquidSplitCreation(
     event.address,
     isFactoryGenerated,
     event.block.timestamp,
     txHash,
     event.logIndex,
-    event.block.number.toI32()
+    event.block.number.toI32(),
+    isChaosSplit
   );
 }
 
 export function handleCreateLiquidSplitClone(event: CreateLS1155Clone): void {
   let isFactoryGenerated = true;
+  let isChaosSplit = false;
   handleLiquidSplitCreation(
     event.params.ls,
     isFactoryGenerated,
     event.block.timestamp,
     event.transaction.hash.toHexString(),
     event.logIndex,
-    event.block.number.toI32()
+    event.block.number.toI32(),
+    isChaosSplit
   );
 }
 
@@ -170,6 +178,58 @@ export function handleTransferBatch1155(event: TransferBatch): void {
   );
 }
 
+export function handleTransferChaos721(event: TransferChaos): void {
+  let liquidSplitId = event.address.toHexString();
+  // Cant use getLiquidSplit because it will throw an error if it doesn't exist, which it won't
+  // on the first execution of this.
+  let liquidSplit = LiquidSplit.load(liquidSplitId);
+
+  // Create liquid split if missing (only needed for first transfer event)
+  if (!liquidSplit) {
+    let isChaosSplit = true;
+    let isFactoryGenerated = false;
+    handleLiquidSplitCreation(
+      event.address,
+      isFactoryGenerated,
+      event.block.timestamp,
+      event.transaction.hash.toHexString(),
+      event.logIndex,
+      event.block.number.toI32(),
+      isChaosSplit
+    );
+  }
+
+  // Handle transfer
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+  let chaosContract = ChaosSplit.bind(event.address);
+
+  let fromAddressString = event.params.from.toHexString();
+  if (fromAddressString != ZERO_ADDRESS) {
+    let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp);
+    fromHolder.ownership = chaosContract.superchargeBalances(event.params.from) * CHAOS_MULTIPLIER / CHAOS_TOTAL_SUPPLY;
+    fromHolder.save();
+  }
+
+  let toAddressString = event.params.to.toHexString();
+  if (toAddressString != ZERO_ADDRESS) {
+    let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp);
+    toHolder.ownership = chaosContract.superchargeBalances(event.params.to) * CHAOS_MULTIPLIER / CHAOS_TOTAL_SUPPLY;
+    toHolder.save();
+  }
+
+  // Save event
+  saveTransferEvents(
+    liquidSplitId,
+    fromAddressString,
+    toAddressString,
+    BigInt.fromI64(1),
+    event.block.timestamp,
+    event.transaction.hash.toHexString(),
+    event.logIndex
+  );
+}
+
 export function handleTransfer721(event: Transfer): void {
   let liquidSplitId = event.address.toHexString();
 
@@ -180,6 +240,17 @@ export function handleTransfer721(event: Transfer): void {
   let timestamp = event.block.timestamp;
 
   updateHolderOwnershipNonFactoryLiquidSplit(event.address, event.params.from, event.params.to, blockNumber, timestamp);
+
+  // Save event
+  saveTransferEvents(
+    liquidSplitId,
+    event.params.from.toHexString(),
+    event.params.to.toHexString(),
+    BigInt.fromI64(1),
+    event.block.timestamp,
+    event.transaction.hash.toHexString(),
+    event.logIndex
+  );
 }
 
 function handleLiquidSplitCreation(
@@ -188,7 +259,8 @@ function handleLiquidSplitCreation(
   timestamp: BigInt,
   txHash: string,
   logIdx: BigInt,
-  blockNumber: i32
+  blockNumber: i32,
+  isChaosSplit: boolean,
 ): void {
   let liquidSplitId = liquidSplitAddress.toHexString();
   createTransactionIfMissing(txHash);
@@ -214,7 +286,10 @@ function handleLiquidSplitCreation(
   liquidSplit.split = liquidSplitContract.payoutSplit().toHexString();
 
   liquidSplit.save();
-  LiquidSplitTemplate.create(liquidSplitAddress);
+  if (!isChaosSplit) {
+    // Don't need to create a template for chaos, tracking it's events manually
+    LiquidSplitTemplate.create(liquidSplitAddress);
+  }
 
   // Save event
   let createLiquidSplitEventId = createJointId([CREATE_LIQUID_SPLIT_EVENT_PREFIX, txHash, logIdx.toString()]);
