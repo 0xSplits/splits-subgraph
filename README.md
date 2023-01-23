@@ -8,6 +8,17 @@
 - [Polygon](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-polygon)
 - [Mumbai](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-mumbai)
 
+## Other Networks
+- [Optimism](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-optimism)
+- [Optimism Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-opt-goerli)
+- [Arbitrum](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-arbitrum)
+- [Arbitrum Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-arb-goerli)
+- [Gnosis](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-gnosis)
+- [Fantom](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-fantom)
+- [Avalanche](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-avalanche)
+- [Bsc](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-bsc)
+- [Aurora](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-aurora)
+
 ### Install
 
 ```bash
