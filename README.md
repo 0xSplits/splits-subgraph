@@ -28,7 +28,7 @@ yarn install
 ### Prepare
 
 ```bash
-yarn prepare:${NETWORK} (mainnet, ropsten)
+yarn prepare:${NETWORK} (mainnet, polygon)
 ```
 
 - [ handle ethereum vs polygon ABI, mappings ]
