@@ -1,5 +1,9 @@
 {
   "network": "matic",
+  "splitMainAddress": "'0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE'",
+  "vestingFactoryAddress": "'0x0a2841630f198745a55c4dab3fe98f77271949e5'",
+  "waterfallFactoryAddress": "'0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6'",
+  "liquidSplitFactoryAddress": "'0xdEcd8B99b7F763e16141450DAa5EA414B7994831'",
   "splitStartBlock": "25303316",
   "vestingStartBlock": "27984752",
   "waterfallStartBlock": "33977643",

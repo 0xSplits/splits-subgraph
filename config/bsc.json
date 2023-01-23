@@ -1,0 +1,12 @@
+{
+  "network": "bsc",
+  "splitMainAddress": "'0x5924cD81dC672151527B1E4b5Ef57B69cBD07Eda'",
+  "vestingFactoryAddress": "'0x7205d93721837c45Be23C930D9fba842e968Ad69'",
+  "waterfallFactoryAddress": "'0xB7CCCcCeb459F0910589556123dC5fA6DC8dE4E0'",
+  "liquidSplitFactoryAddress": "'0xCDe071bE119024EdC970B3Da15003ee834ae40D2'",
+  "splitStartBlock": "24962607",
+  "vestingStartBlock": "24962810",
+  "waterfallStartBlock": "24962939",
+  "liquidSplitStartBlock": "24963441",
+  "polygon": true
+}

@@ -33,7 +33,7 @@ dataSources:
     name: SplitMain
     network: {{network}}
     source:
-      address: "0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE"
+      address: {{{splitMainAddress}}}
       abi: SplitMain
       startBlock: {{splitStartBlock}}
     mapping:
@@ -95,7 +95,7 @@ dataSources:
     name: VestingModuleFactory
     network: {{network}}
     source: 
-      address: "0x0a2841630f198745a55c4dab3fe98f77271949e5"
+      address: {{{vestingFactoryAddress}}}
       abi: VestingModuleFactory
       startBlock: {{vestingStartBlock}}
     mapping:
@@ -116,7 +116,7 @@ dataSources:
     name: WaterfallModuleFactory
     network: {{network}}
     source: 
-      address: "0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6"
+      address: {{{waterfallFactoryAddress}}}
       abi: WaterfallModuleFactory
       startBlock: {{waterfallStartBlock}}
     mapping:
@@ -156,7 +156,7 @@ dataSources:
     name: LiquidSplitFactory
     network: {{network}}
     source: 
-      address: "0xdEcd8B99b7F763e16141450DAa5EA414B7994831"
+      address: {{{liquidSplitFactoryAddress}}}
       abi: LiquidSplitFactory
       startBlock: {{liquidSplitStartBlock}}
     mapping:

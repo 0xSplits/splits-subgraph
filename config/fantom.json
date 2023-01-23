@@ -1,12 +1,12 @@
 {
-  "network": "arbitrum-one",
+  "network": "fantom",
   "splitMainAddress": "'0x2ed6c4B5dA6378c7897AC67Ba9e43102Feb694EE'",
   "vestingFactoryAddress": "'0x0a2841630f198745a55c4dab3fe98f77271949e5'",
   "waterfallFactoryAddress": "'0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6'",
   "liquidSplitFactoryAddress": "'0xdEcd8B99b7F763e16141450DAa5EA414B7994831'",
-  "splitStartBlock": "26082503",
-  "vestingStartBlock": "26112587",
-  "waterfallStartBlock": "32752593",
-  "liquidSplitStartBlock": "32755634",
+  "splitStartBlock": "53993922",
+  "vestingStartBlock": "53996048",
+  "waterfallStartBlock": "53997776",
+  "liquidSplitStartBlock": "53998434",
   "polygon": true
 }
