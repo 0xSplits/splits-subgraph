@@ -179,6 +179,10 @@ export function handleTransferBatch1155(event: TransferBatch): void {
 }
 
 export function handleTransferChaos721(event: TransferChaos): void {
+  // Only the first 1000 tokens are part of the chaos liquid split
+  let shouldSkip = event.params.tokenId > BigInt.fromI32(999)
+  if (shouldSkip) return;
+
   let liquidSplitId = event.address.toHexString();
   // Cant use getLiquidSplit because it will throw an error if it doesn't exist, which it won't
   // on the first execution of this.
