@@ -102,6 +102,11 @@ export function handleCreateSplit(event: CreateSplit): void {
   if (splitUser) return;
 
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
+
+  // Create dummy split so that the id doesn't get taken up by a user entity
+  // before the call handler can create it
+  let split = new Split(splitId);
+  split.save();
 }
 
 export function handleCreateSplitCall(call: CreateSplitCall): void {
