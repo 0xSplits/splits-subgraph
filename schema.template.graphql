@@ -1,3 +1,8 @@
+enum ParentEntityType {
+  liquidSplit
+  recoup
+}
+
 interface Account {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
@@ -6,6 +11,7 @@ interface Account {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+  parentEntityType: ParentEntityType
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
@@ -46,6 +52,7 @@ type User implements Account @entity {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+  parentEntityType: ParentEntityType
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
@@ -59,6 +66,7 @@ type Split implements Account @entity {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+  parentEntityType: ParentEntityType
 
   controller: Bytes!
   newPotentialController: Bytes!
@@ -89,7 +97,8 @@ type VestingModule implements Account @entity {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
-  
+  parentEntityType: ParentEntityType
+
   vestingPeriod: BigInt!
   beneficiary: Split!
   streams: [VestingStream!] @derivedFrom(field: "account")
@@ -117,6 +126,7 @@ type WaterfallModule implements Account @entity {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+  parentEntityType: ParentEntityType
 
   token: Token!
   tranches: [WaterfallTranche!] @derivedFrom(field: "account")
@@ -144,6 +154,7 @@ type LiquidSplit implements Account @entity {
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
+  parentEntityType: ParentEntityType
 
   distributorFee: BigInt!
   holders: [Holder!]! @derivedFrom(field: "liquidSplit")

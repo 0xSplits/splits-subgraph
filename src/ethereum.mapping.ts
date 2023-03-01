@@ -17,6 +17,7 @@ import {
 } from "../generated/SplitMain/SplitMain";
 import {
   Split,
+  LiquidSplit,
   Recipient,
   User,
   Transaction,
@@ -123,9 +124,12 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
     return;
   }
 
-  createUserIfMissing(call.inputs.controller.toHexString(), blockNumber, timestamp);
+  let controllerId = call.inputs.controller.toHexString();
+  createUserIfMissing(controllerId, blockNumber, timestamp);
 
-  let split = new Split(splitId);
+  // Split must exist at this point, was created in event handler and we know it's not
+  // a user entity
+  let split = getSplit(splitId) as Split;
   split.createdBlock = blockNumber;
   split.latestBlock = blockNumber;
   split.latestActivity = timestamp;
@@ -164,8 +168,13 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
       accountId
     )
   }
-
   split.recipients = recipientIds;
+
+  let liquidSplitController = LiquidSplit.load(controllerId);
+  if (liquidSplitController) {
+    split.parentEntityType = 'liquidSplit';
+  }
+
   split.save();
 }
 
