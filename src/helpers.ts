@@ -237,8 +237,6 @@ export function distributeSplit(
     split.latestBlock = blockNumber;
     split.latestActivity = timestamp;
     split.save();
-
-
   }
 
   // doesn't know msg.sender; only affects advance users distributing from contracts
