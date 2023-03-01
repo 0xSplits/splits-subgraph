@@ -38,6 +38,10 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   let txHash = event.transaction.hash.toHexString();
 
   let payoutSplitId = event.params.payoutSplit.toHexString();
+  // Payout split already exists for these liquid splits, but not for the 
+  // CreateLS1155Clone event. Order of events determines processing order across
+  // different data sources, and the clone event comes before the create split event
+  // (but the CreateLiquidSplit event comes after).
   let payoutSplit = Split.load(payoutSplitId);
   if (!payoutSplit) return;
 
