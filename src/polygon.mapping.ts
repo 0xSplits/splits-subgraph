@@ -1,4 +1,4 @@
-import { store, Address, log } from "@graphprotocol/graph-ts";
+import { Address, store, log } from "@graphprotocol/graph-ts";
 import {
   CancelControlTransfer,
   ControlTransfer,
@@ -23,6 +23,10 @@ import {
   saveSplitRecipientRemovedEvent,
   getSplit,
   getAccountIdForSplitEvents,
+  PERCENTAGE_SCALE,
+  ZERO_ADDRESS,
+  TWO,
+  ONE_ADDRESS,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -82,6 +86,8 @@ export function handleCreateSplit(event: CreateSplit): void {
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
   let blockNumber = event.block.number.toI32();
+  let accounts = event.params.accounts;
+  let percentAllocations = event.params.percentAllocations;
 
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
@@ -94,7 +100,22 @@ export function handleCreateSplit(event: CreateSplit): void {
 
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 
-  createUserIfMissing(event.params.controller.toHexString(), blockNumber, timestamp);
+  // Create controller as user EXCEPT when it looks like this is a payout split
+  // for a liquid split. In this case don't create the user so we don't tie up
+  // the address. This isn't needed in the ethereum call handler since that runs after
+  // the liquid split event handler. It also only impacts custom liquid splits, not
+  // factory liquid splits due to the ordering of events being different for the
+  // two.
+  let looksLikeLiquidSplitPayout = (
+    accounts.length == 2 &&
+    accounts[0].toHexString() == ZERO_ADDRESS &&
+    accounts[1].toHexString() == ONE_ADDRESS &&
+    percentAllocations[0] == PERCENTAGE_SCALE / TWO &&
+    percentAllocations[1] == PERCENTAGE_SCALE / TWO
+  )
+  if (!looksLikeLiquidSplitPayout) {
+    createUserIfMissing(event.params.controller.toHexString(), blockNumber, timestamp);
+  }
 
   let split = new Split(splitId);
   split.createdBlock = blockNumber;
@@ -104,8 +125,6 @@ export function handleCreateSplit(event: CreateSplit): void {
   split.newPotentialController = Address.zero();
   split.distributorFee = event.params.distributorFee;
 
-  let accounts = event.params.accounts;
-  let percentAllocations = event.params.percentAllocations;
   let recipientIds = new Array<string>();
   for (let i: i32 = 0; i < accounts.length; i++) {
     let accountId = accounts[i].toHexString();

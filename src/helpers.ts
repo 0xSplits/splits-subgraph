@@ -26,8 +26,10 @@ import {
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
 export const ZERO = BigInt.fromI32(0);
 export const ONE = BigInt.fromI32(1);
+export const TWO = BigInt.fromI32(2);
 
 export const ZERO_ADDRESS = Address.zero().toHexString();
+export const ONE_ADDRESS = "0x0000000000000000000000000000000000000001";
 
 export const SET_SPLIT_EVENT_PREFIX = "sse";
 export const ADDED_PREFIX = "add";
