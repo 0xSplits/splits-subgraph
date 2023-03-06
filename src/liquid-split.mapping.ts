@@ -72,17 +72,6 @@ export function handleCreateLiquidSplitClone(event: CreateLS1155Clone): void {
   );
 }
 
-export function handleCreateLiquidSplitFromFactory(event: CreateLS1155): void {
-  // The liquid split was already created from the abstract constructor's event,
-  // just need to mark it as factory generated
-  let liquidSplitId = event.params.ls.toHexString();
-  let liquidSplit = getLiquidSplit(liquidSplitId);
-  if (!liquidSplit) return;
-
-  liquidSplit.isFactoryGenerated = true;
-  liquidSplit.save();
-}
-
 export function handleTransferSingle1155(event: TransferSingle): void {
   let liquidSplitId = event.address.toHexString();
 

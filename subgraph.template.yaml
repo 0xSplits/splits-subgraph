@@ -171,8 +171,6 @@ dataSources:
         - name: LiquidSplitFactory
           file: ./abis/LiquidSplitFactory.json
       eventHandlers:
-        - event: CreateLS1155(indexed address)
-          handler: handleCreateLiquidSplitFromFactory
         - event: CreateLS1155Clone(indexed address)
           handler: handleCreateLiquidSplitClone
       file: ./src/liquid-split.mapping.ts
