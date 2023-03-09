@@ -4,9 +4,11 @@
   "vestingFactoryAddress": "'0x7205d93721837c45Be23C930D9fba842e968Ad69'",
   "waterfallFactoryAddress": "'0xB7CCCcCeb459F0910589556123dC5fA6DC8dE4E0'",
   "liquidSplitFactoryAddress": "'0xCDe071bE119024EdC970B3Da15003ee834ae40D2'",
+  "recoupAddress": "'0x5ff0C88311F79803B43e9Dc3F2B20F49A6b680fd'",
   "splitStartBlock": "24962607",
   "vestingStartBlock": "24962810",
   "waterfallStartBlock": "24962939",
   "liquidSplitStartBlock": "24963441",
+  "recoupStartBlock": "26327011",
   "polygon": true
 }
