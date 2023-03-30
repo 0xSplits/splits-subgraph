@@ -130,11 +130,12 @@ type WaterfallModule implements Account @entity {
 
   token: Token!
   tranches: [WaterfallTranche!] @derivedFrom(field: "account")
-  nonWaterfallRecipient: Bytes!
   totalClaimedAmount: BigInt!
+  nonWaterfallRecipientAccount: Account!
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
+  nonWaterfallRecipient: Bytes!
 }
 
 type WaterfallTranche @entity {

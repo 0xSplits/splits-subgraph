@@ -25,7 +25,8 @@ import {
   createUserIfMissing,
   getWaterfallModule,
   RECEIVE_PREFIX,
-  TOKEN_WITHDRAWAL_USER_PREFIX
+  TOKEN_WITHDRAWAL_USER_PREFIX,
+  TOKEN_WITHDRAWAL_WATERFALL_PREFIX
 } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
@@ -59,8 +60,12 @@ export function handleCreateWaterfallModule(event: CreateWaterfallModule): void 
   let token = new Token(tokenId);
   token.save();
 
+  let nonWaterfallRecipientAccountId = event.params.nonWaterfallRecipient.toHexString();
+  createUserIfMissing(nonWaterfallRecipientAccountId, blockNumber, timestamp);
+
   waterfallModule.token = tokenId;
-  waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient;
+  waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient; // deprecated
+  waterfallModule.nonWaterfallRecipientAccount = nonWaterfallRecipientAccountId;
   waterfallModule.totalClaimedAmount = ZERO;
   waterfallModule.createdBlock = blockNumber;
   waterfallModule.latestBlock = blockNumber;
@@ -148,6 +153,12 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 
   waterfallModule.save();
 
+  updateTokenWithdrawal(
+    waterfallModuleId,
+    waterfallModule.token,
+    totalPayout,
+  )
+
   // Save event
   let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
   let waterfallFundsEvent = new WaterfallFundsEvent(waterfallFundsEventId);
@@ -181,13 +192,22 @@ export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds):
   let token = new Token(tokenId);
   token.save();
 
+  let amount = event.params.amount;
+
+  updateTokenWithdrawal(
+    waterfallModuleId,
+    tokenId,
+    amount,
+  )
+
+  // Save events
   let recoverNonWaterfallFundsEventId = createJointId([RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
   let recoverNonWaterfallFundsEvent = new RecoverNonWaterfallFundsEvent(recoverNonWaterfallFundsEventId);
   recoverNonWaterfallFundsEvent.timestamp = timestamp;
   recoverNonWaterfallFundsEvent.transaction = txHash;
   recoverNonWaterfallFundsEvent.account = waterfallModuleId;
   recoverNonWaterfallFundsEvent.logIndex = logIdx;
-  recoverNonWaterfallFundsEvent.amount = event.params.amount;
+  recoverNonWaterfallFundsEvent.amount = amount;
   recoverNonWaterfallFundsEvent.nonWaterfallToken = tokenId;
   recoverNonWaterfallFundsEvent.save();
 
@@ -317,4 +337,24 @@ function saveWaterfallRecipientReceivedFunds(
   receiveWaterfallFundsEvent.amount = amount;
   receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId;
   receiveWaterfallFundsEvent.save();
+}
+
+function updateTokenWithdrawal(
+  waterfallModuleId: string,
+  tokenId: string,
+  amount: BigInt,
+): void {
+  let waterfallTokenBalanceId = createJointId([waterfallModuleId, tokenId]);
+  let waterfallTokenWithdrawalId = createJointId([
+    TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
+    waterfallTokenBalanceId
+  ]);
+  let waterfallTokenWithdrawal = TokenWithdrawal.load(waterfallTokenWithdrawalId);
+  if (!waterfallTokenWithdrawal) {
+    waterfallTokenWithdrawal = new TokenWithdrawal(waterfallTokenWithdrawalId);
+    waterfallTokenWithdrawal.account = waterfallModuleId;
+    waterfallTokenWithdrawal.token = tokenId;
+  }
+  waterfallTokenWithdrawal.amount += amount;
+  waterfallTokenWithdrawal.save();
 }
