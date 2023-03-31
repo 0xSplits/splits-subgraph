@@ -9,7 +9,7 @@ import {
   UpdateSplit,
   Withdrawal
 } from "../generated/SplitMain/SplitMain";
-import { Split, Recipient, User } from "../generated/schema";
+import { LiquidSplit, Split, Recipient, User } from "../generated/schema";
 import {
   createJointId,
   createUserIfMissing,
@@ -88,6 +88,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   let blockNumber = event.block.number.toI32();
   let accounts = event.params.accounts;
   let percentAllocations = event.params.percentAllocations;
+  let controllerId = event.params.controller.toHexString();
 
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
@@ -114,7 +115,7 @@ export function handleCreateSplit(event: CreateSplit): void {
     percentAllocations[1] == PERCENTAGE_SCALE / TWO
   )
   if (!looksLikeLiquidSplitPayout) {
-    createUserIfMissing(event.params.controller.toHexString(), blockNumber, timestamp);
+    createUserIfMissing(controllerId, blockNumber, timestamp);
   }
 
   let split = new Split(splitId);
@@ -145,8 +146,13 @@ export function handleCreateSplit(event: CreateSplit): void {
       accountId
     )
   }
-
   split.recipients = recipientIds;
+
+  let liquidSplitController = LiquidSplit.load(controllerId);
+  if (liquidSplitController) {
+    split.parentEntityType = 'liquidSplit';
+  }
+
   split.save();
 }
 

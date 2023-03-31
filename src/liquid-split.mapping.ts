@@ -44,6 +44,8 @@ export function handleCreateLiquidSplit(event: CreateLiquidSplit): void {
   // (but the CreateLiquidSplit event comes after).
   let payoutSplit = Split.load(payoutSplitId);
   if (!payoutSplit) return;
+  payoutSplit.parentEntityType = 'liquidSplit';
+  payoutSplit.save();
 
   let isFactoryGenerated = false;
   let isChaosSplit = false;
