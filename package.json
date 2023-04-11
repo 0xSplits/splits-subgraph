@@ -43,8 +43,8 @@
     "build-and-deploy-mainnet-testing": "yarn prepare:mainnet-testing && yarn build && yarn deploy:mainnet-testing"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.27.0",
-    "@graphprotocol/graph-ts": "0.24.1"
+    "@graphprotocol/graph-cli": "^0.45.1",
+    "@graphprotocol/graph-ts": "^0.29.3"
   },
   "devDependencies": {
     "mustache": "^4.2.0"
