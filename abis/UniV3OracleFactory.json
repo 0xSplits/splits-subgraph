@@ -1,0 +1,236 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IUniswapV3Factory",
+          "name": "uniswapV3Factory_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "weth9_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "contract UniV3OracleImpl",
+          "name": "oracle",
+          "type": "address"
+        },
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint24",
+              "name": "defaultFee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultPeriod",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultScaledOfferFactor",
+              "type": "uint32"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "base",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "quote",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct QuotePair",
+                  "name": "quotePair",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint24",
+                      "name": "fee",
+                      "type": "uint24"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "period",
+                      "type": "uint32"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "scaledOfferFactor",
+                      "type": "uint32"
+                    }
+                  ],
+                  "internalType": "struct UniV3OracleImpl.PairOverride",
+                  "name": "pairOverride",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
+              "name": "pairOverrides",
+              "type": "tuple[]"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct UniV3OracleImpl.InitParams",
+          "name": "params",
+          "type": "tuple"
+        }
+      ],
+      "name": "CreateUniV3Oracle",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes",
+          "name": "data_",
+          "type": "bytes"
+        }
+      ],
+      "name": "createOracle",
+      "outputs": [
+        {
+          "internalType": "contract OracleImpl",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint24",
+              "name": "defaultFee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultPeriod",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultScaledOfferFactor",
+              "type": "uint32"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "base",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "quote",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct QuotePair",
+                  "name": "quotePair",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint24",
+                      "name": "fee",
+                      "type": "uint24"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "period",
+                      "type": "uint32"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "scaledOfferFactor",
+                      "type": "uint32"
+                    }
+                  ],
+                  "internalType": "struct UniV3OracleImpl.PairOverride",
+                  "name": "pairOverride",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
+              "name": "pairOverrides",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct UniV3OracleImpl.InitParams",
+          "name": "params_",
+          "type": "tuple"
+        }
+      ],
+      "name": "createUniV3Oracle",
+      "outputs": [
+        {
+          "internalType": "contract UniV3OracleImpl",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "uniV3OracleImpl",
+      "outputs": [
+        {
+          "internalType": "contract UniV3OracleImpl",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}

@@ -92,6 +92,7 @@ export function handleControlTransfer(event: ControlTransfer): void {
 
 export function handleCreateSplit(event: CreateSplit): void {
   let timestamp = event.block.timestamp;
+  let blockNumber = event.block.number.toI32();
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
   let splitId = event.params.split.toHexString();
@@ -105,8 +106,19 @@ export function handleCreateSplit(event: CreateSplit): void {
   saveSetSplitEvent(timestamp, txHash, logIdx, splitId, 'create');
 
   // Create dummy split so that the id doesn't get taken up by a user entity
-  // before the call handler can create it
+  // before the call handler can create it.
   let split = new Split(splitId);
+  split.createdBlock = blockNumber;
+  split.latestBlock = blockNumber;
+  split.latestActivity = timestamp;
+
+  // All these values will get overwritten in the call handler
+  split.controller = Address.zero();
+  split.newPotentialController = Address.zero();
+  split.distributorFee = BigInt.fromI32(0);
+  let recipientIds = new Array<string>();
+  split.recipients = recipientIds;
+
   split.save();
 }
 

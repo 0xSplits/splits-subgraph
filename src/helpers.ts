@@ -21,6 +21,7 @@ import {
   WaterfallModule,
   VestingModule,
   LiquidSplit,
+  Swapper,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -71,6 +72,7 @@ function addBalanceToUser(
     );
     accountTokenInternalBalance.account = accountId;
     accountTokenInternalBalance.token = tokenId;
+    accountTokenInternalBalance.amount = BigInt.fromI32(0);
   }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
@@ -220,6 +222,7 @@ export function distributeSplit(
     splitTokenWithdrawal = new TokenWithdrawal(splitTokenWithdrawalId);
     splitTokenWithdrawal.account = splitId;
     splitTokenWithdrawal.token = tokenId;
+    splitTokenWithdrawal.amount = BigInt.fromI32(0);
   }
   splitTokenWithdrawal.amount += amount;
   splitTokenWithdrawal.save();
@@ -403,6 +406,7 @@ export function handleTokenWithdrawal(
     tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
     tokenWithdrawal.account = accountId;
     tokenWithdrawal.token = tokenId;
+    tokenWithdrawal.amount = BigInt.fromI32(0);
   }
   tokenWithdrawal.amount += amount;
   tokenWithdrawal.save();
@@ -416,6 +420,7 @@ export function handleTokenWithdrawal(
     tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
     tokenInternalBalance.account = accountId;
     tokenInternalBalance.token = tokenId;
+    tokenInternalBalance.amount = BigInt.fromI32(0);
   }
 
   // There's a bug on ethereum when distribute and withdraw events are grouped together in a transaction.
@@ -468,6 +473,9 @@ export function createUserIfMissing(
 
   let liquidSplit = LiquidSplit.load(accountId);
   if (liquidSplit) return;
+
+  let swapper = Swapper.load(accountId);
+  if (swapper) return;
 
   // Don't allow this for the chaos liquid split. The liquid split is the controller
   // of the payout split, but there's no event to create the liquid split before the
@@ -541,6 +549,21 @@ export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
   }
 
   return liquidSplit;
+}
+
+export function getSwapper(swapperId: string): Swapper | null {
+  let swapper = Swapper.load(swapperId);
+  if (!swapper) {
+    let swapperUser = User.load(swapperId);
+    if (swapperUser) {
+      // It's a valid case where the swapper doesn't exist. Just exit.
+      log.warning('Trying to fetch a swapper, but a user already exists: {}', [swapperId]);
+      return null;
+    }
+    throw new Error('Swapper must exist');
+  }
+
+  return swapper;
 }
 
 export function createTransactionIfMissing(txHash: string): void {

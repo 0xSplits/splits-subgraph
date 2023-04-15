@@ -260,12 +260,15 @@ function updateWaterfallTrancheAmount(waterfallTranche: WaterfallTranche, remain
     return ZERO;
   }
 
-  if (waterfallTranche.size === waterfallTranche.claimedAmount) {
+  // Need to cast to avoid compilation error with graph-ts.
+  let trancheSize = waterfallTranche.size as BigInt;
+
+  if (trancheSize === waterfallTranche.claimedAmount) {
     // Tranche is already filled
     return remainingPayout;
   }
 
-  let trancheFundsRemaining = waterfallTranche.size - waterfallTranche.claimedAmount;
+  let trancheFundsRemaining = trancheSize - waterfallTranche.claimedAmount;
   if (trancheFundsRemaining >= remainingPayout) {
     // The current tranche can take the rest of the payout
     waterfallTranche.claimedAmount += remainingPayout;
@@ -316,6 +319,7 @@ function saveWaterfallRecipientReceivedFunds(
       tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
       tokenWithdrawal.account = accountId;
       tokenWithdrawal.token = tokenId;
+      tokenWithdrawal.amount = ZERO;
     }
     tokenWithdrawal.amount += amount;
     tokenWithdrawal.save();
@@ -354,6 +358,7 @@ function updateTokenWithdrawal(
     waterfallTokenWithdrawal = new TokenWithdrawal(waterfallTokenWithdrawalId);
     waterfallTokenWithdrawal.account = waterfallModuleId;
     waterfallTokenWithdrawal.token = tokenId;
+    waterfallTokenWithdrawal.amount = ZERO;
   }
   waterfallTokenWithdrawal.amount += amount;
   waterfallTokenWithdrawal.save();

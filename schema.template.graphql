@@ -181,6 +181,68 @@ type Transaction @entity {
   setSplitEvents: [SetSplitEvent!]
 }
 
+enum OracleType {
+  uniswapV3TWAP
+}
+
+type UniswapV3TWAPPairOverride @entity {
+  id: ID! # ${oracleId}-${base}-${quote}
+  oracle: Oracle!
+  base: Token!
+  quote: Token!
+  fee: BigInt!
+  period: BigInt!
+  scaledOfferFactor: BigInt!
+}
+
+# No required fields because of third-party oracles. We'll still create the 
+# oracle object but won't know anything about it
+type Oracle @entity {
+  id: ID! #ethereum address
+  type: OracleType
+  createdBlock: Int
+  latestBlock: Int
+  latestActivity: BigInt
+  # TODO: These are all specific to univ3twap, should we pull out to something else?
+  owner: Account
+  paused: Boolean
+  defaultFee: BigInt
+  defaultPeriod: BigInt
+  defaultScaledOfferFactor: BigInt
+  pairOverrides: [UniswapV3TWAPPairOverride!] @derivedFrom(field: "oracle")
+}
+
+type SwapBalance @entity {
+  id: ID! # ${swapperId}-${inputTokenId}-${outputTokenId}
+  swapper: Swapper!
+  inputToken: Token!
+  inputAmount: BigInt!
+  outputToken: Token!
+  outputAmount: BigInt!
+}
+
+type Swapper implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
+  parentEntityType: ParentEntityType
+
+  owner: Account!
+  paused: Boolean!
+  beneficiary: Account!
+  tokenToBeneficiary: Token!
+  oracle: Oracle!
+
+  swapBalances: [SwapBalance!]! @derivedFrom(field: "swapper")
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
+}
+
 interface AccountEvent {
   id: ID! # ${prefix}-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
@@ -462,4 +524,13 @@ type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   nftTransferEvent: LiquidSplitNFTTransferEvent!
+}
+
+type CreateSwapperEvent implements AccountEvent @entity {
+  id: ID! # cse-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
 }

@@ -1,0 +1,570 @@
+{
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "contract IUniswapV3Factory",
+          "name": "uniswapV3Factory_",
+          "type": "address"
+        },
+        {
+          "internalType": "address",
+          "name": "weth9_",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "Paused",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Pool_DoesNotExist",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "T",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "Unauthorized",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "oldOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "OwnershipTransferred",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint24",
+          "name": "defaultFee",
+          "type": "uint24"
+        }
+      ],
+      "name": "SetDefaultFee",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "defaultPeriod",
+          "type": "uint32"
+        }
+      ],
+      "name": "SetDefaultPeriod",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "uint32",
+          "name": "defaultScaledOfferFactor",
+          "type": "uint32"
+        }
+      ],
+      "name": "SetDefaultScaledOfferFactor",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "base",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "quote",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct QuotePair",
+              "name": "quotePair",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint24",
+                  "name": "fee",
+                  "type": "uint24"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "period",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "scaledOfferFactor",
+                  "type": "uint32"
+                }
+              ],
+              "internalType": "struct UniV3OracleImpl.PairOverride",
+              "name": "pairOverride",
+              "type": "tuple"
+            }
+          ],
+          "indexed": false,
+          "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
+          "name": "params",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "SetPairOverrides",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "bool",
+          "name": "paused",
+          "type": "bool"
+        }
+      ],
+      "name": "SetPaused",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "defaultFee",
+      "outputs": [
+        {
+          "internalType": "uint24",
+          "name": "",
+          "type": "uint24"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "defaultPeriod",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "defaultScaledOfferFactor",
+      "outputs": [
+        {
+          "internalType": "uint32",
+          "name": "",
+          "type": "uint32"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "base",
+              "type": "address"
+            },
+            {
+              "internalType": "address",
+              "name": "quote",
+              "type": "address"
+            }
+          ],
+          "internalType": "struct QuotePair[]",
+          "name": "quotePairs_",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "getPairOverrides",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "uint24",
+              "name": "fee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "uint32",
+              "name": "period",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "scaledOfferFactor",
+              "type": "uint32"
+            }
+          ],
+          "internalType": "struct UniV3OracleImpl.PairOverride[]",
+          "name": "pairOverrides",
+          "type": "tuple[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "base",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "quote",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct QuotePair",
+              "name": "quotePair",
+              "type": "tuple"
+            },
+            {
+              "internalType": "uint128",
+              "name": "baseAmount",
+              "type": "uint128"
+            },
+            {
+              "internalType": "bytes",
+              "name": "data",
+              "type": "bytes"
+            }
+          ],
+          "internalType": "struct OracleImpl.QuoteParams[]",
+          "name": "quoteParams_",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "getQuoteAmounts",
+      "outputs": [
+        {
+          "internalType": "uint256[]",
+          "name": "quoteAmounts",
+          "type": "uint256[]"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "internalType": "address",
+              "name": "owner",
+              "type": "address"
+            },
+            {
+              "internalType": "bool",
+              "name": "paused",
+              "type": "bool"
+            },
+            {
+              "internalType": "uint24",
+              "name": "defaultFee",
+              "type": "uint24"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultPeriod",
+              "type": "uint32"
+            },
+            {
+              "internalType": "uint32",
+              "name": "defaultScaledOfferFactor",
+              "type": "uint32"
+            },
+            {
+              "components": [
+                {
+                  "components": [
+                    {
+                      "internalType": "address",
+                      "name": "base",
+                      "type": "address"
+                    },
+                    {
+                      "internalType": "address",
+                      "name": "quote",
+                      "type": "address"
+                    }
+                  ],
+                  "internalType": "struct QuotePair",
+                  "name": "quotePair",
+                  "type": "tuple"
+                },
+                {
+                  "components": [
+                    {
+                      "internalType": "uint24",
+                      "name": "fee",
+                      "type": "uint24"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "period",
+                      "type": "uint32"
+                    },
+                    {
+                      "internalType": "uint32",
+                      "name": "scaledOfferFactor",
+                      "type": "uint32"
+                    }
+                  ],
+                  "internalType": "struct UniV3OracleImpl.PairOverride",
+                  "name": "pairOverride",
+                  "type": "tuple"
+                }
+              ],
+              "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
+              "name": "pairOverrides",
+              "type": "tuple[]"
+            }
+          ],
+          "internalType": "struct UniV3OracleImpl.InitParams",
+          "name": "params_",
+          "type": "tuple"
+        }
+      ],
+      "name": "initializer",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "paused",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint24",
+          "name": "defaultFee_",
+          "type": "uint24"
+        }
+      ],
+      "name": "setDefaultFee",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "defaultPeriod_",
+          "type": "uint32"
+        }
+      ],
+      "name": "setDefaultPeriod",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "uint32",
+          "name": "defaultScaledOfferFactor_",
+          "type": "uint32"
+        }
+      ],
+      "name": "setDefaultScaledOfferFactor",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "components": [
+            {
+              "components": [
+                {
+                  "internalType": "address",
+                  "name": "base",
+                  "type": "address"
+                },
+                {
+                  "internalType": "address",
+                  "name": "quote",
+                  "type": "address"
+                }
+              ],
+              "internalType": "struct QuotePair",
+              "name": "quotePair",
+              "type": "tuple"
+            },
+            {
+              "components": [
+                {
+                  "internalType": "uint24",
+                  "name": "fee",
+                  "type": "uint24"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "period",
+                  "type": "uint32"
+                },
+                {
+                  "internalType": "uint32",
+                  "name": "scaledOfferFactor",
+                  "type": "uint32"
+                }
+              ],
+              "internalType": "struct UniV3OracleImpl.PairOverride",
+              "name": "pairOverride",
+              "type": "tuple"
+            }
+          ],
+          "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
+          "name": "params_",
+          "type": "tuple[]"
+        }
+      ],
+      "name": "setPairOverrides",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bool",
+          "name": "paused_",
+          "type": "bool"
+        }
+      ],
+      "name": "setPaused",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "owner_",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "uniV3OracleFactory",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "uniswapV3Factory",
+      "outputs": [
+        {
+          "internalType": "contract IUniswapV3Factory",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "weth9",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ]
+}
