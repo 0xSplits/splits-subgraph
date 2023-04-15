@@ -196,6 +196,47 @@ dataSources:
         - event: CreateRecoup(address)
           handler: handleCreateRecoup
       file: ./src/templates.mapping.ts
+  - kind: ethereum/contract
+    name: UniV3OracleFactory
+    network: {{network}}
+    source: 
+      address: {{{uniV3OracleFactoryAddress}}}
+      abi: UniV3OracleFactory
+      startBlock: {{uniV3OracleStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Oracle
+        - UniswapV3TWAPPairOverride
+      abis:
+        - name: UniV3OracleFactory
+          file: ./abis/UniV3OracleFactory.json
+      eventHandlers:
+        - event: CreateUniV3Oracle(indexed address,(address,bool,uint24,uint32,uint32,((address,address),(uint24,uint32,uint32))[]))
+          handler: handleCreateUniV3Oracle
+      file: ./src/oracle.mapping.ts
+  - kind: ethereum/contract
+    name: SwapperFactory
+    network: {{network}}
+    source: 
+      address: {{{swapperFactoryAddress}}}
+      abi: SwapperFactory
+      startBlock: {{swapperStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Swapper
+      abis:
+        - name: SwapperFactory
+          file: ./abis/SwapperFactory.json
+      eventHandlers:
+        - event: CreateSwapper(indexed address,(address,bool,address,address,address))
+          handler: handleCreateSwapper
+      file: ./src/swapper.mapping.ts
 templates:
   - kind: ethereum/contract
     name: VestingModule
@@ -260,3 +301,55 @@ templates:
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer721
       file: ./src/liquid-split.mapping.ts
+  - kind: ethereum/contract
+    name: UniV3Oracle
+    network: {{network}}
+    source: 
+      abi: UniV3Oracle
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Oracle
+        - UniswapV3TWAPPairOverride
+      abis:
+        - name: UniV3Oracle
+          file: ./abis/UniV3Oracle.json
+      eventHandlers:
+        - event: SetDefaultFee(uint24)
+          handler: handleSetDefaultFee
+        - event: SetDefaultPeriod(uint32)
+          handler: handleSetDefaultPeriod
+        - event: SetDefaultScaledOfferFactor(uint32)
+          handler: handleSetDefaultScaledOfferFactor
+      file: ./src/oracle.mapping.ts
+  - kind: ethereum/contract
+    name: Swapper
+    network: {{network}}
+    source: 
+      abi: Swapper
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.6
+      language: wasm/assemblyscript
+      entities:
+        - Swapper
+        - SwapBalance
+      abis:
+        - name: Swapper
+          file: ./abis/Swapper.json
+      eventHandlers:
+        - event: SetBeneficiary(address)
+          handler: handleSetBeneficiary
+        - event: SetTokenToBeneficiary(address)
+          handler: handleSetTokenToBeneficiary
+        - event: SetOracle(address)
+          handler: handleSetOracle
+        - event: SetPaused(bool)
+          handler: handleSetPaused
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+        - event: Flash(indexed address,((address,address),uint128,bytes)[],address,uint256[],uint256)
+          handler: handleFlash
+      file: ./src/swapper.mapping.ts
