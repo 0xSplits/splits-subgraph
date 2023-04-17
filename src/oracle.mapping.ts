@@ -1,6 +1,6 @@
 import { BigInt, log } from "@graphprotocol/graph-ts";
 import { CreateUniV3Oracle } from "../generated/UniV3OracleFactory/UniV3OracleFactory"
-import { SetDefaultFee, SetDefaultPeriod, SetDefaultScaledOfferFactor } from "../generated/templates/UniV3Oracle/UniV3Oracle"
+import { SetDefaultFee, SetDefaultPeriod, SetDefaultScaledOfferFactor, SetPairOverrides } from "../generated/templates/UniV3Oracle/UniV3Oracle"
 import { UniV3Oracle as UniV3OracleTemplate } from "../generated/templates";
 import {
   Token,
@@ -98,6 +98,7 @@ function updatePairOverride(
   pairOverride.fee = fee;
   pairOverride.period = period;
   pairOverride.scaledOfferFactor = scaledOfferFactor;
+  pairOverride.save();
 }
 
 export function handleSetDefaultFee(event: SetDefaultFee): void {
@@ -155,6 +156,42 @@ export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFa
   }
 
   oracle.defaultScaledOfferFactor = event.params.defaultScaledOfferFactor;
+  oracle.save();
+
+  // TODO: Save event?
+}
+
+export function handleSetPairOverrides(event: SetPairOverrides): void {
+  let oracleId = event.address.toHexString();
+
+  let oracle = Oracle.load(oracleId);
+  if (!oracle) return;
+
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+
+  if (event.block.number.toI32() > oracle.latestBlock) {
+    oracle.latestBlock = blockNumber;
+    oracle.latestActivity = timestamp;
+  }
+
+  let pairOverrides = event.params.params
+  for (let i: i32 = 0; i < pairOverrides.length; i++) {
+    let base = pairOverrides[i].quotePair.base.toHexString();
+    let baseToken = new Token(base);
+    baseToken.save();
+
+    let quote = pairOverrides[i].quotePair.quote.toHexString();
+    let quoteToken = new Token(quote);
+    quoteToken.save();
+
+    let fee = BigInt.fromI32(pairOverrides[i].pairOverride.fee);
+    let period = pairOverrides[i].pairOverride.period;
+    let scaledOfferFactor = pairOverrides[i].pairOverride.scaledOfferFactor;
+
+    updatePairOverride(oracleId, base, quote, fee, period, scaledOfferFactor);
+  }
+
   oracle.save();
 
   // TODO: Save event?
