@@ -183,6 +183,7 @@ type Transaction @entity {
 
 enum OracleType {
   uniswapV3TWAP
+  unknown
 }
 
 type UniswapV3TWAPPairOverride @entity {
@@ -199,7 +200,7 @@ type UniswapV3TWAPPairOverride @entity {
 # oracle object but won't know anything about it
 type Oracle @entity {
   id: ID! #ethereum address
-  type: OracleType
+  type: OracleType!
   createdBlock: Int
   latestBlock: Int
   latestActivity: BigInt

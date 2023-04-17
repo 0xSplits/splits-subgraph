@@ -323,6 +323,8 @@ templates:
           handler: handleSetDefaultPeriod
         - event: SetDefaultScaledOfferFactor(uint32)
           handler: handleSetDefaultScaledOfferFactor
+        - event: SetPairOverrides(((address,address),(uint24,uint32,uint32))[])
+          handler: handleSetPairOverrides
       file: ./src/oracle.mapping.ts
   - kind: ethereum/contract
     name: Swapper
