@@ -33,31 +33,31 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
 
   let oracle = new Oracle(oracleId);
 
-  let owner = event.params.params[0].toAddress().toHexString();
-  let paused = event.params.params[1].toBoolean();
-  let defaultFee = event.params.params[2].toBigInt();
-  let defaultPeriod = event.params.params[3].toBigInt();
-  let defaultScaledOfferFactor = event.params.params[4].toBigInt();
-  let pairOverrides = event.params.params[5].toArray();
+  let owner = event.params.params.owner.toHexString();
+  let paused = event.params.params.paused;
+  let defaultFee = BigInt.fromI32(event.params.params.defaultFee);
+  let defaultPeriod = event.params.params.defaultPeriod;
+  let defaultScaledOfferFactor = event.params.params.defaultScaledOfferFactor;
+  let pairOverrides = event.params.params.pairOverrides;
 
   createUserIfMissing(owner, blockNumber, timestamp);
 
   for (let i: i32 = 0; i < pairOverrides.length; i++) {
-    let quotePair = pairOverrides[i].toArray()[0].toArray();
+    let quotePair = pairOverrides[i].quotePair;
 
-    let base = quotePair[0].toAddress().toHexString();
+    let base = quotePair.base.toHexString();
     let baseToken = new Token(base);
     baseToken.save();
 
-    let quote = quotePair[1].toAddress().toHexString();
+
+    let quote = quotePair.quote.toHexString();
     let quoteToken = new Token(quote);
     quoteToken.save();
 
-    let pairOverride = pairOverrides[i].toArray()[1].toArray();
-
-    let fee = pairOverride[0].toBigInt();
-    let period = pairOverride[1].toBigInt();
-    let scaledOfferFactor = pairOverride[2].toBigInt();
+    let pairOverride = pairOverrides[i].pairOverride;
+    let fee = BigInt.fromI32(pairOverride.fee);
+    let period = pairOverride.period;
+    let scaledOfferFactor = pairOverride.scaledOfferFactor;
 
     updatePairOverride(oracleId, base, quote, fee, period, scaledOfferFactor);
   }
