@@ -1,6 +1,7 @@
 enum ParentEntityType {
   liquidSplit
   recoup
+  diversifier
 }
 
 interface Account {
@@ -39,13 +40,6 @@ type TokenInternalBalance implements TokenBalance @entity {
 
 type TokenWithdrawal implements TokenBalance @entity {
   id: ID! # w-${accountId}-${tokenId}
-  amount: BigInt!
-  token: Token!
-  account: Account!
-}
-
-type TokenRelease implements TokenBalance @entity {
-  id: ID! # r-${accountId}-${tokenId}
   amount: BigInt!
   token: Token!
   account: Account!
@@ -249,6 +243,14 @@ type Swapper implements Account @entity {
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
+}
+
+# TODO: should this be more generic? On Account?
+type TokenRelease @entity {
+  id: ID! # r-${accountId}-${tokenId}
+  amount: BigInt!
+  token: Token!
+  account: PassThroughWallet!
 }
 
 type PassThroughWallet implements Account @entity {
@@ -555,6 +557,15 @@ type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
 }
 
 type CreateSwapperEvent implements AccountEvent @entity {
+  id: ID! # cse-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+}
+
+type CreatePassThroughWalletEvent implements AccountEvent @entity {
   id: ID! # cse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
