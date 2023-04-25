@@ -13,18 +13,22 @@ import {
   User,
   PassThroughWallet,
   TokenRelease,
+  Recipient,
+  Swapper,
 } from "../generated/schema";
 import {
   createJointId,
   createTransactionIfMissing,
   createUserIfMissing,
   getPassThroughWallet,
+  getSplit,
   TOKEN_RELEASE_PREFIX,
+  ZERO,
+  ZERO_ADDRESS,
 } from "./helpers";
 
-export const ZERO = BigInt.fromI32(0);
-
 const CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX = "cptwe";
+const DIVERSIFIER_FACTORY_ADDRESS = "0xFE7800f67b3e42ddb004057169603FEAdEeD31B0";
 
 export function handleCreatePassThroughWallet(event: CreatePassThroughWallet): void {
   let passThroughWalletId = event.params.passThroughWallet.toHexString();
@@ -93,8 +97,34 @@ export function handleSetPassThrough(event: SetPassThrough): void {
   let newPassThrough = event.params.passThrough.toHexString();
   createUserIfMissing(newPassThrough, blockNumber, timestamp);
 
+  let oldPassThrough = passThroughWallet.passThroughAccount;
   passThroughWallet.passThroughAccount = newPassThrough;
   passThroughWallet.save();
+
+  // Need to update parentEntityTypes for downstream if this is
+  // the diversifier factory updating the pass through.
+  if (
+    passThroughWallet.owner.toLowerCase() == DIVERSIFIER_FACTORY_ADDRESS.toLowerCase() &&
+    oldPassThrough == ZERO_ADDRESS
+  ) {
+    let split = getSplit(passThroughWallet.passThroughAccount);
+    if (!split) return;
+
+    split.parentEntityType = 'diversifier';
+    split.save();
+
+    let recipients = split.recipients;
+    for (let i: i32 = 0; i < recipients.length; i++) {
+      let recipientId = recipients[i];
+      // must exist
+      let recipient = Recipient.load(recipientId) as Recipient;
+      let swapper = Swapper.load(recipient.account); // TODO: check for other account types?
+      if (swapper) {
+        swapper.parentEntityType = 'diversifier';
+        swapper.save();
+      }
+    }
+  }
 
   // Save event?
 }

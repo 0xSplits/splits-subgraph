@@ -22,6 +22,7 @@ import {
   VestingModule,
   LiquidSplit,
   Swapper,
+  PassThroughWallet,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -478,6 +479,9 @@ export function createUserIfMissing(
   let swapper = Swapper.load(accountId);
   if (swapper) return;
 
+  let passThroughWallet = PassThroughWallet.load(accountId);
+  if (passThroughWallet) return;  
+
   // Don't allow this for the chaos liquid split. The liquid split is the controller
   // of the payout split, but there's no event to create the liquid split before the
   // payout split. We can't create the user first because that blocks us from creating
@@ -565,6 +569,21 @@ export function getSwapper(swapperId: string): Swapper | null {
   }
 
   return swapper;
+}
+
+export function getPassThroughWallet(passThroughWalletId: string): PassThroughWallet | null {
+  let passThroughWallet = PassThroughWallet.load(passThroughWalletId);
+  if (!passThroughWallet) {
+    let passThroughWalletUser = User.load(passThroughWalletId);
+    if (passThroughWalletUser) {
+      // It's a valid case where the waterfall doesn't exist. Just exit.
+      log.warning('Trying to fetch a pass through wallet, but a user already exists: {}', [passThroughWalletId]);
+      return null;
+    }
+    throw new Error('Pass through wallet must exist');
+  }
+
+  return passThroughWallet;
 }
 
 export function createTransactionIfMissing(txHash: string): void {
