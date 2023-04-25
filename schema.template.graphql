@@ -44,6 +44,13 @@ type TokenWithdrawal implements TokenBalance @entity {
   account: Account!
 }
 
+type TokenRelease implements TokenBalance @entity {
+  id: ID! # r-${accountId}-${tokenId}
+  amount: BigInt!
+  token: Token!
+  account: Account!
+}
+
 type User implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
@@ -239,6 +246,26 @@ type Swapper implements Account @entity {
   oracle: Oracle!
 
   swapBalances: [SwapBalance!]! @derivedFrom(field: "swapper")
+
+  # Deprecated
+  upstream: [Recipient!] @derivedFrom(field: "account")
+}
+
+type PassThroughWallet implements Account @entity {
+  id: ID! # ethereum address
+  internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
+  withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  createdBlock: Int!
+  latestBlock: Int!
+  latestActivity: BigInt!
+  parentEntityType: ParentEntityType
+
+  owner: Account!
+  paused: Boolean!
+  passThroughAccount: Account!
+
+  passThroughBalances: [TokenRelease!]! @derivedFrom(field: "account")
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")

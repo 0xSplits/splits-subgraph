@@ -44,6 +44,7 @@ export const TOKEN_WITHDRAWAL_SPLIT_PREFIX = "w-s";
 export const TOKEN_WITHDRAWAL_USER_PREFIX = "w-u";
 export const TOKEN_WITHDRAWAL_WATERFALL_PREFIX = "w-w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
+export const TOKEN_RELEASE_PREFIX = "r";
 export const CONTROL_TRANSFER_EVENT_PREFIX = "ct";
 export const FROM_USER_PREFIX = "fu";
 export const TO_USER_PREFIX = "tu";
