@@ -15,21 +15,30 @@ import {
   User,
   Swapper,
   SwapBalance,
-  CreateSwapperEvent,
   TokenWithdrawal,
   Oracle,
+  CreateSwapperEvent,
+  UpdateSwapperBeneficiaryEvent,
+  UpdateSwapperTokenEvent,
+  SwapFundsEvent,
+  ReceiveSwappedFundsEvent,
 } from "../generated/schema";
 import {
   createJointId,
   createTransactionIfMissing,
   createUserIfMissing,
   getSwapper,
+  RECEIVE_PREFIX,
   TOKEN_WITHDRAWAL_USER_PREFIX,
   ZERO,
   ZERO_ADDRESS,
 } from "./helpers";
 
-const CREATE_SWAPPER_EVENT_PREFIX = "cse";
+const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
+const UPDATE_SWAPPER_BENEFICIARY_EVENT_PREFIX = "usbe";
+const UPDATE_SWAPPER_TOKEN_EVENT_PREFIX = "uste";
+const SWAP_FUNDS_EVENT_PREFIX = "sfe";
+
 const TRANSFER_EVENT_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 const WETH_WITHDRAWAL_EVENT_TOPIC = "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65";
 
@@ -77,13 +86,15 @@ export function handleCreateSwapper(event: CreateSwapper): void {
   swapper.save();
   SwapperTemplate.create(event.params.swapper);
 
-  // Save event
+  // Save events
   let createSwapperEventId = createJointId([CREATE_SWAPPER_EVENT_PREFIX, txHash, logIdx.toString()]);
   let createSwapperEvent = new CreateSwapperEvent(createSwapperEventId);
   createSwapperEvent.timestamp = timestamp;
   createSwapperEvent.transaction = txHash;
   createSwapperEvent.logIndex = logIdx;
   createSwapperEvent.account = swapperId;
+  createSwapperEvent.beneficiary = beneficiary;
+  createSwapperEvent.token = tokenToBeneficiary;
   createSwapperEvent.save();
 }
 
@@ -95,6 +106,9 @@ export function handleSetBeneficiary(event: SetBeneficiary): void {
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > swapper.latestBlock) {
     swapper.latestBlock = blockNumber;
@@ -104,10 +118,20 @@ export function handleSetBeneficiary(event: SetBeneficiary): void {
   let newBeneficiary = event.params.beneficiary.toHexString();
   createUserIfMissing(newBeneficiary, blockNumber, timestamp);
 
+  let oldBeneficiary = swapper.beneficiary;
   swapper.beneficiary = newBeneficiary;
   swapper.save();
 
-  // TODO: Save event
+  // Save events
+  let updateBeneficiaryEventId = createJointId([UPDATE_SWAPPER_BENEFICIARY_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateBeneficiaryEvent = new UpdateSwapperBeneficiaryEvent(updateBeneficiaryEventId);
+  updateBeneficiaryEvent.timestamp = timestamp;
+  updateBeneficiaryEvent.transaction = txHash;
+  updateBeneficiaryEvent.logIndex = logIdx;
+  updateBeneficiaryEvent.account = swapperId;
+  updateBeneficiaryEvent.oldBeneficiary = oldBeneficiary;
+  updateBeneficiaryEvent.newBeneficiary = newBeneficiary;
+  updateBeneficiaryEvent.save();
 }
 
 export function handleSetTokenToBeneficiary(event: SetTokenToBeneficiary): void {
@@ -118,6 +142,9 @@ export function handleSetTokenToBeneficiary(event: SetTokenToBeneficiary): void 
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > swapper.latestBlock) {
     swapper.latestBlock = blockNumber;
@@ -128,10 +155,20 @@ export function handleSetTokenToBeneficiary(event: SetTokenToBeneficiary): void 
   let token = new Token(newToken);
   token.save();
 
+  let oldToken = swapper.tokenToBeneficiary;
   swapper.tokenToBeneficiary = newToken;
   swapper.save();
 
-  // TODO: Save event
+  // Save events
+  let updateTokenEventId = createJointId([UPDATE_SWAPPER_TOKEN_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateTokenEvent = new UpdateSwapperTokenEvent(updateTokenEventId);
+  updateTokenEvent.timestamp = timestamp;
+  updateTokenEvent.transaction = txHash;
+  updateTokenEvent.logIndex = logIdx;
+  updateTokenEvent.account = swapperId;
+  updateTokenEvent.oldToken = oldToken;
+  updateTokenEvent.newToken = newToken;
+  updateTokenEvent.save();
 }
 
 export function handleSetOracle(event: SetOracle): void {
@@ -208,9 +245,6 @@ export function handleExecCalls(event: ExecCalls): void {
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
-  // let txHash = event.transaction.hash.toHexString();
-  // createTransactionIfMissing(txHash);
-  // let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > swapper.latestBlock) {
     swapper.latestBlock = blockNumber;
@@ -220,8 +254,6 @@ export function handleExecCalls(event: ExecCalls): void {
   handleOwnerSwap(swapper, event);
 
   swapper.save();
-
-  // Save event?
 }
 
 export function handleFlash(event: Flash): void {
@@ -232,19 +264,19 @@ export function handleFlash(event: Flash): void {
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > swapper.latestBlock) {
     swapper.latestBlock = blockNumber;
     swapper.latestActivity = timestamp;
   }
 
-  let trader = event.params.trader.toHexString();
   let tokenToBeneficiary = event.params.tokenToBeneficiary.toHexString();
   let amountsToBeneificiary = event.params.amountsToBeneficiary;
   let excessToBeneficiary = event.params.excessToBeneficiary;
   let quoteParams = event.params.quoteParams;
-
-  // TODO: anything to do with trader?
 
   for (let i: i32 = 0; i < quoteParams.length; i++) {
     let inputAmount = quoteParams[i].baseAmount;
@@ -259,7 +291,10 @@ export function handleFlash(event: Flash): void {
       inputTokenId,
       inputAmount,
       tokenToBeneficiary,
-      outputAmount
+      outputAmount,
+      timestamp,
+      txHash,
+      logIdx,
     );
   }
 
@@ -271,7 +306,10 @@ export function handleFlash(event: Flash): void {
       tokenToBeneficiary,
       excessToBeneficiary,
       tokenToBeneficiary,
-      excessToBeneficiary
+      excessToBeneficiary,
+      timestamp,
+      txHash,
+      logIdx,
     );
   }
 
@@ -285,6 +323,11 @@ function handleOwnerSwap(
   event: ExecCalls,
 ): void {
   let swapperId = swapper.id;
+
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   let receipt = event.receipt as ethereum.TransactionReceipt;
   if (receipt) {
@@ -312,6 +355,9 @@ function handleOwnerSwap(
             pendingInputAmount,
             token,
             amount,
+            timestamp,
+            txHash,
+            logIdx,
           );
         }
       } else if (topic0 == WETH_WITHDRAWAL_EVENT_TOPIC) {
@@ -323,6 +369,9 @@ function handleOwnerSwap(
           pendingInputAmount,
           ZERO_ADDRESS,
           amount,
+          timestamp,
+          txHash,
+          logIdx,
         );
       }
     }
@@ -335,7 +384,10 @@ function updateSwapBalance(
   inputTokenId: string,
   inputAmount: BigInt,
   outputTokenId: string,
-  outputAmount: BigInt
+  outputAmount: BigInt,
+  timestamp: BigInt,
+  txHash: string,
+  logIdx: BigInt
 ): void {
   let swapBalanceId = createJointId([swapperId, inputTokenId, outputTokenId]);
   let swapBalance = SwapBalance.load(swapBalanceId);
@@ -370,6 +422,28 @@ function updateSwapBalance(
     tokenWithdrawal.amount += outputAmount;
     tokenWithdrawal.save();
   }
+
+  // Save events
+  let swapFundsEventId = createJointId([SWAP_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let swapFundsEvent = new SwapFundsEvent(swapFundsEventId);
+  swapFundsEvent.timestamp = timestamp;
+  swapFundsEvent.transaction = txHash;
+  swapFundsEvent.logIndex = logIdx;
+  swapFundsEvent.account = swapperId;
+  swapFundsEvent.inputAmount = inputAmount;
+  swapFundsEvent.inputToken = inputTokenId;
+  swapFundsEvent.outputAmount = outputAmount;
+  swapFundsEvent.outputToken = outputTokenId;
+  swapFundsEvent.save();
+
+  let receiveSwappedFundsEventId = createJointId([RECEIVE_PREFIX, SWAP_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let receiveSwappedFundsEvent = new ReceiveSwappedFundsEvent(receiveSwappedFundsEventId);
+  receiveSwappedFundsEvent.timestamp = timestamp;
+  receiveSwappedFundsEvent.transaction = txHash;
+  receiveSwappedFundsEvent.logIndex = logIdx;
+  receiveSwappedFundsEvent.account = beneficiary;
+  receiveSwappedFundsEvent.swapFundsEvent = swapFundsEventId;
+  receiveSwappedFundsEvent.save();
 }
 
 function createOracleIfMissing(
