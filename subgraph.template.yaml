@@ -1,4 +1,4 @@
-specVersion: 0.0.2
+specVersion: 0.0.6
 description: 0xSplits
 repository: https://github.com/0xSplits/splits-subgraph
 schema:
@@ -13,7 +13,7 @@ dataSources:
       startBlock: {{splitStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Split
@@ -75,7 +75,7 @@ dataSources:
       startBlock: {{vestingStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - VestingModule
@@ -96,7 +96,7 @@ dataSources:
       startBlock: {{waterfallStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - WaterfallModule
@@ -117,7 +117,7 @@ dataSources:
       startBlock: 14891074
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - LiquidSplit
@@ -140,7 +140,7 @@ dataSources:
       startBlock: {{liquidSplitStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - LiquidSplit
@@ -161,7 +161,7 @@ dataSources:
       startBlock: {{liquidSplitStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - LiquidSplit
@@ -183,7 +183,7 @@ dataSources:
       startBlock: {{recoupStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - WaterfallModule
@@ -205,7 +205,7 @@ dataSources:
       startBlock: {{uniV3OracleStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Oracle
@@ -226,7 +226,7 @@ dataSources:
       startBlock: {{swapperStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Swapper
@@ -246,7 +246,7 @@ dataSources:
       startBlock: {{passThroughWalletStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - PassThroughWallet
@@ -266,7 +266,7 @@ dataSources:
       startBlock: {{diversifierStartBlock}}
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - PassThroughWallet
@@ -285,7 +285,7 @@ templates:
       abi: VestingModule
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - VestingStream
@@ -305,7 +305,7 @@ templates:
       abi: WaterfallModule
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - WaterfallTranche
@@ -325,7 +325,7 @@ templates:
       abi: FullLiquidSplit
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - LiquidSplit
@@ -348,7 +348,7 @@ templates:
       abi: UniV3Oracle
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Oracle
@@ -373,7 +373,7 @@ templates:
       abi: Swapper
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - Swapper
@@ -394,6 +394,7 @@ templates:
           handler: handleOwnershipTransferred
         - event: ExecCalls((address,uint256,bytes)[])
           handler: handleExecCalls
+          receipt: true
         - event: Flash(indexed address,((address,address),uint128,bytes)[],address,uint256[],uint256)
           handler: handleFlash
       file: ./src/swapper.mapping.ts
@@ -404,7 +405,7 @@ templates:
       abi: PassThroughWallet
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.6
+      apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
         - PassThroughWallet
