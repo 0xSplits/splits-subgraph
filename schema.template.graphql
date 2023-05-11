@@ -557,16 +557,70 @@ type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
 }
 
 type CreateSwapperEvent implements AccountEvent @entity {
-  id: ID! # cse-${txHash}-${logIdx}
+  id: ID! # cswe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
   logIndex: BigInt!
 
   transaction: Transaction!
+
+  token: Token!
+  beneficiary: Account!
+}
+
+type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
+  id: ID! # usbe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  oldBeneficiary: Account!
+  newBeneficiary: Account!
+}
+
+type UpdateSwapperTokenEvent implements AccountEvent @entity {
+  id: ID! # uste-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  oldToken: Token!
+  newToken: Token!
+}
+
+type SwapFundsEvent implements AccountEvent @entity {
+  id: ID! # sfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  inputAmount: BigInt!
+  inputToken: Token!
+  outputAmount: BigInt!
+  outputToken: Token!
+
+  recipient: ReceiveSwappedFundsEvent @derivedFrom(field: "swapFundsEvent")
+}
+
+type ReceiveSwappedFundsEvent implements AccountEvent @entity {
+  id: ID! # r-sfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  swapFundsEvent: SwapFundsEvent!
 }
 
 type CreatePassThroughWalletEvent implements AccountEvent @entity {
-  id: ID! # cse-${txHash}-${logIdx}
+  id: ID! # cptwe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
   logIndex: BigInt!
