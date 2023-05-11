@@ -1,4 +1,4 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { CreateSwapper } from "../generated/SwapperFactory/SwapperFactory";
 import {
   SetBeneficiary,
@@ -25,11 +25,13 @@ import {
   createUserIfMissing,
   getSwapper,
   TOKEN_WITHDRAWAL_USER_PREFIX,
+  ZERO,
+  ZERO_ADDRESS,
 } from "./helpers";
 
-export const ZERO = BigInt.fromI32(0);
-
 const CREATE_SWAPPER_EVENT_PREFIX = "cse";
+const TRANSFER_EVENT_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+const WETH_WITHDRAWAL_EVENT_TOPIC = "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65";
 
 export function handleCreateSwapper(event: CreateSwapper): void {
   let swapperId = event.params.swapper.toHexString();
@@ -198,6 +200,30 @@ export function handleOwnershipTransferred(event: OwnershipTransferred): void {
   // TODO: Save event
 }
 
+export function handleExecCalls(event: ExecCalls): void {
+  let swapperId = event.address.toHexString();
+
+  let swapper = getSwapper(swapperId);
+  if (!swapper) return;
+
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+  // let txHash = event.transaction.hash.toHexString();
+  // createTransactionIfMissing(txHash);
+  // let logIdx = event.logIndex;
+
+  if (event.block.number.toI32() > swapper.latestBlock) {
+    swapper.latestBlock = blockNumber;
+    swapper.latestActivity = timestamp;
+  }
+
+  handleOwnerSwap(swapper, event);
+
+  swapper.save();
+
+  // Save event?
+}
+
 export function handleFlash(event: Flash): void {
   let swapperId = event.address.toHexString();
 
@@ -249,7 +275,58 @@ export function handleFlash(event: Flash): void {
     );
   }
 
+  swapper.save();
+
   // TODO: save event
+}
+
+function handleOwnerSwap(
+  swapper: Swapper,
+  event: ExecCalls,
+): void {
+  let swapperId = swapper.id;
+
+  let receipt = event.receipt as ethereum.TransactionReceipt;
+  if (receipt) {
+    let receiptLogs = receipt.logs;
+    let pendingInputToken = '';
+    let pendingInputAmount = BigInt.fromI32(0);
+
+    for (let i: i32 = 0; i < receiptLogs.length; i++) {
+      let receiptLog = receiptLogs[i];
+      let topic0 = receiptLog.topics[0].toHexString();
+      if (topic0 == TRANSFER_EVENT_TOPIC) {
+        let token = receiptLog.address.toHexString();
+        let fromAddress = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
+        let toAddress = getAddressHexFromBytes32(receiptLog.topics[2].toHexString());
+        let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
+
+        if (fromAddress == swapperId) {
+          pendingInputToken = token;
+          pendingInputAmount = amount;
+        } else if (toAddress == swapperId) {
+          updateSwapBalance(
+            swapperId,
+            swapper.beneficiary,
+            pendingInputToken,
+            pendingInputAmount,
+            token,
+            amount,
+          );
+        }
+      } else if (topic0 == WETH_WITHDRAWAL_EVENT_TOPIC) {
+        let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
+        updateSwapBalance(
+          swapperId,
+          swapper.beneficiary,
+          pendingInputToken,
+          pendingInputAmount,
+          ZERO_ADDRESS,
+          amount,
+        );
+      }
+    }
+  }
 }
 
 function updateSwapBalance(
@@ -303,4 +380,10 @@ function createOracleIfMissing(
     oracle = new Oracle(oracleId);
     oracle.type = 'unknown';
   }
+}
+
+function getAddressHexFromBytes32(bytesAddress: string): string {
+  let prefix = bytesAddress.slice(0, 2);
+  let address = bytesAddress.slice(26);
+  return prefix + address;
 }
