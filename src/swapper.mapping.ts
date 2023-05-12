@@ -439,7 +439,6 @@ function updateSwapBalance(
   let receiveSwappedFundsEventId = createJointId([RECEIVE_PREFIX, SWAP_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
   let receiveSwappedFundsEvent = new ReceiveSwappedFundsEvent(receiveSwappedFundsEventId);
   receiveSwappedFundsEvent.timestamp = timestamp;
-  receiveSwappedFundsEvent.transaction = txHash;
   receiveSwappedFundsEvent.logIndex = logIdx;
   receiveSwappedFundsEvent.account = beneficiary;
   receiveSwappedFundsEvent.swapFundsEvent = swapFundsEventId;

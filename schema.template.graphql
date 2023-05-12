@@ -614,8 +614,6 @@ type ReceiveSwappedFundsEvent implements AccountEvent @entity {
   account: Account!
   logIndex: BigInt!
 
-  transaction: Transaction!
-
   swapFundsEvent: SwapFundsEvent!
 }
 
@@ -626,4 +624,41 @@ type CreatePassThroughWalletEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   transaction: Transaction!
+
+  passThroughAccount: Account!
+}
+
+type UpdatePassThroughAccountEvent implements AccountEvent @entity {
+  id: ID! # uptae-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  oldPassThroughAccount: Account!
+  newPassThroughAccount: Account!
+}
+
+type PassThroughFundsEvent implements AccountEvent @entity {
+  id: ID! # ptfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  tokens: [Token!]!
+  amounts: [BigInt!]!
+
+  recipient: ReceivePassThroughFundsEvent @derivedFrom(field: "passThroughFundsEvent")
+}
+
+type ReceivePassThroughFundsEvent implements AccountEvent @entity {
+  id: ID! # r-ptfe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  passThroughFundsEvent: PassThroughFundsEvent!
 }
