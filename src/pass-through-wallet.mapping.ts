@@ -15,6 +15,10 @@ import {
   TokenRelease,
   Recipient,
   Swapper,
+  CreatePassThroughWalletEvent,
+  UpdatePassThroughAccountEvent,
+  PassThroughFundsEvent,
+  ReceivePassThroughFundsEvent,
 } from "../generated/schema";
 import {
   createJointId,
@@ -22,12 +26,16 @@ import {
   createUserIfMissing,
   getPassThroughWallet,
   getSplit,
+  RECEIVE_PREFIX,
   TOKEN_RELEASE_PREFIX,
   ZERO,
   ZERO_ADDRESS,
 } from "./helpers";
 
 const CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX = "cptwe";
+const UPDATE_PASS_THROUGH_ACCOUNT_EVENT_PREFIX = "uptae";
+const PASS_THROUGH_FUNDS_EVENT_PREFIX = "ptfe";
+
 const DIVERSIFIER_FACTORY_ADDRESS = "0xFE7800f67b3e42ddb004057169603FEAdEeD31B0";
 
 export function handleCreatePassThroughWallet(event: CreatePassThroughWallet): void {
@@ -68,13 +76,14 @@ export function handleCreatePassThroughWallet(event: CreatePassThroughWallet): v
   PassThroughWalletTemplate.create(event.params.passThroughWallet);
 
   // Save event
-  // let createPassThroughWalletEventId = createJointId([CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX, txHash, logIdx.toString()]);
-  // let createPassThroughWalletEvent = new CreatePassThroughWalletEvent(createPassThroughWalletEventId);
-  // createPassThroughWalletEvent.timestamp = timestamp;
-  // createPassThroughWalletEvent.transaction = txHash;
-  // createPassThroughWalletEvent.logIndex = logIdx;
-  // createPassThroughWalletEvent.account = passThroughWalletId;
-  // createPassThroughWalletEvent.save();
+  let createPassThroughWalletEventId = createJointId([CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let createPassThroughWalletEvent = new CreatePassThroughWalletEvent(createPassThroughWalletEventId);
+  createPassThroughWalletEvent.timestamp = timestamp;
+  createPassThroughWalletEvent.transaction = txHash;
+  createPassThroughWalletEvent.logIndex = logIdx;
+  createPassThroughWalletEvent.account = passThroughWalletId;
+  createPassThroughWalletEvent.passThroughAccount = passThroughAccount;
+  createPassThroughWalletEvent.save();
 }
 
 export function handleSetPassThrough(event: SetPassThrough): void {
@@ -85,9 +94,9 @@ export function handleSetPassThrough(event: SetPassThrough): void {
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
-  // let txHash = event.transaction.hash.toHexString();
-  // createTransactionIfMissing(txHash);
-  // let logIdx = event.logIndex;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > passThroughWallet.latestBlock) {
     passThroughWallet.latestBlock = event.block.number.toI32();
@@ -126,7 +135,16 @@ export function handleSetPassThrough(event: SetPassThrough): void {
     }
   }
 
-  // Save event?
+  // Save event
+  let updatePassThroughAccountEventId = createJointId([UPDATE_PASS_THROUGH_ACCOUNT_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updatePassThroughAccountEvent = new UpdatePassThroughAccountEvent(updatePassThroughAccountEventId);
+  updatePassThroughAccountEvent.timestamp = timestamp;
+  updatePassThroughAccountEvent.transaction = txHash;
+  updatePassThroughAccountEvent.logIndex = logIdx;
+  updatePassThroughAccountEvent.account = passThroughWalletId;
+  updatePassThroughAccountEvent.oldPassThroughAccount = oldPassThrough;
+  updatePassThroughAccountEvent.newPassThroughAccount = newPassThrough;
+  updatePassThroughAccountEvent.save();
 }
 
 export function handleSetPaused(event: SetPaused): void {
@@ -206,10 +224,10 @@ export function handlePassThrough(event: PassThrough): void {
   let passThroughWallet = getPassThroughWallet(passThroughWalletId);
   if (!passThroughWallet) return;
 
-  // let timestamp = event.block.timestamp;
-  // let txHash = event.transaction.hash.toHexString();
-  // createTransactionIfMissing(txHash);
-  // let logIdx = event.logIndex;
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > passThroughWallet.latestBlock) {
     passThroughWallet.latestBlock = event.block.number.toI32();
@@ -218,6 +236,7 @@ export function handlePassThrough(event: PassThrough): void {
 
   let tokenIds = event.params.tokens;
   let amounts = event.params.amounts;
+  let stringTokenIds: string[] = [];
   for (let i: i32 = 0; i < tokenIds.length; i++) {
     let tokenId = tokenIds[i].toHexString();
     let amount = amounts[i];
@@ -226,9 +245,30 @@ export function handlePassThrough(event: PassThrough): void {
     token.save();
 
     updateTokenRelease(passThroughWalletId, tokenId, amount);
+
+    stringTokenIds.push(tokenId);
   }
 
   passThroughWallet.save();
+
+  // Save event
+  let passThroughFundsEventId = createJointId([PASS_THROUGH_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let passThroughFundsEvent = new PassThroughFundsEvent(passThroughFundsEventId);
+  passThroughFundsEvent.timestamp = timestamp;
+  passThroughFundsEvent.transaction = txHash;
+  passThroughFundsEvent.logIndex = logIdx;
+  passThroughFundsEvent.account = passThroughWalletId;
+  passThroughFundsEvent.tokens = stringTokenIds;
+  passThroughFundsEvent.amounts = amounts;
+  passThroughFundsEvent.save();
+
+  let receivePassThroughFundsEventId = createJointId([RECEIVE_PREFIX, PASS_THROUGH_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let receivePassThroughFundsEvent = new ReceivePassThroughFundsEvent(receivePassThroughFundsEventId);
+  receivePassThroughFundsEvent.timestamp = timestamp;
+  receivePassThroughFundsEvent.logIndex = logIdx;
+  receivePassThroughFundsEvent.account = passThroughWallet.passThroughAccount;
+  receivePassThroughFundsEvent.passThroughFundsEvent = passThroughFundsEventId;
+  receivePassThroughFundsEvent.save();
 }
 
 function updateTokenRelease(
