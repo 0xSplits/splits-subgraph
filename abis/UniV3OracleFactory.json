@@ -3,11 +3,6 @@
     {
       "inputs": [
         {
-          "internalType": "contract IUniswapV3Factory",
-          "name": "uniswapV3Factory_",
-          "type": "address"
-        },
-        {
           "internalType": "address",
           "name": "weth9_",
           "type": "address"
@@ -38,18 +33,8 @@
               "type": "bool"
             },
             {
-              "internalType": "uint24",
-              "name": "defaultFee",
-              "type": "uint24"
-            },
-            {
               "internalType": "uint32",
               "name": "defaultPeriod",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "defaultScaledOfferFactor",
               "type": "uint32"
             },
             {
@@ -74,28 +59,23 @@
                 {
                   "components": [
                     {
-                      "internalType": "uint24",
-                      "name": "fee",
-                      "type": "uint24"
+                      "internalType": "address",
+                      "name": "pool",
+                      "type": "address"
                     },
                     {
                       "internalType": "uint32",
                       "name": "period",
                       "type": "uint32"
-                    },
-                    {
-                      "internalType": "uint32",
-                      "name": "scaledOfferFactor",
-                      "type": "uint32"
                     }
                   ],
-                  "internalType": "struct UniV3OracleImpl.PairOverride",
-                  "name": "pairOverride",
+                  "internalType": "struct UniV3OracleImpl.PairDetail",
+                  "name": "pairDetail",
                   "type": "tuple"
                 }
               ],
-              "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
-              "name": "pairOverrides",
+              "internalType": "struct UniV3OracleImpl.SetPairDetailParams[]",
+              "name": "pairDetails",
               "type": "tuple[]"
             }
           ],
@@ -119,7 +99,7 @@
       "name": "createOracle",
       "outputs": [
         {
-          "internalType": "contract OracleImpl",
+          "internalType": "contract IOracle",
           "name": "",
           "type": "address"
         }
@@ -142,18 +122,8 @@
               "type": "bool"
             },
             {
-              "internalType": "uint24",
-              "name": "defaultFee",
-              "type": "uint24"
-            },
-            {
               "internalType": "uint32",
               "name": "defaultPeriod",
-              "type": "uint32"
-            },
-            {
-              "internalType": "uint32",
-              "name": "defaultScaledOfferFactor",
               "type": "uint32"
             },
             {
@@ -178,28 +148,23 @@
                 {
                   "components": [
                     {
-                      "internalType": "uint24",
-                      "name": "fee",
-                      "type": "uint24"
+                      "internalType": "address",
+                      "name": "pool",
+                      "type": "address"
                     },
                     {
                       "internalType": "uint32",
                       "name": "period",
                       "type": "uint32"
-                    },
-                    {
-                      "internalType": "uint32",
-                      "name": "scaledOfferFactor",
-                      "type": "uint32"
                     }
                   ],
-                  "internalType": "struct UniV3OracleImpl.PairOverride",
-                  "name": "pairOverride",
+                  "internalType": "struct UniV3OracleImpl.PairDetail",
+                  "name": "pairDetail",
                   "type": "tuple"
                 }
               ],
-              "internalType": "struct UniV3OracleImpl.SetPairOverrideParams[]",
-              "name": "pairOverrides",
+              "internalType": "struct UniV3OracleImpl.SetPairDetailParams[]",
+              "name": "pairDetails",
               "type": "tuple[]"
             }
           ],
