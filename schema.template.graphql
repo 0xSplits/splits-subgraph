@@ -600,6 +600,30 @@ type UpdateSwapperTokenEvent implements AccountEvent @entity {
   newToken: Token!
 }
 
+type UpdateSwapperOracleEvent implements AccountEvent @entity {
+  id: ID! # usoe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  oldOracle: Oracle!
+  newOracle: Oracle!
+}
+
+type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent @entity {
+  id: ID! # usdsofe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  oldScaledOfferFactor: BigInt!
+  newScaledOfferFactor: BigInt!
+}
+
 type SwapFundsEvent implements AccountEvent @entity {
   id: ID! # sfe-${txHash}-${logIdx}
   timestamp: BigInt!

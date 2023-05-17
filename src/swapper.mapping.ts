@@ -8,6 +8,7 @@ import {
   OwnershipTransferred,
   ExecCalls,
   Flash,
+  SetDefaultScaledOfferFactor,
 } from "../generated/templates/Swapper/Swapper";
 import { Swapper as SwapperTemplate } from "../generated/templates";
 import {
@@ -20,6 +21,8 @@ import {
   CreateSwapperEvent,
   UpdateSwapperBeneficiaryEvent,
   UpdateSwapperTokenEvent,
+  UpdateSwapperOracleEvent,
+  UpdateSwapperDefaultScaledOfferFactorEvent,
   SwapFundsEvent,
   ReceiveSwappedFundsEvent,
   SwapperPairOverride,
@@ -199,6 +202,9 @@ export function handleSetOracle(event: SetOracle): void {
 
   let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
 
   if (event.block.number.toI32() > swapper.latestBlock) {
     swapper.latestBlock = blockNumber;
@@ -208,10 +214,55 @@ export function handleSetOracle(event: SetOracle): void {
   let oracleId = event.params.oracle.toHexString();
   createOracleIfMissing(oracleId);
 
+  let oldOracleId = swapper.oracle;
   swapper.oracle = oracleId;
   swapper.save();
 
-  // TODO: Save event
+  // Save events
+  let updateOracleEventId = createJointId([UPDATE_SWAPPER_TOKEN_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateOracleEvent = new UpdateSwapperOracleEvent(updateOracleEventId);
+  updateOracleEvent.timestamp = timestamp;
+  updateOracleEvent.transaction = txHash;
+  updateOracleEvent.logIndex = logIdx;
+  updateOracleEvent.account = swapperId;
+  updateOracleEvent.oldOracle = oldOracleId;
+  updateOracleEvent.newOracle = oracleId;
+  updateOracleEvent.save();
+}
+
+export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFactor): void {
+  let swapperId = event.address.toHexString();
+
+  let swapper = getSwapper(swapperId);
+  if (!swapper) return;
+
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
+
+  if (event.block.number.toI32() > swapper.latestBlock) {
+    swapper.latestBlock = blockNumber;
+    swapper.latestActivity = timestamp;
+  }
+
+  let defaultScaledOfferFactor = event.params.defaultScaledOfferFactor;
+
+  let oldScaledOfferFactor = swapper.defaultScaledOfferFactor;
+  swapper.defaultScaledOfferFactor = defaultScaledOfferFactor;
+  swapper.save();
+
+  // Save events
+  let updateDefaultScaledOfferFactorEventId = createJointId([UPDATE_SWAPPER_TOKEN_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateDefaultScaledOfferFactorEvent = new UpdateSwapperDefaultScaledOfferFactorEvent(updateDefaultScaledOfferFactorEventId);
+  updateDefaultScaledOfferFactorEvent.timestamp = timestamp;
+  updateDefaultScaledOfferFactorEvent.transaction = txHash;
+  updateDefaultScaledOfferFactorEvent.logIndex = logIdx;
+  updateDefaultScaledOfferFactorEvent.account = swapperId;
+  updateDefaultScaledOfferFactorEvent.oldScaledOfferFactor = oldScaledOfferFactor;
+  updateDefaultScaledOfferFactorEvent.newScaledOfferFactor = defaultScaledOfferFactor;
+  updateDefaultScaledOfferFactorEvent.save();
 }
 
 export function handleSetPaused(event: SetPaused): void {
@@ -444,7 +495,7 @@ function updateSwapBalance(
   }
 
   // Save events
-  let swapFundsEventId = createJointId([SWAP_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let swapFundsEventId = createJointId([SWAP_FUNDS_EVENT_PREFIX, inputTokenId, txHash, logIdx.toString()]);
   let swapFundsEvent = new SwapFundsEvent(swapFundsEventId);
   swapFundsEvent.timestamp = timestamp;
   swapFundsEvent.transaction = txHash;
@@ -456,7 +507,7 @@ function updateSwapBalance(
   swapFundsEvent.outputToken = outputTokenId;
   swapFundsEvent.save();
 
-  let receiveSwappedFundsEventId = createJointId([RECEIVE_PREFIX, SWAP_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let receiveSwappedFundsEventId = createJointId([RECEIVE_PREFIX, SWAP_FUNDS_EVENT_PREFIX, inputTokenId, txHash, logIdx.toString()]);
   let receiveSwappedFundsEvent = new ReceiveSwappedFundsEvent(receiveSwappedFundsEventId);
   receiveSwappedFundsEvent.timestamp = timestamp;
   receiveSwappedFundsEvent.logIndex = logIdx;
