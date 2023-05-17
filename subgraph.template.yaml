@@ -388,6 +388,8 @@ templates:
           handler: handleSetTokenToBeneficiary
         - event: SetOracle(address)
           handler: handleSetOracle
+        - event: SetDefaultScaledOfferFactor(uint32)
+          handler: handleSetDefaultScaledOfferFactor
         - event: SetPaused(bool)
           handler: handleSetPaused
         - event: OwnershipTransferred(indexed address,indexed address)
