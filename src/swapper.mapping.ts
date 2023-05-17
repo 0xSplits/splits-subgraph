@@ -22,6 +22,7 @@ import {
   UpdateSwapperTokenEvent,
   SwapFundsEvent,
   ReceiveSwappedFundsEvent,
+  SwapperPairOverride,
 } from "../generated/schema";
 import {
   createJointId,
@@ -62,11 +63,13 @@ export function handleCreateSwapper(event: CreateSwapper): void {
 
   let swapper = new Swapper(swapperId);
 
-  let owner = event.params.params[0].toAddress().toHexString();
-  let paused = event.params.params[1].toBoolean();
-  let beneficiary = event.params.params[2].toAddress().toHexString();
-  let tokenToBeneficiary = event.params.params[3].toAddress().toHexString();
-  let oracleId = event.params.params[4].toAddress().toHexString();
+  let owner = event.params.params.owner.toHexString();
+  let paused = event.params.params.paused;
+  let beneficiary = event.params.params.beneficiary.toHexString();
+  let tokenToBeneficiary = event.params.params.tokenToBeneficiary.toHexString();
+  let oracleId = event.params.params.oracle.toHexString();
+  let defaultScaledOfferFactor = event.params.params.defaultScaledOfferFactor;
+  let scaledOfferFactorPairOverrides = event.params.params.pairScaledOfferFactors;
 
   createUserIfMissing(owner, blockNumber, timestamp);
   createUserIfMissing(beneficiary, blockNumber, timestamp);
@@ -79,9 +82,26 @@ export function handleCreateSwapper(event: CreateSwapper): void {
   swapper.beneficiary = beneficiary;
   swapper.tokenToBeneficiary = tokenToBeneficiary;
   swapper.oracle = oracleId;
+  swapper.defaultScaledOfferFactor = defaultScaledOfferFactor;
   swapper.createdBlock = blockNumber;
   swapper.latestBlock = blockNumber;
   swapper.latestActivity = timestamp;
+
+  for (let i: i32 = 0; i < scaledOfferFactorPairOverrides.length; i++) {
+    let quotePair = scaledOfferFactorPairOverrides[i].quotePair;
+
+    let base = quotePair.base.toHexString();
+    let baseToken = new Token(base);
+    baseToken.save();
+
+    let quote = quotePair.quote.toHexString();
+    let quoteToken = new Token(quote);
+    quoteToken.save();
+
+    let scaledOfferFactor = scaledOfferFactorPairOverrides[i].scaledOfferFactor;
+
+    updatePairOverride(swapperId, base, quote, scaledOfferFactor);
+  }
 
   swapper.save();
   SwapperTemplate.create(event.params.swapper);
@@ -459,4 +479,22 @@ function getAddressHexFromBytes32(bytesAddress: string): string {
   let prefix = bytesAddress.slice(0, 2);
   let address = bytesAddress.slice(26);
   return prefix + address;
+}
+
+function updatePairOverride(
+  swapperId: string,
+  baseToken: string,
+  quoteToken: string,
+  scaledOfferFactor: BigInt,
+): void {
+  let pairOverrideId = createJointId([swapperId, baseToken, quoteToken]);
+  let pairOverride = SwapperPairOverride.load(pairOverrideId);
+  if (!pairOverride) {
+    pairOverride = new SwapperPairOverride(pairOverrideId);
+    pairOverride.swapper = swapperId;
+    pairOverride.base = baseToken;
+    pairOverride.quote = quoteToken;
+  }
+  pairOverride.scaledOfferFactor = scaledOfferFactor;
+  pairOverride.save();
 }

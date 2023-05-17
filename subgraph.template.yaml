@@ -209,12 +209,14 @@ dataSources:
       language: wasm/assemblyscript
       entities:
         - Oracle
-        - UniswapV3TWAPPairOverride
+        - UniswapV3TWAPPairDetail
       abis:
         - name: UniV3OracleFactory
           file: ./abis/UniV3OracleFactory.json
+        - name: UniV3Pool
+          file: ./abis/UniV3Pool.json
       eventHandlers:
-        - event: CreateUniV3Oracle(indexed address,(address,bool,uint24,uint32,uint32,((address,address),(uint24,uint32,uint32))[]))
+        - event: CreateUniV3Oracle(indexed address,(address,bool,uint32,((address,address),(address,uint32))[]))
           handler: handleCreateUniV3Oracle
       file: ./src/oracle.mapping.ts
   - kind: ethereum/contract
@@ -234,7 +236,7 @@ dataSources:
         - name: SwapperFactory
           file: ./abis/SwapperFactory.json
       eventHandlers:
-        - event: CreateSwapper(indexed address,(address,bool,address,address,address))
+        - event: CreateSwapper(indexed address,(address,bool,address,address,address,uint32,((address,address),uint32)[]))
           handler: handleCreateSwapper
       file: ./src/swapper.mapping.ts
   - kind: ethereum/contract
@@ -352,19 +354,17 @@ templates:
       language: wasm/assemblyscript
       entities:
         - Oracle
-        - UniswapV3TWAPPairOverride
+        - UniswapV3TWAPPairDetail
       abis:
         - name: UniV3Oracle
           file: ./abis/UniV3Oracle.json
+        - name: UniV3Pool
+          file: ./abis/UniV3Pool.json
       eventHandlers:
-        - event: SetDefaultFee(uint24)
-          handler: handleSetDefaultFee
         - event: SetDefaultPeriod(uint32)
           handler: handleSetDefaultPeriod
-        - event: SetDefaultScaledOfferFactor(uint32)
-          handler: handleSetDefaultScaledOfferFactor
-        - event: SetPairOverrides(((address,address),(uint24,uint32,uint32))[])
-          handler: handleSetPairOverrides
+        - event: SetPairDetails(((address,address),(address,uint32))[])
+          handler: handleSetPairDetails
       file: ./src/oracle.mapping.ts
   - kind: ethereum/contract
     name: Swapper
@@ -395,7 +395,7 @@ templates:
         - event: ExecCalls((address,uint256,bytes)[])
           handler: handleExecCalls
           receipt: true
-        - event: Flash(indexed address,((address,address),uint128,bytes)[],address,uint256[],uint256)
+        - event: Flash(indexed address,indexed address,((address,address),uint128,bytes)[],address,uint256[],uint256)
           handler: handleFlash
       file: ./src/swapper.mapping.ts
   - kind: ethereum/contract
@@ -422,6 +422,6 @@ templates:
           handler: handleOwnershipTransferred
         - event: ExecCalls((address,uint256,bytes)[])
           handler: handleExecCalls
-        - event: PassThrough(address[],uint256[])
+        - event: PassThrough(indexed address,address[],uint256[])
           handler: handlePassThrough
       file: ./src/pass-through-wallet.mapping.ts
