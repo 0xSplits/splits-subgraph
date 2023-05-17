@@ -1,12 +1,13 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
+import { Address, BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import { CreateUniV3Oracle } from "../generated/UniV3OracleFactory/UniV3OracleFactory"
-import { SetDefaultFee, SetDefaultPeriod, SetDefaultScaledOfferFactor, SetPairOverrides } from "../generated/templates/UniV3Oracle/UniV3Oracle"
+import { UniV3Pool as UniV3PoolContract } from "../generated/UniV3OracleFactory/UniV3Pool"
+import { SetDefaultPeriod, SetPairDetails } from "../generated/templates/UniV3Oracle/UniV3Oracle"
 import { UniV3Oracle as UniV3OracleTemplate } from "../generated/templates";
 import {
   Token,
   User,
   Oracle,
-  UniswapV3TWAPPairOverride,
+  UniswapV3TWAPPairDetail,
 } from "../generated/schema";
 import {
   createJointId,
@@ -35,39 +36,33 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
 
   let owner = event.params.params.owner.toHexString();
   let paused = event.params.params.paused;
-  let defaultFee = BigInt.fromI32(event.params.params.defaultFee);
   let defaultPeriod = event.params.params.defaultPeriod;
-  let defaultScaledOfferFactor = event.params.params.defaultScaledOfferFactor;
-  let pairOverrides = event.params.params.pairOverrides;
+  let pairDetails = event.params.params.pairDetails;
 
   createUserIfMissing(owner, blockNumber, timestamp);
 
-  for (let i: i32 = 0; i < pairOverrides.length; i++) {
-    let quotePair = pairOverrides[i].quotePair;
+  for (let i: i32 = 0; i < pairDetails.length; i++) {
+    let quotePair = pairDetails[i].quotePair;
 
     let base = quotePair.base.toHexString();
     let baseToken = new Token(base);
     baseToken.save();
 
-
     let quote = quotePair.quote.toHexString();
     let quoteToken = new Token(quote);
     quoteToken.save();
 
-    let pairOverride = pairOverrides[i].pairOverride;
-    let fee = BigInt.fromI32(pairOverride.fee);
-    let period = pairOverride.period;
-    let scaledOfferFactor = pairOverride.scaledOfferFactor;
+    let pairDetail = pairDetails[i].pairDetail;
+    let pool = pairDetail.pool;
+    let period = pairDetail.period;
 
-    updatePairOverride(oracleId, base, quote, fee, period, scaledOfferFactor);
+    updatePairDetail(oracleId, base, quote, pool, period);
   }
 
   oracle.type = "uniswapV3TWAP";
   oracle.owner = owner;
   oracle.paused = paused;
-  oracle.defaultFee = defaultFee;
   oracle.defaultPeriod = defaultPeriod;
-  oracle.defaultScaledOfferFactor = defaultScaledOfferFactor;
 
   oracle.createdBlock = blockNumber;
   oracle.latestBlock = blockNumber;
@@ -79,46 +74,29 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
   // TODO: Save event?
 }
 
-function updatePairOverride(
+function updatePairDetail(
   oracleId: string,
   baseToken: string,
   quoteToken: string,
-  fee: BigInt,
+  pool: Bytes,
   period: BigInt,
-  scaledOfferFactor: BigInt
 ): void {
-  let pairOverrideId = createJointId([oracleId, baseToken, quoteToken]);
-  let pairOverride = UniswapV3TWAPPairOverride.load(pairOverrideId);
-  if (!pairOverride) {
-    pairOverride = new UniswapV3TWAPPairOverride(pairOverrideId);
-    pairOverride.oracle = oracleId;
-    pairOverride.base = baseToken;
-    pairOverride.quote = quoteToken;
+  let pairDetailId = createJointId([oracleId, baseToken, quoteToken]);
+  let pairDetail = UniswapV3TWAPPairDetail.load(pairDetailId);
+  if (!pairDetail) {
+    pairDetail = new UniswapV3TWAPPairDetail(pairDetailId);
+    pairDetail.oracle = oracleId;
+    pairDetail.base = baseToken;
+    pairDetail.quote = quoteToken;
   }
-  pairOverride.fee = fee;
-  pairOverride.period = period;
-  pairOverride.scaledOfferFactor = scaledOfferFactor;
-  pairOverride.save();
-}
+  pairDetail.pool = pool;
+  pairDetail.period = period;
 
-export function handleSetDefaultFee(event: SetDefaultFee): void {
-  let oracleId = event.address.toHexString();
+  // Fetch pool fee
+  let uniV3PoolContract = UniV3PoolContract.bind(Address.fromBytes(pool));
+  pairDetail.fee = uniV3PoolContract.fee();
 
-  let oracle = Oracle.load(oracleId);
-  if (!oracle) return;
-
-  let blockNumber = event.block.number.toI32();
-  let timestamp = event.block.timestamp;
-
-  if (event.block.number.toI32() > oracle.latestBlock) {
-    oracle.latestBlock = blockNumber;
-    oracle.latestActivity = timestamp;
-  }
-
-  oracle.defaultFee = BigInt.fromI32(event.params.defaultFee);
-  oracle.save();
-
-  // TODO: Save event?
+  pairDetail.save();
 }
 
 export function handleSetDefaultPeriod(event: SetDefaultPeriod): void {
@@ -141,7 +119,7 @@ export function handleSetDefaultPeriod(event: SetDefaultPeriod): void {
   // TODO: Save event?
 }
 
-export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFactor): void {
+export function handleSetPairDetails(event: SetPairDetails): void {
   let oracleId = event.address.toHexString();
 
   let oracle = Oracle.load(oracleId);
@@ -155,41 +133,20 @@ export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFa
     oracle.latestActivity = timestamp;
   }
 
-  oracle.defaultScaledOfferFactor = event.params.defaultScaledOfferFactor;
-  oracle.save();
-
-  // TODO: Save event?
-}
-
-export function handleSetPairOverrides(event: SetPairOverrides): void {
-  let oracleId = event.address.toHexString();
-
-  let oracle = Oracle.load(oracleId);
-  if (!oracle) return;
-
-  let blockNumber = event.block.number.toI32();
-  let timestamp = event.block.timestamp;
-
-  if (event.block.number.toI32() > oracle.latestBlock) {
-    oracle.latestBlock = blockNumber;
-    oracle.latestActivity = timestamp;
-  }
-
-  let pairOverrides = event.params.params
-  for (let i: i32 = 0; i < pairOverrides.length; i++) {
-    let base = pairOverrides[i].quotePair.base.toHexString();
+  let pairDetails = event.params.params
+  for (let i: i32 = 0; i < pairDetails.length; i++) {
+    let base = pairDetails[i].quotePair.base.toHexString();
     let baseToken = new Token(base);
     baseToken.save();
 
-    let quote = pairOverrides[i].quotePair.quote.toHexString();
+    let quote = pairDetails[i].quotePair.quote.toHexString();
     let quoteToken = new Token(quote);
     quoteToken.save();
 
-    let fee = BigInt.fromI32(pairOverrides[i].pairOverride.fee);
-    let period = pairOverrides[i].pairOverride.period;
-    let scaledOfferFactor = pairOverrides[i].pairOverride.scaledOfferFactor;
+    let pool = pairDetails[i].pairDetail.pool;
+    let period = pairDetails[i].pairDetail.period;
 
-    updatePairOverride(oracleId, base, quote, fee, period, scaledOfferFactor);
+    updatePairDetail(oracleId, base, quote, pool, period);
   }
 
   oracle.save();

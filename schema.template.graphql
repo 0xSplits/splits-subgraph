@@ -187,14 +187,14 @@ enum OracleType {
   unknown
 }
 
-type UniswapV3TWAPPairOverride @entity {
+type UniswapV3TWAPPairDetail @entity {
   id: ID! # ${oracleId}-${base}-${quote}
   oracle: Oracle!
   base: Token!
   quote: Token!
-  fee: BigInt!
+  pool: Bytes!
+  fee: Int!
   period: BigInt!
-  scaledOfferFactor: BigInt!
 }
 
 # No required fields because of third-party oracles. We'll still create the 
@@ -208,10 +208,8 @@ type Oracle @entity {
   # TODO: These are all specific to univ3twap, should we pull out to something else?
   owner: Account
   paused: Boolean
-  defaultFee: BigInt
   defaultPeriod: BigInt
-  defaultScaledOfferFactor: BigInt
-  pairOverrides: [UniswapV3TWAPPairOverride!] @derivedFrom(field: "oracle")
+  pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
 }
 
 type SwapBalance @entity {
@@ -221,6 +219,14 @@ type SwapBalance @entity {
   inputAmount: BigInt!
   outputToken: Token!
   outputAmount: BigInt!
+}
+
+type SwapperPairOverride @entity {
+  id: ID! # ${swapperId}-${base}-${quote}
+  swapper: Swapper!
+  base: Token!
+  quote: Token!
+  scaledOfferFactor: BigInt!
 }
 
 type Swapper implements Account @entity {
@@ -237,6 +243,8 @@ type Swapper implements Account @entity {
   paused: Boolean!
   beneficiary: Account!
   tokenToBeneficiary: Token!
+  defaultScaledOfferFactor: BigInt!
+  scaledOfferFactorPairOverrides: [SwapperPairOverride!]! @derivedFrom(field: "swapper")
   oracle: Oracle!
 
   swapBalances: [SwapBalance!]! @derivedFrom(field: "swapper")
