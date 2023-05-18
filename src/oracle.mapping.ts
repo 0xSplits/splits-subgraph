@@ -92,9 +92,14 @@ function updatePairDetail(
   pairDetail.pool = pool;
   pairDetail.period = period;
 
-  // Fetch pool fee
+  // Fetch pool fee. Need to handle the case of a non-univ3 pool
   let uniV3PoolContract = UniV3PoolContract.bind(Address.fromBytes(pool));
-  pairDetail.fee = uniV3PoolContract.fee();
+  let feeCallResult = uniV3PoolContract.try_fee();
+  let fee = 0;
+  if (!feeCallResult.reverted) {
+    fee = feeCallResult.value;
+  }
+  pairDetail.fee = fee;
 
   pairDetail.save();
 }
