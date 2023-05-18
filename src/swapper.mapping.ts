@@ -400,6 +400,26 @@ function handleOwnerSwap(
   createTransactionIfMissing(txHash);
   let logIdx = event.logIndex;
 
+  let calls = event.params.calls;
+  for (let i: i32 = 0; i < calls.length; i++) {
+    let toAddress = calls[i].to.toHexString();
+    if (toAddress == swapper.beneficiary) {
+      // Handle direct eth transfer to beneficiary
+      let value = calls[i].value;
+      updateSwapBalance(
+        swapperId,
+        swapper.beneficiary,
+        ZERO_ADDRESS,
+        value,
+        ZERO_ADDRESS,
+        value,
+        timestamp,
+        txHash,
+        logIdx,
+      )
+    }
+  }
+
   let receipt = event.receipt as ethereum.TransactionReceipt;
   if (receipt) {
     let receiptLogs = receipt.logs;
@@ -409,6 +429,7 @@ function handleOwnerSwap(
     for (let i: i32 = 0; i < receiptLogs.length; i++) {
       let receiptLog = receiptLogs[i];
       let topic0 = receiptLog.topics[0].toHexString();
+
       if (topic0 == TRANSFER_EVENT_TOPIC) {
         let token = receiptLog.address.toHexString();
         let fromAddress = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
@@ -418,6 +439,21 @@ function handleOwnerSwap(
         if (fromAddress == swapperId) {
           pendingInputToken = token;
           pendingInputAmount = amount;
+
+          // Handle direct transfer from swapper to beneficiary
+          if (toAddress == swapper.beneficiary) {
+            updateSwapBalance(
+              swapperId,
+              swapper.beneficiary,
+              pendingInputToken,
+              pendingInputAmount,
+              token,
+              amount,
+              timestamp,
+              txHash,
+              logIdx,
+            );
+          }
         } else if (toAddress == swapperId) {
           updateSwapBalance(
             swapperId,
