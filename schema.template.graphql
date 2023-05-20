@@ -573,7 +573,7 @@ type CreateSwapperEvent implements AccountEvent @entity {
   transaction: Transaction!
 
   token: Token!
-  beneficiary: Account!
+  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent @derivedFrom(field: "createSwapperEvent")
 }
 
 type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
@@ -584,8 +584,27 @@ type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
 
   transaction: Transaction!
 
-  oldBeneficiary: Account!
-  newBeneficiary: Account!
+  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent @derivedFrom(field: "updateSwapperEvent")
+  beneficiaryRemovedEvent: SwapperBeneficiaryRemovedEvent @derivedFrom(field: "updateSwapperEvent")
+}
+
+type SwapperBeneficiaryAddedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  createSwapperEvent: CreateSwapperEvent
+  updateSwapperEvent: UpdateSwapperBeneficiaryEvent
+}
+
+type SwapperBeneficiaryRemovedEvent implements AccountEvent @entity {
+  id: ID!
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  updateSwapperEvent: UpdateSwapperBeneficiaryEvent!
 }
 
 type UpdateSwapperTokenEvent implements AccountEvent @entity {
