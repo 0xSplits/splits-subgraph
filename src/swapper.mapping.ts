@@ -19,6 +19,8 @@ import {
   TokenWithdrawal,
   Oracle,
   CreateSwapperEvent,
+  SwapperBeneficiaryAddedEvent,
+  SwapperBeneficiaryRemovedEvent,
   UpdateSwapperBeneficiaryEvent,
   UpdateSwapperTokenEvent,
   UpdateSwapperOracleEvent,
@@ -32,6 +34,8 @@ import {
   createTransactionIfMissing,
   createUserIfMissing,
   getSwapper,
+  ADDED_PREFIX,
+  REMOVED_PREFIX,
   RECEIVE_PREFIX,
   TOKEN_WITHDRAWAL_USER_PREFIX,
   ZERO,
@@ -116,9 +120,16 @@ export function handleCreateSwapper(event: CreateSwapper): void {
   createSwapperEvent.transaction = txHash;
   createSwapperEvent.logIndex = logIdx;
   createSwapperEvent.account = swapperId;
-  createSwapperEvent.beneficiary = beneficiary;
   createSwapperEvent.token = tokenToBeneficiary;
   createSwapperEvent.save();
+
+  let beneficiaryAddedEventId = createJointId([ADDED_PREFIX, createSwapperEventId]);
+  let beneficiaryAddedEvent = new SwapperBeneficiaryAddedEvent(beneficiaryAddedEventId);
+  beneficiaryAddedEvent.timestamp = timestamp;
+  beneficiaryAddedEvent.logIndex = logIdx;
+  beneficiaryAddedEvent.account = beneficiary;
+  beneficiaryAddedEvent.createSwapperEvent = createSwapperEventId;
+  beneficiaryAddedEvent.save();
 }
 
 export function handleSetBeneficiary(event: SetBeneficiary): void {
@@ -152,9 +163,23 @@ export function handleSetBeneficiary(event: SetBeneficiary): void {
   updateBeneficiaryEvent.transaction = txHash;
   updateBeneficiaryEvent.logIndex = logIdx;
   updateBeneficiaryEvent.account = swapperId;
-  updateBeneficiaryEvent.oldBeneficiary = oldBeneficiary;
-  updateBeneficiaryEvent.newBeneficiary = newBeneficiary;
   updateBeneficiaryEvent.save();
+
+  let beneficiaryAddedEventId = createJointId([ADDED_PREFIX, updateBeneficiaryEventId]);
+  let beneficiaryAddedEvent = new SwapperBeneficiaryAddedEvent(beneficiaryAddedEventId);
+  beneficiaryAddedEvent.timestamp = timestamp;
+  beneficiaryAddedEvent.logIndex = logIdx;
+  beneficiaryAddedEvent.account = newBeneficiary;
+  beneficiaryAddedEvent.updateSwapperEvent = updateBeneficiaryEventId;
+  beneficiaryAddedEvent.save();
+
+  let beneficiaryRemovedEventId = createJointId([REMOVED_PREFIX, updateBeneficiaryEventId]);
+  let beneficiaryRemovedEvent = new SwapperBeneficiaryRemovedEvent(beneficiaryRemovedEventId);
+  beneficiaryRemovedEvent.timestamp = timestamp;
+  beneficiaryRemovedEvent.logIndex = logIdx;
+  beneficiaryRemovedEvent.account = oldBeneficiary;
+  beneficiaryRemovedEvent.updateSwapperEvent = updateBeneficiaryEventId;
+  beneficiaryRemovedEvent.save();
 }
 
 export function handleSetTokenToBeneficiary(event: SetTokenToBeneficiary): void {
@@ -408,7 +433,7 @@ function handleOwnerSwap(
       let value = calls[i].value;
       updateSwapBalance(
         swapperId,
-        swapper.beneficiary,
+        toAddress,
         ZERO_ADDRESS,
         value,
         ZERO_ADDRESS,
