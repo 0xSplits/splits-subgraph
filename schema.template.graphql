@@ -261,6 +261,23 @@ type TokenRelease @entity {
   account: PassThroughWallet!
 }
 
+type PassThroughWalletSwapBalanceOutput @entity {
+  id: ID! # ${passThroughWalletSwapBalanceId}-${tokenId}
+  token: Token!
+  amount: BigInt!
+
+  passThroughWalletSwapBalance: PassThroughWalletSwapBalance!
+}
+
+type PassThroughWalletSwapBalance @entity {
+  id: ID! # ${passThroughWalletId}-${inputTokenId}
+  inputToken: Token!
+  inputAmount: BigInt!
+  outputs: [PassThroughWalletSwapBalanceOutput!]! @derivedFrom(field: "passThroughWalletSwapBalance")
+
+  passThroughWallet: PassThroughWallet!
+}
+
 type PassThroughWallet implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
@@ -276,6 +293,7 @@ type PassThroughWallet implements Account @entity {
   passThroughAccount: Account!
 
   passThroughBalances: [TokenRelease!]! @derivedFrom(field: "account")
+  swapBalances: [PassThroughWalletSwapBalance]! @derivedFrom(field: "passThroughWallet")
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")

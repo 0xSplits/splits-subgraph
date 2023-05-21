@@ -51,6 +51,10 @@ export const FROM_USER_PREFIX = "fu";
 export const TO_USER_PREFIX = "tu";
 export const ID_SEPARATOR = "-";
 
+export const TRANSFER_EVENT_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
+export const WETH_DEPOSIT_EVENT_TOPIC = "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c";
+export const WETH_WITHDRAWAL_EVENT_TOPIC = "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65";
+
 export function createJointId(args: Array<string>): string {
   return args.join(ID_SEPARATOR);
 }
@@ -592,4 +596,11 @@ export function createTransactionIfMissing(txHash: string): void {
     tx = new Transaction(txHash);
     tx.save();
   }
+}
+
+// TODO: is there really nothing built-in for this??
+export function getAddressHexFromBytes32(bytesAddress: string): string {
+  let prefix = bytesAddress.slice(0, 2);
+  let address = bytesAddress.slice(26);
+  return prefix + address;
 }

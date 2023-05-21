@@ -40,15 +40,15 @@ import {
   TOKEN_WITHDRAWAL_USER_PREFIX,
   ZERO,
   ZERO_ADDRESS,
+  TRANSFER_EVENT_TOPIC,
+  WETH_WITHDRAWAL_EVENT_TOPIC,
+  getAddressHexFromBytes32,
 } from "./helpers";
 
 const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
 const UPDATE_SWAPPER_BENEFICIARY_EVENT_PREFIX = "usbe";
 const UPDATE_SWAPPER_TOKEN_EVENT_PREFIX = "uste";
 const SWAP_FUNDS_EVENT_PREFIX = "sfe";
-
-const TRANSFER_EVENT_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
-const WETH_WITHDRAWAL_EVENT_TOPIC = "0x7fcf532c15f0a6db0bd6d0e038bea71d30d808c7d98cb3bf7268a95bf5081b65";
 
 export function handleCreateSwapper(event: CreateSwapper): void {
   let swapperId = event.params.swapper.toHexString();
@@ -585,12 +585,6 @@ function createOracleIfMissing(
     oracle = new Oracle(oracleId);
     oracle.type = 'unknown';
   }
-}
-
-function getAddressHexFromBytes32(bytesAddress: string): string {
-  let prefix = bytesAddress.slice(0, 2);
-  let address = bytesAddress.slice(26);
-  return prefix + address;
 }
 
 function updatePairOverride(
