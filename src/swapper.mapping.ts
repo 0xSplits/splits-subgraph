@@ -1,4 +1,4 @@
-import { BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, TypedMap, ethereum, log, store } from "@graphprotocol/graph-ts";
 import { CreateSwapper } from "../generated/SwapperFactory/SwapperFactory";
 import {
   SetBeneficiary,
@@ -43,6 +43,7 @@ import {
   TRANSFER_EVENT_TOPIC,
   WETH_WITHDRAWAL_EVENT_TOPIC,
   getAddressHexFromBytes32,
+  WETH_DEPOSIT_EVENT_TOPIC,
 } from "./helpers";
 
 const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
@@ -410,8 +411,34 @@ export function handleFlash(event: Flash): void {
   }
 
   swapper.save();
+}
 
-  // TODO: save event
+class SwapBalanceData {
+  inputAmount: BigInt
+  outputs: Map<string, BigInt>
+}
+
+function updateSwapBalanceData(
+  swapBalanceData: Map<string, SwapBalanceData>,
+  inputToken: string,
+  outputToken: string,
+  inputAmount: BigInt,
+  outputAmount: BigInt,
+): void {
+  if (!swapBalanceData.has(inputToken)) {
+    let newData: SwapBalanceData = {
+      inputAmount: ZERO,
+      outputs: new Map(),
+    };
+    newData.outputs.set(outputToken, ZERO);
+    swapBalanceData.set(inputToken, newData);
+  }
+
+  let swapData = swapBalanceData.get(inputToken);
+  swapData.inputAmount += inputAmount;
+
+  let currentOutputAmount = swapData.outputs.get(outputToken);
+  swapData.outputs.set(outputToken, currentOutputAmount + outputAmount);
 }
 
 function handleOwnerSwap(
@@ -425,23 +452,24 @@ function handleOwnerSwap(
   createTransactionIfMissing(txHash);
   let logIdx = event.logIndex;
 
+  let swapBalanceData = new Map<string, SwapBalanceData>();
+
   let calls = event.params.calls;
   for (let i: i32 = 0; i < calls.length; i++) {
     let toAddress = calls[i].to.toHexString();
     if (toAddress == swapper.beneficiary) {
-      // Handle direct eth transfer to beneficiary
+      // Handle direct eth transfer to beneficiary. It's possible we accidentally
+      // count a weth --> eth swap here, will handle subtracting that amount
+      // in the weth withdrawal event.
       let value = calls[i].value;
-      updateSwapBalance(
-        swapperId,
-        toAddress,
+
+      updateSwapBalanceData(
+        swapBalanceData,
+        ZERO_ADDRESS,
         ZERO_ADDRESS,
         value,
-        ZERO_ADDRESS,
         value,
-        timestamp,
-        txHash,
-        logIdx,
-      )
+      );
     }
   }
 
@@ -449,7 +477,9 @@ function handleOwnerSwap(
   if (receipt) {
     let receiptLogs = receipt.logs;
     let pendingInputToken = '';
-    let pendingInputAmount = BigInt.fromI32(0);
+    let pendingInputAmount = ZERO;
+    let pendingOutputToken = '';
+    let pendingOutputAmount = ZERO;
 
     for (let i: i32 = 0; i < receiptLogs.length; i++) {
       let receiptLog = receiptLogs[i];
@@ -467,45 +497,133 @@ function handleOwnerSwap(
 
           // Handle direct transfer from swapper to beneficiary
           if (toAddress == swapper.beneficiary) {
-            updateSwapBalance(
-              swapperId,
-              swapper.beneficiary,
-              pendingInputToken,
-              pendingInputAmount,
+            updateSwapBalanceData(
+              swapBalanceData,
+              token,
               token,
               amount,
-              timestamp,
-              txHash,
-              logIdx,
+              amount,
             );
+          } else if (pendingOutputToken != '') {
+            // Output transfer was processed first. Update swap balances now
+            // that we have input data
+            updateSwapBalanceData(
+              swapBalanceData,
+              token,
+              pendingOutputToken,
+              amount,
+              pendingOutputAmount,
+            );
+
+            pendingOutputToken = '';
+            pendingOutputAmount = ZERO;
           }
         } else if (toAddress == swapperId) {
-          updateSwapBalance(
-            swapperId,
-            swapper.beneficiary,
+          updateSwapBalanceData(
+            swapBalanceData,
             pendingInputToken,
+            token,
             pendingInputAmount,
+            amount,
+          );
+        } else if (toAddress == swapper.beneficiary) {
+          // We got the output data before the input data
+          pendingOutputToken = token;
+          pendingOutputAmount = amount;
+        }
+      } else if (topic0 == WETH_DEPOSIT_EVENT_TOPIC) {
+        let token = receiptLog.address.toHexString()
+        let depositor = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
+        let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
+
+        if (depositor == swapperId) {
+          // It's a eth --> weth trade. Got double counted in the transfer event handler
+          // though as weth --> weth.
+
+          updateSwapBalanceData(
+            swapBalanceData,
+            ZERO_ADDRESS,
             token,
             amount,
-            timestamp,
-            txHash,
-            logIdx,
+            amount,
           );
+          updateSwapBalanceData(
+            swapBalanceData,
+            token,
+            token,
+            amount.neg(),
+            amount.neg(),
+          );
+        } else if (pendingOutputToken != '') {
+          // Output transfer was processed first. Update swap balances now
+          // that we have input data
+          updateSwapBalanceData(
+            swapBalanceData,
+            ZERO_ADDRESS,
+            pendingOutputToken,
+            amount,
+            pendingOutputAmount,
+          );
+
+          pendingOutputToken = '';
+          pendingOutputAmount = ZERO;
         }
       } else if (topic0 == WETH_WITHDRAWAL_EVENT_TOPIC) {
+        let token = receiptLog.address.toHexString();
+        let recipient = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
         let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
-        updateSwapBalance(
-          swapperId,
-          swapper.beneficiary,
-          pendingInputToken,
-          pendingInputAmount,
-          ZERO_ADDRESS,
-          amount,
-          timestamp,
-          txHash,
-          logIdx,
-        );
+
+        if (recipient == swapperId) {
+          // We counted this as eth --> eth up above instead of weth --> eth. Add the correct
+          // swap balance, and also subtract from eth --> eth
+          updateSwapBalanceData(
+            swapBalanceData,
+            token,
+            ZERO_ADDRESS,
+            amount,
+            amount,
+          );
+          updateSwapBalanceData(
+            swapBalanceData,
+            ZERO_ADDRESS,
+            ZERO_ADDRESS,
+            amount.neg(),
+            amount.neg(),
+          );
+        } else {
+          updateSwapBalanceData(
+            swapBalanceData,
+            pendingInputToken,
+            ZERO_ADDRESS,
+            pendingInputAmount,
+            amount,
+          );
+        }
       }
+    }
+  }
+
+  const inputTokens = swapBalanceData.keys();
+  for (let i: i32 = 0; i < inputTokens.length; i++) {
+    let inputToken = inputTokens[i];
+    let swapData = swapBalanceData.get(inputToken);
+
+    let outputTokens = swapData.outputs.keys();
+    for (let j: i32 = 0; j < outputTokens.length; j++) {
+      let outputToken = outputTokens[j];
+      let outputAmount = swapData.outputs.get(outputToken);
+
+      updateSwapBalance(
+        swapperId,
+        swapper.beneficiary,
+        inputToken,
+        swapData.inputAmount,
+        outputToken,
+        outputAmount,
+        timestamp,
+        txHash,
+        logIdx,
+      );
     }
   }
 }
@@ -533,6 +651,7 @@ function updateSwapBalance(
   }
   swapBalance.inputAmount += inputAmount;
   swapBalance.outputAmount += outputAmount;
+
   swapBalance.save();
 
   // Only need to update withdrawn for users. For all modules, swapped funds
@@ -557,15 +676,21 @@ function updateSwapBalance(
 
   // Save events
   let swapFundsEventId = createJointId([SWAP_FUNDS_EVENT_PREFIX, inputTokenId, txHash, logIdx.toString()]);
-  let swapFundsEvent = new SwapFundsEvent(swapFundsEventId);
-  swapFundsEvent.timestamp = timestamp;
-  swapFundsEvent.transaction = txHash;
-  swapFundsEvent.logIndex = logIdx;
-  swapFundsEvent.account = swapperId;
-  swapFundsEvent.inputAmount = inputAmount;
-  swapFundsEvent.inputToken = inputTokenId;
-  swapFundsEvent.outputAmount = outputAmount;
-  swapFundsEvent.outputToken = outputTokenId;
+  let swapFundsEvent = SwapFundsEvent.load(swapFundsEventId);
+  if (!swapFundsEvent) {
+    swapFundsEvent = new SwapFundsEvent(swapFundsEventId);
+    swapFundsEvent.timestamp = timestamp;
+    swapFundsEvent.transaction = txHash;
+    swapFundsEvent.logIndex = logIdx;
+    swapFundsEvent.account = swapperId;
+    swapFundsEvent.inputToken = inputTokenId;
+    swapFundsEvent.outputToken = outputTokenId;
+
+    swapFundsEvent.inputAmount = ZERO;
+    swapFundsEvent.outputAmount = ZERO;
+  }
+  swapFundsEvent.inputAmount += inputAmount;
+  swapFundsEvent.outputAmount += outputAmount;
   swapFundsEvent.save();
 
   let receiveSwappedFundsEventId = createJointId([RECEIVE_PREFIX, SWAP_FUNDS_EVENT_PREFIX, inputTokenId, txHash, logIdx.toString()]);
