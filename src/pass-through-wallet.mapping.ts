@@ -17,6 +17,7 @@ import {
   Swapper,
   CreatePassThroughWalletEvent,
   UpdatePassThroughAccountEvent,
+  PassThroughFundsBalance,
   PassThroughFundsEvent,
   ReceivePassThroughFundsEvent,
   Split,
@@ -262,9 +263,18 @@ export function handlePassThrough(event: PassThrough): void {
   passThroughFundsEvent.transaction = txHash;
   passThroughFundsEvent.logIndex = logIdx;
   passThroughFundsEvent.account = passThroughWalletId;
-  passThroughFundsEvent.tokens = stringTokenIds;
-  passThroughFundsEvent.amounts = amounts;
   passThroughFundsEvent.save();
+
+  for (let i: i32 = 0; i < tokenIds.length; i++) {
+    let tokenId = tokenIds[i].toHexString();
+    let amount = amounts[i];
+    let passThroughFundsBalanceId = createJointId([passThroughFundsEventId, tokenId]);
+    let passThroughFundsBalance = new PassThroughFundsBalance(passThroughFundsBalanceId);
+    passThroughFundsBalance.token = tokenId;
+    passThroughFundsBalance.amount = amount;
+    passThroughFundsBalance.passThroughFundsEvent = passThroughFundsEventId;
+    passThroughFundsBalance.save();
+  }
 
   let receivePassThroughFundsEventId = createJointId([RECEIVE_PREFIX, PASS_THROUGH_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
   let receivePassThroughFundsEvent = new ReceivePassThroughFundsEvent(receivePassThroughFundsEventId);
