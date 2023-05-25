@@ -709,6 +709,14 @@ type UpdatePassThroughAccountEvent implements AccountEvent @entity {
   newPassThroughAccount: Account!
 }
 
+type PassThroughFundsBalance @entity {
+  id: ID! # ${passThroughFundsEventId}-${tokenId}
+  token: Token!
+  amount: BigInt!
+
+  passThroughFundsEvent: PassThroughFundsEvent!
+}
+
 type PassThroughFundsEvent implements AccountEvent @entity {
   id: ID! # ptfe-${txHash}-${logIdx}
   timestamp: BigInt!
@@ -717,8 +725,7 @@ type PassThroughFundsEvent implements AccountEvent @entity {
 
   transaction: Transaction!
 
-  tokens: [Token!]!
-  amounts: [BigInt!]!
+  passThroughBalances: [PassThroughFundsBalance!] @derivedFrom(field: "passThroughFundsEvent")
 
   recipient: ReceivePassThroughFundsEvent @derivedFrom(field: "passThroughFundsEvent")
 }
