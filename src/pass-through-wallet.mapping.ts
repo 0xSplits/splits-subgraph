@@ -306,6 +306,12 @@ function updateTokenRelease(
   passThroughWalletTokenRelease.save();
 }
 
+class EthTransferData {
+  amount: BigInt
+  beneficiary: string
+  isEthOutputSwapper: boolean
+}
+
 function handleOwnerSwap(
   passThroughWallet: PassThroughWallet,
   event: ExecCalls,
@@ -319,6 +325,17 @@ function handleOwnerSwap(
   let txHash = event.transaction.hash.toHexString();
   createTransactionIfMissing(txHash);
   let logIdx = event.logIndex;
+
+  let ethTransfers: EthTransferData[] = [];
+  let swapperBeneficiaries: string[] = [];
+  for (let i: i32 = 0; i < split.recipients.length; i++) {
+    let recipientId = split.recipients[i];
+    let recipient = Recipient.load(recipientId) as Recipient;
+    let swapper = Swapper.load(recipient.account);
+    if (swapper) {
+      swapperBeneficiaries.push(swapper.beneficiary);
+    }
+  }
 
   let calls = event.params.calls;
   for (let i: i32 = 0; i < calls.length; i++) {
@@ -335,19 +352,14 @@ function handleOwnerSwap(
       }
 
       if (toAddress == beneficiary) {
-        // Handle direct eth transfer to beneficiary
+        // Store direct eth transfers to beneficiary, will update swap balances at the end
         let value = calls[i].value;
-        updateSwapBalance(
-          passThroughWallet.id,
-          toAddress,
-          ZERO_ADDRESS,
-          value,
-          ZERO_ADDRESS,
-          value,
-          timestamp,
-          txHash,
-          logIdx,
-        )
+        ethTransfers.push({
+          amount: value,
+          beneficiary: toAddress,
+          isEthOutputSwapper: swapper ? swapper.tokenToBeneficiary == ZERO_ADDRESS : false,
+        })
+        break;
       }
     }
   }
@@ -355,8 +367,14 @@ function handleOwnerSwap(
   let receipt = event.receipt as ethereum.TransactionReceipt;
   if (receipt) {
     let receiptLogs = receipt.logs;
-    let pendingInputToken = ZERO_ADDRESS; // Default this to eth, if no from transfer picked up this was the input token
-    let pendingInputAmount = BigInt.fromI32(0);
+    let pendingInputToken = '';
+    let pendingInputAmount = ZERO;
+    let pendingSwapperBeneficiaryIndex = 0;
+    let pendingOutputToken = '';
+    let pendingOutputAmount = ZERO;
+    let pendingOutputBeneficiary = '';
+    let ethToWethAmount = ZERO;
+    let ethToWethToken = '';
 
     for (let i: i32 = 0; i < receiptLogs.length; i++) {
       let receiptLog = receiptLogs[i];
@@ -382,24 +400,60 @@ function handleOwnerSwap(
       
             // Handle direct transfer from pass through wallet to recipient
             if (toAddress == beneficiary) {
-              updateSwapBalance(
-                passThroughWallet.id,
-                beneficiary,
-                pendingInputToken,
-                pendingInputAmount,
-                token,
-                amount,
-                timestamp,
-                txHash,
-                logIdx,
-              );
-              pendingInputToken = ZERO_ADDRESS;
-              pendingInputAmount = BigInt.fromI32(0);
+              if (token == ethToWethToken && amount == ethToWethAmount) {
+                // It's actually an eth --> weth trade, not weth --> weth
+                updateSwapBalance(
+                  passThroughWallet.id,
+                  beneficiary,
+                  ZERO_ADDRESS,
+                  amount,
+                  token,
+                  amount,
+                  timestamp,
+                  txHash,
+                  logIdx,
+                );
+                ethToWethAmount = ZERO;
+                ethToWethToken = '';
+                break;
+              } else {
+                updateSwapBalance(
+                  passThroughWallet.id,
+                  beneficiary,
+                  pendingInputToken,
+                  pendingInputAmount,
+                  token,
+                  amount,
+                  timestamp,
+                  txHash,
+                  logIdx,
+                );
+                pendingInputToken = '';
+                pendingInputAmount = ZERO;
+                break;
+              }
             }
           }
+
+          if (pendingInputToken != '' && pendingOutputToken != '') {
+            // It was not a direct transfer, and we have output data, so process the swap
+            // with the current data
+            updateSwapBalance(
+              passThroughWallet.id,
+              pendingOutputBeneficiary,
+              pendingInputToken,
+              pendingInputAmount,
+              pendingOutputToken,
+              pendingOutputAmount,
+              timestamp,
+              txHash,
+              logIdx,
+            );
+            pendingOutputToken = '';
+            pendingOutputAmount = ZERO;
+            pendingOutputBeneficiary = '';
+          }
         } else {
-          // TODO: need to capture input eth amount somehow still
-          // Handle uniswap trade
           for (let i: i32 = 0; i < split.recipients.length; i++) {
             let recipientId = split.recipients[i];
             let recipient = Recipient.load(recipientId) as Recipient;
@@ -409,54 +463,113 @@ function handleOwnerSwap(
             if (swapper) beneficiary = swapper.beneficiary;
 
             if (toAddress == beneficiary) {
-              updateSwapBalance(
-                passThroughWallet.id,
-                beneficiary,
-                pendingInputToken,
-                pendingInputAmount,
-                token,
-                amount,
-                timestamp,
-                txHash,
-                logIdx,
-              );
-              pendingInputToken = ZERO_ADDRESS;
-              pendingInputAmount = BigInt.fromI32(0);
+              // We got the output data before the input data
+              pendingOutputToken = token;
+              pendingOutputAmount = amount;
+              pendingOutputBeneficiary = toAddress;
+              break;
             }
           }
         }
       } else if (topic0 == WETH_WITHDRAWAL_EVENT_TOPIC) {
-        // TODO: fix this. How can we know the recipient?
+        let token = receiptLog.address.toHexString();
+        let withdrawer = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
         let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
-        updateSwapBalance(
-          passThroughWallet.id,
-          '', // Unknown beneficiary
-          pendingInputToken,
-          pendingInputAmount,
-          ZERO_ADDRESS,
-          amount,
-          timestamp,
-          txHash,
-          logIdx,
-        );
-        pendingInputToken = ZERO_ADDRESS;
-        pendingInputAmount = BigInt.fromI32(0);
+
+        if (withdrawer == passThroughWallet.id) {
+          // We counted this as eth --> eth up above instead of weth --> eth. Add the correct
+          // swap balance, and also remove from eth --> eth array.
+
+          let beneficiary = '';
+          for (let i: i32 = ethTransfers.length - 1; i >= 0; i--) {
+            let ethTransferData = ethTransfers[i];
+            if (ethTransferData.amount == amount && ethTransferData.isEthOutputSwapper) {
+              beneficiary = ethTransferData.beneficiary;
+              ethTransfers.pop();
+              break;
+            }
+          }
+
+          if (beneficiary) {
+            updateSwapBalance(
+              passThroughWallet.id,
+              beneficiary,
+              token,
+              amount,
+              ZERO_ADDRESS,
+              amount,
+              timestamp,
+              txHash,
+              logIdx,
+            );
+          }
+        } else {
+          // It was a swap with eth as the output. Need to assume the order of events
+          // to guess the beneficiary.
+          let beneficiary = swapperBeneficiaries[pendingSwapperBeneficiaryIndex];
+          updateSwapBalance(
+            passThroughWallet.id,
+            beneficiary,
+            pendingInputToken,
+            pendingInputAmount,
+            ZERO_ADDRESS,
+            amount,
+            timestamp,
+            txHash,
+            logIdx,
+          );
+          pendingInputToken = ZERO_ADDRESS;
+          pendingInputAmount = ZERO;
+
+          pendingSwapperBeneficiaryIndex += 1;
+          if (pendingSwapperBeneficiaryIndex >= swapperBeneficiaries.length) {
+            pendingSwapperBeneficiaryIndex = 0;
+          }
+        }
       } else if (topic0 == WETH_DEPOSIT_EVENT_TOPIC) {
-        // Just update the input amount, the outputs will be handled by other events
+        let token = receiptLog.address.toHexString();
+        let depositor = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
         let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
-        updateSwapBalance(
-          passThroughWallet.id,
-          '', // Unknown beneficiary
-          ZERO_ADDRESS,
-          amount,
-          null,
-          BigInt.fromI32(0),
-          timestamp,
-          txHash,
-          logIdx,
-        )
+
+        if (depositor == passThroughWallet.id) {
+          // It's a eth --> weth trade. Will get processed in the transfer event handler
+          // though as weth --> weth.
+          ethToWethAmount = amount;
+          ethToWethToken = token;
+        } else if (pendingOutputToken != '') {
+          updateSwapBalance(
+            passThroughWallet.id,
+            pendingOutputBeneficiary,
+            ZERO_ADDRESS,
+            amount,
+            pendingOutputToken,
+            pendingOutputAmount,
+            timestamp,
+            txHash,
+            logIdx,
+          );
+          pendingOutputToken = '';
+          pendingOutputAmount = ZERO;
+          pendingOutputBeneficiary = '';
+        }
       }
     }
+  }
+
+  // Update swap balances for the eth --> eth transfers
+  for (let i: i32 = 0; i < ethTransfers.length; i++) {
+    let ethTransferData = ethTransfers[i];
+    updateSwapBalance(
+      passThroughWallet.id,
+      ethTransferData.beneficiary,
+      ZERO_ADDRESS,
+      ethTransferData.amount,
+      ZERO_ADDRESS,
+      ethTransferData.amount,
+      timestamp,
+      txHash,
+      logIdx,
+    );
   }
 }
 
