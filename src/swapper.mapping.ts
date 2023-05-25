@@ -532,7 +532,7 @@ function handleOwnerSwap(
           pendingOutputAmount = amount;
         }
       } else if (topic0 == WETH_DEPOSIT_EVENT_TOPIC) {
-        let token = receiptLog.address.toHexString()
+        let token = receiptLog.address.toHexString();
         let depositor = getAddressHexFromBytes32(receiptLog.topics[1].toHexString());
         let amount = BigInt.fromUnsignedBytes(Bytes.fromUint8Array(receiptLog.data.reverse()));
 
