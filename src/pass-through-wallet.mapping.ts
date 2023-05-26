@@ -241,7 +241,6 @@ export function handlePassThrough(event: PassThrough): void {
 
   let tokenIds = event.params.tokens;
   let amounts = event.params.amounts;
-  let stringTokenIds: string[] = [];
   for (let i: i32 = 0; i < tokenIds.length; i++) {
     let tokenId = tokenIds[i].toHexString();
     let amount = amounts[i];
@@ -250,8 +249,6 @@ export function handlePassThrough(event: PassThrough): void {
     token.save();
 
     updateTokenRelease(passThroughWalletId, tokenId, amount);
-
-    stringTokenIds.push(tokenId);
   }
 
   passThroughWallet.save();
@@ -309,7 +306,6 @@ function updateTokenRelease(
 class EthTransferData {
   amount: BigInt
   beneficiary: string
-  isEthOutputSwapper: boolean
 }
 
 function handleOwnerSwap(
@@ -340,9 +336,10 @@ function handleOwnerSwap(
   let calls = event.params.calls;
   for (let i: i32 = 0; i < calls.length; i++) {
     let toAddress = calls[i].to.toHexString();
+    let value = calls[i].value;
 
-    for (let i: i32 = 0; i < split.recipients.length; i++) {
-      let recipientId = split.recipients[i];
+    for (let j: i32 = 0; j < split.recipients.length; j++) {
+      let recipientId = split.recipients[j];
       let recipient = Recipient.load(recipientId) as Recipient;
       let beneficiary = recipient.account;
 
@@ -353,11 +350,9 @@ function handleOwnerSwap(
 
       if (toAddress == beneficiary) {
         // Store direct eth transfers to beneficiary, will update swap balances at the end
-        let value = calls[i].value;
         ethTransfers.push({
           amount: value,
           beneficiary: toAddress,
-          isEthOutputSwapper: swapper ? swapper.tokenToBeneficiary == ZERO_ADDRESS : false,
         })
         break;
       }
@@ -390,8 +385,8 @@ function handleOwnerSwap(
           pendingInputToken = token;
           pendingInputAmount = amount;
 
-          for (let i: i32 = 0; i < split.recipients.length; i++) {
-            let recipientId = split.recipients[i];
+          for (let j: i32 = 0; j < split.recipients.length; j++) {
+            let recipientId = split.recipients[j];
             let recipient = Recipient.load(recipientId) as Recipient;
             let beneficiary = recipient.account;
       
@@ -454,8 +449,8 @@ function handleOwnerSwap(
             pendingOutputBeneficiary = '';
           }
         } else {
-          for (let i: i32 = 0; i < split.recipients.length; i++) {
-            let recipientId = split.recipients[i];
+          for (let j: i32 = 0; j < split.recipients.length; j++) {
+            let recipientId = split.recipients[j];
             let recipient = Recipient.load(recipientId) as Recipient;
             let beneficiary = recipient.account;
       
@@ -481,9 +476,9 @@ function handleOwnerSwap(
           // swap balance, and also remove from eth --> eth array.
 
           let beneficiary = '';
-          for (let i: i32 = ethTransfers.length - 1; i >= 0; i--) {
-            let ethTransferData = ethTransfers[i];
-            if (ethTransferData.amount == amount && ethTransferData.isEthOutputSwapper) {
+          for (let j: i32 = ethTransfers.length - 1; j >= 0; j--) {
+            let ethTransferData = ethTransfers[j];
+            if (ethTransferData.amount == amount) {
               beneficiary = ethTransferData.beneficiary;
               ethTransfers.pop();
               break;
