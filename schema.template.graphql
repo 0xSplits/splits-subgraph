@@ -738,3 +738,34 @@ type ReceivePassThroughFundsEvent implements AccountEvent @entity {
 
   passThroughFundsEvent: PassThroughFundsEvent!
 }
+
+type ReceiveOwnerSwappedDiversifierFundsEvent implements AccountEvent @entity {
+  id: ID! #
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  swapDiversifierFundsBalance: SwapDiversifierFundsBalance!
+}
+
+type SwapDiversifierFundsBalance @entity {
+  id: ID! # ${owernSwapDiversifierFundsEventId}-${tokenId}-${recipientId}
+  inputToken: Token!
+  inputAmount: BigInt!
+  outputToken: Token!
+  outputAmount: BigInt!
+
+  recipient: ReceiveOwnerSwappedDiversifierFundsEvent @derivedFrom(field: "swapDiversifierFundsBalance")
+  ownerSwapDiversifierFundsEvent: OwnerSwapDiversifierFundsEvent!
+}
+
+type OwnerSwapDiversifierFundsEvent implements AccountEvent @entity {
+  id: ID! # osdfe-${inputToken}-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+
+  swapDiversifierFundsBalances: [SwapDiversifierFundsBalance!] @derivedFrom(field: "ownerSwapDiversifierFundsEvent")
+}
