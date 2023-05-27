@@ -46,7 +46,7 @@ const CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX = "cptwe";
 const UPDATE_PASS_THROUGH_ACCOUNT_EVENT_PREFIX = "uptae";
 const PASS_THROUGH_FUNDS_EVENT_PREFIX = "ptfe";
 
-const DIVERSIFIER_FACTORY_ADDRESS = "0xFE7800f67b3e42ddb004057169603FEAdEeD31B0";
+const DIVERSIFIER_FACTORY_ADDRESS = "0xD067e6Af70B1f5d9c5Ea45EeA8dD4842878c9888";
 
 export function handleCreatePassThroughWallet(event: CreatePassThroughWallet): void {
   let passThroughWalletId = event.params.passThroughWallet.toHexString();
