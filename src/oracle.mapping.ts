@@ -56,7 +56,9 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
     let pool = pairDetail.pool;
     let period = pairDetail.period;
 
+    // Store reverse pairing as well for easier lookup
     updatePairDetail(oracleId, base, quote, pool, period);
+    updatePairDetail(oracleId, quote, base, pool, period);
   }
 
   oracle.type = "uniswapV3TWAP";
@@ -151,7 +153,9 @@ export function handleSetPairDetails(event: SetPairDetails): void {
     let pool = pairDetails[i].pairDetail.pool;
     let period = pairDetails[i].pairDetail.period;
 
+    // Store reverse pairing as well for easier lookup
     updatePairDetail(oracleId, base, quote, pool, period);
+    updatePairDetail(oracleId, quote, base, pool, period);
   }
 
   oracle.save();
