@@ -5,10 +5,18 @@
   "waterfallFactoryAddress": "'0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6'",
   "liquidSplitFactoryAddress": "'0xdEcd8B99b7F763e16141450DAa5EA414B7994831'",
   "recoupAddress": "'0xCbB386B801Ec72A5aB02AEB723dECd12f96EdE41'",
+  "uniV3OracleFactoryAddress": "'0x498f316fEB85a250fdC64B859a130515491EC888'",
+  "swapperFactoryAddress": "'0xa244bbe019cf1BA177EE5A532250be2663Fb55cA'",
+  "passThroughWalletFactoryAddress": "'0xF5aCC1568706Fbf9A55a77DdBe8DF907Da95dD6B'",
+  "diversifierFactoryAddress": "'0x78791997483f25217F4C3FE2a568Fe3eFaf77884'",
   "splitStartBlock": "6374540",
   "vestingStartBlock": "6839434",
   "waterfallStartBlock": "7718183",
   "liquidSplitStartBlock": "7829527",
   "recoupStartBlock": "8626129",
+  "uniV3OracleStartBlock": "9111052",
+  "swapperStartBlock": "9111157",
+  "passThroughWalletStartBlock": "9111177",
+  "diversifierStartBlock": "9111208",
   "ethereum": true
 }
