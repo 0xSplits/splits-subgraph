@@ -396,11 +396,11 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
   let toAddressString = toAddress.toHexString()
 
   if (fromAddressString == ZERO_ADDRESS || toAddressString == ZERO_ADDRESS) {
-    let holders = store.loadRelated('LiquidSplit', liquidSplitId, 'holders')
+    let liquidSplit = LiquidSplit.load(liquidSplitId) as LiquidSplit
+    let holders = liquidSplit.holders.load()
     for (let i = 0; i < holders.length; i++) {
-      let holderAddress = Address.fromString(holders[i].getString('account'))
-      let holder = Holder.load(holders[i].getString('id')) as Holder
-      holder.ownership = liquidSplitContract.scaledPercentBalanceOf(holderAddress)
+      let holder = holders[i]
+      holder.ownership = liquidSplitContract.scaledPercentBalanceOf(Address.fromString(holder.id))
       holder.save()
     }
 
