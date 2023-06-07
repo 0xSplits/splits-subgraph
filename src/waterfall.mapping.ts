@@ -26,7 +26,8 @@ import {
   getWaterfallModule,
   RECEIVE_PREFIX,
   TOKEN_WITHDRAWAL_USER_PREFIX,
-  TOKEN_WITHDRAWAL_WATERFALL_PREFIX
+  TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
+  updateWithdrawalAmount
 } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
@@ -309,20 +310,7 @@ function saveWaterfallRecipientReceivedFunds(
   // will show up in their active balances.
   let user = User.load(accountId);
   if (user) {
-    let tokenBalanceId = createJointId([accountId, tokenId]);
-    let tokenWithdrawalId = createJointId([
-      TOKEN_WITHDRAWAL_USER_PREFIX,
-      tokenBalanceId
-    ]);
-    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
-    if (!tokenWithdrawal) {
-      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
-      tokenWithdrawal.account = accountId;
-      tokenWithdrawal.token = tokenId;
-      tokenWithdrawal.amount = ZERO;
-    }
-    tokenWithdrawal.amount += amount;
-    tokenWithdrawal.save();
+    updateWithdrawalAmount(accountId, tokenId, amount);
   }
 
   // Save event

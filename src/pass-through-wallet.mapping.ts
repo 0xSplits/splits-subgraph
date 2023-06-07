@@ -39,6 +39,7 @@ import {
   TOKEN_RELEASE_PREFIX,
   TOKEN_WITHDRAWAL_USER_PREFIX,
   TRANSFER_EVENT_TOPIC,
+  updateWithdrawalAmount,
   WETH_DEPOSIT_EVENT_TOPIC,
   WETH_WITHDRAWAL_EVENT_TOPIC,
   ZERO,
@@ -609,20 +610,7 @@ function updateSwapBalance(
   // will show up in their active balances.
   let user = User.load(recipient);
   if (user) {
-    let tokenBalanceId = createJointId([recipient, outputTokenId]);
-    let tokenWithdrawalId = createJointId([
-      TOKEN_WITHDRAWAL_USER_PREFIX,
-      tokenBalanceId
-    ]);
-    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
-    if (!tokenWithdrawal) {
-      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
-      tokenWithdrawal.account = recipient;
-      tokenWithdrawal.token = outputTokenId;
-      tokenWithdrawal.amount = ZERO;
-    }
-    tokenWithdrawal.amount += outputAmount;
-    tokenWithdrawal.save();
+    updateWithdrawalAmount(recipient, outputTokenId, outputAmount);
   }
 
   // Save events

@@ -46,6 +46,7 @@ import {
   WETH_WITHDRAWAL_EVENT_TOPIC,
   getAddressHexFromBytes32,
   WETH_DEPOSIT_EVENT_TOPIC,
+  updateWithdrawalAmount,
 } from "./helpers";
 
 const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
@@ -710,20 +711,7 @@ function updateSwapBalance(
   // will show up in their active balances.
   let user = User.load(beneficiary);
   if (user) {
-    let tokenBalanceId = createJointId([beneficiary, outputTokenId]);
-    let tokenWithdrawalId = createJointId([
-      TOKEN_WITHDRAWAL_USER_PREFIX,
-      tokenBalanceId
-    ]);
-    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
-    if (!tokenWithdrawal) {
-      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
-      tokenWithdrawal.account = beneficiary;
-      tokenWithdrawal.token = outputTokenId;
-      tokenWithdrawal.amount = ZERO;
-    }
-    tokenWithdrawal.amount += outputAmount;
-    tokenWithdrawal.save();
+    updateWithdrawalAmount(beneficiary, outputTokenId, outputAmount);
   }
 
   // Save events

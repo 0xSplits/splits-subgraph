@@ -428,22 +428,9 @@ export function handleTokenWithdrawal(
   blockNumber: i32,
   timestamp: BigInt
 ): void {
+  updateWithdrawalAmount(accountId, tokenId, amount);
+
   let tokenBalanceId = createJointId([accountId, tokenId]);
-
-  let tokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_USER_PREFIX,
-    tokenBalanceId
-  ]);
-  let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
-  if (!tokenWithdrawal) {
-    tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
-    tokenWithdrawal.account = accountId;
-    tokenWithdrawal.token = tokenId;
-    tokenWithdrawal.amount = ZERO;
-  }
-  tokenWithdrawal.amount += amount;
-  tokenWithdrawal.save();
-
   let tokenInternalBalanceId = createJointId([
     TOKEN_INTERNAL_BALANCE_PREFIX,
     tokenBalanceId
@@ -466,6 +453,28 @@ export function handleTokenWithdrawal(
       user.save();
     }
   }
+}
+
+export function updateWithdrawalAmount(
+  accountId: string,
+  tokenId: string,
+  amount: BigInt
+): void {
+  let tokenBalanceId = createJointId([accountId, tokenId]);
+
+  let tokenWithdrawalId = createJointId([
+    TOKEN_WITHDRAWAL_USER_PREFIX,
+    tokenBalanceId
+  ]);
+  let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId);
+  if (!tokenWithdrawal) {
+    tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
+    tokenWithdrawal.account = accountId;
+    tokenWithdrawal.token = tokenId;
+    tokenWithdrawal.amount = ZERO;
+  }
+  tokenWithdrawal.amount += amount;
+  tokenWithdrawal.save();
 }
 
 const CHAOS_LIQUID_SPLIT = "0x8427e46826a520b1264b55f31fcb5ddfdc31e349";
