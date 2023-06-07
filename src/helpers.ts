@@ -23,6 +23,10 @@ import {
   LiquidSplit,
   Swapper,
   PassThroughWallet,
+  TokenDistribution,
+  ContractEarnings,
+  ContractEarningsWithdrawal,
+  ContractEarningsInternalBalance,
 } from "../generated/schema";
 
 export const PERCENTAGE_SCALE = BigInt.fromI64(1e6 as i64);
@@ -45,11 +49,14 @@ export const TOKEN_WITHDRAWAL_SPLIT_PREFIX = "w-s";
 export const TOKEN_WITHDRAWAL_USER_PREFIX = "w-u";
 export const TOKEN_WITHDRAWAL_WATERFALL_PREFIX = "w-w";
 export const TOKEN_INTERNAL_BALANCE_PREFIX = "ib";
-export const TOKEN_RELEASE_PREFIX = "r";
+export const TOKEN_DISTRIBUTION_BALANCE_PREFIX = "d";
 export const CONTROL_TRANSFER_EVENT_PREFIX = "ct";
 export const FROM_USER_PREFIX = "fu";
 export const TO_USER_PREFIX = "tu";
 export const ID_SEPARATOR = "-";
+export const CONTRACT_EARNINGS_PREFIX = "ce";
+export const CONTRACT_EARINGS_WITHDRAWAL_PREFIX = "w";
+export const CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX = "ib";
 
 export const TRANSFER_EVENT_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
 export const WETH_DEPOSIT_EVENT_TOPIC = "0xe1fffcc4923d04b559f4d29a8bfc6cda04eb5b0d3c460751c2402c5c5cc9109c";
@@ -78,7 +85,7 @@ function addBalanceToUser(
     );
     accountTokenInternalBalance.account = accountId;
     accountTokenInternalBalance.token = tokenId;
-    accountTokenInternalBalance.amount = BigInt.fromI32(0);
+    accountTokenInternalBalance.amount = ZERO;
   }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
@@ -228,7 +235,7 @@ export function distributeSplit(
     splitTokenWithdrawal = new TokenWithdrawal(splitTokenWithdrawalId);
     splitTokenWithdrawal.account = splitId;
     splitTokenWithdrawal.token = tokenId;
-    splitTokenWithdrawal.amount = BigInt.fromI32(0);
+    splitTokenWithdrawal.amount = ZERO;
   }
   splitTokenWithdrawal.amount += amount;
   splitTokenWithdrawal.save();
@@ -588,6 +595,33 @@ export function getPassThroughWallet(passThroughWalletId: string): PassThroughWa
   }
 
   return passThroughWallet;
+}
+
+export function getAccount(accountId: string): (
+  Split | WaterfallModule | VestingModule | LiquidSplit | Swapper | PassThroughWallet | User
+) {
+  let split = Split.load(accountId);
+  if (split) return split;
+
+  let waterfall = WaterfallModule.load(accountId);
+  if (waterfall) return waterfall;
+
+  let vesting = VestingModule.load(accountId);
+  if (vesting) return vesting;
+
+  let liquidSplit = LiquidSplit.load(accountId);
+  if (liquidSplit) return liquidSplit;
+
+  let swapper = Swapper.load(accountId);
+  if (swapper) return swapper;
+
+  let passThroughWallet = PassThroughWallet.load(accountId);
+  if (passThroughWallet) return passThroughWallet;
+  
+  let user = User.load(accountId);
+  if (user) return user;
+  
+  throw new Error('Account never created')
 }
 
 export function createTransactionIfMissing(txHash: string): void {
