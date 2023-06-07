@@ -180,6 +180,7 @@ type Transaction @entity {
   # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
   distributionEvents: [DistributionEvent!]
   setSplitEvents: [SetSplitEvent!]
+  withdrawEvents: [WithdrawalEvent!]
 }
 
 enum OracleType {

@@ -64,6 +64,8 @@ dataSources:
           handler: handleDistributeETHCall
         - function: distributeERC20(address,address,address[],uint32[],uint32,address)
           handler: handleDistributeERC20Call
+        - function: withdraw(address,uint256,address[])
+          handler: handleWithdrawCall
       {{/ethereum}}
       file: ./src/mapping.ts
   - kind: ethereum/contract

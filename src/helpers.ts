@@ -321,7 +321,8 @@ export function saveWithdrawalEvent(
 ): string {
   let tx = Transaction.load(txHash);
   if (!tx) tx = new Transaction(txHash);
-  tx.save();
+  let withdrawEvents = tx.withdrawEvents;
+  if (!withdrawEvents) withdrawEvents = new Array<string>();
 
   let withdrawalEventId = createJointId([
     WITHDRAWAL_EVENT_PREFIX,
@@ -335,6 +336,10 @@ export function saveWithdrawalEvent(
   withdrawalEvent.logIndex = logIdx;
   withdrawalEvent.transaction = txHash;
   withdrawalEvent.save();
+  withdrawEvents.push(withdrawalEventId);
+
+  tx.withdrawEvents = withdrawEvents;
+  tx.save();
 
   return withdrawalEventId
 }
@@ -392,12 +397,27 @@ export function saveControlTransferEvents(
   }
 }
 
-export function handleTokenWithdrawal(
+export function handleTokenWithdrawalEvent(
   withdrawalEventId: string,
+  tokenId: string,
+  amount: BigInt,
+): void {
+  let tokenWithdrawalEventId = createJointId([
+    TOKEN_PREFIX,
+    withdrawalEventId,
+    tokenId,
+  ]);
+  let tokenWithdrawalEvent = new TokenWithdrawalEvent(tokenWithdrawalEventId);
+  tokenWithdrawalEvent.token = tokenId;
+  tokenWithdrawalEvent.amount = amount;
+  tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
+  tokenWithdrawalEvent.save();
+}
+
+export function handleTokenWithdrawal(
   accountId: string,
   tokenId: string,
   amount: BigInt,
-  resetBalance: boolean,
   blockNumber: i32,
   timestamp: BigInt
 ): void {
@@ -412,7 +432,7 @@ export function handleTokenWithdrawal(
     tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId);
     tokenWithdrawal.account = accountId;
     tokenWithdrawal.token = tokenId;
-    tokenWithdrawal.amount = BigInt.fromI32(0);
+    tokenWithdrawal.amount = ZERO;
   }
   tokenWithdrawal.amount += amount;
   tokenWithdrawal.save();
@@ -426,30 +446,10 @@ export function handleTokenWithdrawal(
     tokenInternalBalance = new TokenInternalBalance(tokenInternalBalanceId);
     tokenInternalBalance.account = accountId;
     tokenInternalBalance.token = tokenId;
-    tokenInternalBalance.amount = BigInt.fromI32(0);
   }
 
-  // There's a bug on ethereum when distribute and withdraw events are grouped together in a transaction.
-  // Subtracting the amount in that case instead of just setting the balance to one handles it (because
-  // this is running before the distribute function in that case).
-  // See: https://linear.app/0xsplits/issue/PANDE-354/fix-subgraph-bug
-  if (resetBalance) {
-    tokenInternalBalance.amount = ONE;
-  } else {
-    tokenInternalBalance.amount -= amount;
-  }
+  tokenInternalBalance.amount = ONE;
   tokenInternalBalance.save();
-
-  let tokenWithdrawalEventId = createJointId([
-    TOKEN_PREFIX,
-    withdrawalEventId,
-    tokenId,
-  ]);
-  let tokenWithdrawalEvent = new TokenWithdrawalEvent(tokenWithdrawalEventId);
-  tokenWithdrawalEvent.token = tokenId;
-  tokenWithdrawalEvent.amount = amount;
-  tokenWithdrawalEvent.withdrawalEvent = withdrawalEventId;
-  tokenWithdrawalEvent.save();
 
   let user = User.load(accountId);
   if (user) {

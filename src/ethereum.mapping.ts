@@ -13,7 +13,8 @@ import {
   UpdateSplitCall,
   UpdateAndDistributeETHCall,
   UpdateAndDistributeERC20Call,
-  Withdrawal
+  Withdrawal,
+  WithdrawCall
 } from "../generated/SplitMain/SplitMain";
 import {
   Split,
@@ -23,6 +24,8 @@ import {
   Transaction,
   DistributionEvent,
   SetSplitEvent,
+  WithdrawalEvent,
+  TokenWithdrawalEvent,
 } from "../generated/schema";
 import {
   createJointId,
@@ -37,6 +40,10 @@ import {
   saveWithdrawalEvent,
   getSplit,
   getAccountIdForSplitEvents,
+  handleTokenWithdrawalEvent,
+  TOKEN_PREFIX,
+  ZERO_ADDRESS,
+  ZERO,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -320,6 +327,23 @@ function _getSetSplitEvent(
   return null;
 }
 
+function _getWithdrawEvent(
+  txHash: string,
+  accountId: string,
+): WithdrawalEvent | null {
+  let tx = Transaction.load(txHash) as Transaction;
+  let withdrawEvents = tx.withdrawEvents as Array<string>;
+
+  for (let i = 0; i < withdrawEvents.length; i++) {
+    let withdrawEvent = WithdrawalEvent.load(withdrawEvents[i]) as WithdrawalEvent;
+    if (withdrawEvent.account == accountId) {
+      return withdrawEvent;
+    }
+  }
+
+  return null;
+}
+
 export function handleInitiateControlTransfer(
   event: InitiateControlTransfer
 ): void {
@@ -466,11 +490,10 @@ export function handleUpdateAndDistributeERC20Call(
 }
 
 export function handleWithdrawal(event: Withdrawal): void {
-  let blockNumber = event.block.number.toI32();
   let timestamp = event.block.timestamp;
   let txHash = event.transaction.hash.toHexString();
   let logIdx = event.logIndex;
-  let account = event.params.account.toHexString();
+  let accountId = event.params.account.toHexString();
   let ethAmount = event.params.ethAmount;
   let tokens = event.params.tokens;
   let tokenAmounts = event.params.tokenAmounts;
@@ -479,30 +502,71 @@ export function handleWithdrawal(event: Withdrawal): void {
     timestamp,
     txHash,
     logIdx,
-    account
+    accountId
   );
 
   if (ethAmount) {
-    handleTokenWithdrawal(
+    handleTokenWithdrawalEvent(
       withdrawalEventId,
-      account,
-      Address.zero().toHexString(),
+      ZERO_ADDRESS,
       ethAmount,
-      false,
-      blockNumber,
-      timestamp
     );
   }
 
   for (let i: i32 = 0; i < tokens.length; i++) {
-    handleTokenWithdrawal(
+    handleTokenWithdrawalEvent(
       withdrawalEventId,
-      account,
       tokens[i].toHexString(),
       tokenAmounts[i],
-      false,
+    );
+  }
+}
+
+export function handleWithdrawCall(call: WithdrawCall): void {
+  let blockNumber = call.block.number.toI32();
+  let timestamp = call.block.timestamp;
+  let txHash = call.transaction.hash.toHexString();
+  let accountId = call.inputs.account.toHexString();
+  let withdrawEth = call.inputs.withdrawETH;
+  let tokens = call.inputs.tokens;
+
+  let withdrawEvent = _getWithdrawEvent(
+    txHash,
+    accountId
+  ) as WithdrawalEvent;
+
+  if (withdrawEth != ZERO) {
+    let tokenWithdrawalEventId = createJointId([
+      TOKEN_PREFIX,
+      withdrawEvent.id,
+      ZERO_ADDRESS,
+    ]);
+    let tokenWithdrawalEvent = TokenWithdrawalEvent.load(tokenWithdrawalEventId) as TokenWithdrawalEvent;
+
+    handleTokenWithdrawal(
+      accountId,
+      ZERO_ADDRESS,
+      tokenWithdrawalEvent.amount,
       blockNumber,
-      timestamp
+      timestamp,
+    );
+  }
+
+  for (let i = 0; i < tokens.length; i++) {
+    let tokenId = tokens[i].toHexString();
+    let tokenWithdrawalEventId = createJointId([
+      TOKEN_PREFIX,
+      withdrawEvent.id,
+      tokenId,
+    ]);
+    let tokenWithdrawalEvent = TokenWithdrawalEvent.load(tokenWithdrawalEventId) as TokenWithdrawalEvent;
+
+    handleTokenWithdrawal(
+      accountId,
+      tokenId,
+      tokenWithdrawalEvent.amount,
+      blockNumber,
+      timestamp,
     );
   }
 }

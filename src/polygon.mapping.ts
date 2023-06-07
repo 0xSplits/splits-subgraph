@@ -27,6 +27,7 @@ import {
   ZERO_ADDRESS,
   TWO,
   ONE_ADDRESS,
+  handleTokenWithdrawalEvent,
 } from "./helpers";
 
 export function handleCancelControlTransfer(
@@ -319,25 +320,31 @@ export function handleWithdrawal(event: Withdrawal): void {
 
   if (ethAmount) {
     handleTokenWithdrawal(
-      withdrawalEventId,
       account,
-      Address.zero().toHexString(),
+      ZERO_ADDRESS,
       ethAmount,
-      true,
       blockNumber,
       timestamp
+    );
+    handleTokenWithdrawalEvent(
+      withdrawalEventId,
+      ZERO_ADDRESS,
+      ethAmount,
     );
   }
 
   for (let i: i32 = 0; i < tokens.length; i++) {
     handleTokenWithdrawal(
-      withdrawalEventId,
       account,
       tokens[i].toHexString(),
       tokenAmounts[i],
-      true,
       blockNumber,
       timestamp
+    );
+    handleTokenWithdrawalEvent(
+      withdrawalEventId,
+      tokens[i].toHexString(),
+      tokenAmounts[i],
     );
   }
 }
