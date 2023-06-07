@@ -1,4 +1,4 @@
-import { Address, BigInt, log } from '@graphprotocol/graph-ts'
+import { Address, BigInt, log, store } from '@graphprotocol/graph-ts'
 import {
   CreateLS1155,
   CreateLS1155Clone,
@@ -33,6 +33,7 @@ import {
   getLiquidSplit,
   PERCENTAGE_SCALE,
   REMOVED_PREFIX,
+  ZERO,
   ZERO_ADDRESS,
 } from './helpers'
 
@@ -375,7 +376,7 @@ function getHolder(
     holder = new Holder(holderId)
     holder.liquidSplit = liquidSplitId
     holder.account = accountId
-    holder.ownership = BigInt.fromI64(0)
+    holder.ownership = ZERO
   }
 
   return holder
@@ -392,27 +393,34 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
   let liquidSplitId = liquidSplitAddress.toHexString()
 
   let fromAddressString = fromAddress.toHexString()
-  if (fromAddressString != ZERO_ADDRESS) {
-    let fromHolder = getHolder(
-      fromAddressString,
-      liquidSplitId,
-      blockNumber,
-      timestamp,
-    )
-    fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(
-      fromAddress,
-    )
-    fromHolder.save()
-  }
-
   let toAddressString = toAddress.toHexString()
-  if (toAddressString != ZERO_ADDRESS) {
-    let toHolder = getHolder(
-      toAddressString,
-      liquidSplitId,
-      blockNumber,
-      timestamp,
-    )
+
+  if (fromAddressString == ZERO_ADDRESS || toAddressString == ZERO_ADDRESS) {
+    let holders = store.loadRelated('LiquidSplit', liquidSplitId, 'holders')
+    for (let i = 0; i < holders.length; i++) {
+      let holderAddress = Address.fromString(holders[i].getString('account'))
+      let holder = Holder.load(holders[i].getString('id')) as Holder
+      holder.ownership = liquidSplitContract.scaledPercentBalanceOf(holderAddress)
+      holder.save()
+    }
+
+    if (fromAddressString != ZERO_ADDRESS) {
+      let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp)
+      fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
+      fromHolder.save()
+    }
+  
+    if (toAddressString != ZERO_ADDRESS) {
+      let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp)
+      toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
+      toHolder.save()
+    }
+  } else {
+    let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp)
+    fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
+    fromHolder.save()
+  
+    let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp)
     toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
     toHolder.save()
   }
