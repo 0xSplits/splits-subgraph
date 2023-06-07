@@ -224,22 +224,10 @@ export function distributeSplit(
     logIdx.toString()
   ]);
 
+  updateWithdrawalAmount(splitId, tokenId, amount);
+  updateDistributionAmount(splitId, tokenId, amount);
+
   let splitTokenBalanceId = createJointId([splitId, tokenId]);
-
-  let splitTokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_SPLIT_PREFIX,
-    splitTokenBalanceId
-  ]);
-  let splitTokenWithdrawal = TokenWithdrawal.load(splitTokenWithdrawalId);
-  if (!splitTokenWithdrawal) {
-    splitTokenWithdrawal = new TokenWithdrawal(splitTokenWithdrawalId);
-    splitTokenWithdrawal.account = splitId;
-    splitTokenWithdrawal.token = tokenId;
-    splitTokenWithdrawal.amount = ZERO;
-  }
-  splitTokenWithdrawal.amount += amount;
-  splitTokenWithdrawal.save();
-
   let splitTokenInternalBalanceId = createJointId([
     TOKEN_INTERNAL_BALANCE_PREFIX,
     splitTokenBalanceId
@@ -475,6 +463,28 @@ export function updateWithdrawalAmount(
   }
   tokenWithdrawal.amount += amount;
   tokenWithdrawal.save();
+}
+
+export function updateDistributionAmount(
+  accountId: string,
+  tokenId: string,
+  amount: BigInt
+): void {
+  let tokenBalanceId = createJointId([accountId, tokenId]);
+
+  let tokenDistributionId = createJointId([
+    TOKEN_DISTRIBUTION_BALANCE_PREFIX,
+    tokenBalanceId
+  ]);
+  let tokenDistribution = TokenDistribution.load(tokenDistributionId);
+  if (!tokenDistribution) {
+    tokenDistribution = new TokenDistribution(tokenDistributionId);
+    tokenDistribution.account = accountId;
+    tokenDistribution.token = tokenId;
+    tokenDistribution.amount = ZERO;
+  }
+  tokenDistribution.amount += amount;
+  tokenDistribution.save();
 }
 
 const CHAOS_LIQUID_SPLIT = "0x8427e46826a520b1264b55f31fcb5ddfdc31e349";

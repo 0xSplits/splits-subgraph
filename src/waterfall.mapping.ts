@@ -25,8 +25,8 @@ import {
   createUserIfMissing,
   getWaterfallModule,
   RECEIVE_PREFIX,
-  TOKEN_WITHDRAWAL_USER_PREFIX,
   TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
+  updateDistributionAmount,
   updateWithdrawalAmount
 } from "./helpers";
 
@@ -350,4 +350,10 @@ function updateTokenWithdrawal(
   }
   waterfallTokenWithdrawal.amount += amount;
   waterfallTokenWithdrawal.save();
+
+  updateDistributionAmount(
+    waterfallModuleId,
+    tokenId,
+    amount
+  );
 }

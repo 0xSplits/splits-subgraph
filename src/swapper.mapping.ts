@@ -1,4 +1,4 @@
-import { BigInt, Bytes, TypedMap, ethereum, log, store } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
 import { CreateSwapper } from "../generated/SwapperFactory/SwapperFactory";
 import {
   SetBeneficiary,
@@ -17,7 +17,6 @@ import {
   User,
   Swapper,
   SwapBalance,
-  TokenWithdrawal,
   Oracle,
   CreateSwapperEvent,
   SwapperBeneficiaryAddedEvent,
@@ -39,7 +38,6 @@ import {
   ADDED_PREFIX,
   REMOVED_PREFIX,
   RECEIVE_PREFIX,
-  TOKEN_WITHDRAWAL_USER_PREFIX,
   ZERO,
   ZERO_ADDRESS,
   TRANSFER_EVENT_TOPIC,
@@ -47,6 +45,7 @@ import {
   getAddressHexFromBytes32,
   WETH_DEPOSIT_EVENT_TOPIC,
   updateWithdrawalAmount,
+  updateDistributionAmount,
 } from "./helpers";
 
 const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
@@ -706,6 +705,12 @@ function updateSwapBalance(
   swapBalance.outputAmount += outputAmount;
 
   swapBalance.save();
+
+  updateDistributionAmount(
+    swapperId,
+    inputTokenId,
+    inputAmount
+  );
 
   // Only need to update withdrawn for users. For all modules, swapped funds
   // will show up in their active balances.
