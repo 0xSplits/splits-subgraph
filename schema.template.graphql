@@ -8,6 +8,7 @@ interface Account {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -45,10 +46,18 @@ type TokenWithdrawal implements TokenBalance @entity {
   account: Account!
 }
 
+type TokenDistribution implements TokenBalance @entity {
+  id: ID! # d-${accountId}-${tokenId}
+  amount: BigInt!
+  token: Token!
+  account: Account!
+}
+
 type User implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -63,6 +72,7 @@ type Split implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -94,6 +104,7 @@ type VestingModule implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -124,6 +135,7 @@ type WaterfallModule implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -153,6 +165,7 @@ type LiquidSplit implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -235,6 +248,7 @@ type Swapper implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
@@ -284,6 +298,7 @@ type PassThroughWallet implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
+  distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!

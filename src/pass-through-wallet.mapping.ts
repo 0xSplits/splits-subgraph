@@ -12,7 +12,6 @@ import {
   Token,
   User,
   PassThroughWallet,
-  TokenRelease,
   Recipient,
   Swapper,
   CreatePassThroughWalletEvent,
@@ -21,7 +20,6 @@ import {
   PassThroughFundsEvent,
   ReceivePassThroughFundsEvent,
   Split,
-  TokenWithdrawal,
   PassThroughWalletSwapBalance,
   PassThroughWalletSwapBalanceOutput,
   OwnerSwapDiversifierFundsEvent,
@@ -36,9 +34,8 @@ import {
   getPassThroughWallet,
   getSplit,
   RECEIVE_PREFIX,
-  TOKEN_RELEASE_PREFIX,
-  TOKEN_WITHDRAWAL_USER_PREFIX,
   TRANSFER_EVENT_TOPIC,
+  updateDistributionAmount,
   updateWithdrawalAmount,
   WETH_DEPOSIT_EVENT_TOPIC,
   WETH_WITHDRAWAL_EVENT_TOPIC,
@@ -253,7 +250,7 @@ export function handlePassThrough(event: PassThrough): void {
     let token = new Token(tokenId);
     token.save();
 
-    updateTokenRelease(passThroughWalletId, tokenId, amount);
+    updateDistributionAmount(passThroughWalletId, tokenId, amount);
   }
 
   passThroughWallet.save();
@@ -285,27 +282,6 @@ export function handlePassThrough(event: PassThrough): void {
   receivePassThroughFundsEvent.account = passThroughWallet.passThroughAccount;
   receivePassThroughFundsEvent.passThroughFundsEvent = passThroughFundsEventId;
   receivePassThroughFundsEvent.save();
-}
-
-function updateTokenRelease(
-  passThroughWalletId: string,
-  tokenId: string,
-  amount: BigInt,
-): void {
-  let passThroughWalletTokenBalanceId = createJointId([passThroughWalletId, tokenId]);
-  let passThroughWalletTokenReleaseId = createJointId([
-    TOKEN_RELEASE_PREFIX,
-    passThroughWalletTokenBalanceId
-  ]);
-  let passThroughWalletTokenRelease = TokenRelease.load(passThroughWalletTokenReleaseId);
-  if (!passThroughWalletTokenRelease) {
-    passThroughWalletTokenRelease = new TokenRelease(passThroughWalletTokenReleaseId);
-    passThroughWalletTokenRelease.account = passThroughWalletId;
-    passThroughWalletTokenRelease.token = tokenId;
-    passThroughWalletTokenRelease.amount = ZERO;
-  }
-  passThroughWalletTokenRelease.amount += amount;
-  passThroughWalletTokenRelease.save();
 }
 
 class EthTransferData {
