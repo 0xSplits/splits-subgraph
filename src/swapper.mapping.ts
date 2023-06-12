@@ -9,6 +9,7 @@ import {
   ExecCalls,
   Flash,
   SetDefaultScaledOfferFactor,
+  SetPairScaledOfferFactors,
 } from "../generated/templates/Swapper/Swapper";
 import { Swapper as SwapperTemplate } from "../generated/templates";
 import {
@@ -25,6 +26,7 @@ import {
   UpdateSwapperTokenEvent,
   UpdateSwapperOracleEvent,
   UpdateSwapperDefaultScaledOfferFactorEvent,
+  UpdateSwapperScaledOfferFactorOverridesEvent,
   SwapFundsEvent,
   ReceiveSwappedFundsEvent,
   SwapperPairOverride,
@@ -49,6 +51,9 @@ import {
 const CREATE_SWAPPER_EVENT_PREFIX = "cswe";
 const UPDATE_SWAPPER_BENEFICIARY_EVENT_PREFIX = "usbe";
 const UPDATE_SWAPPER_TOKEN_EVENT_PREFIX = "uste";
+const UPDATE_SWAPPER_ORACLE_EVENT_PREFIX = "usoe";
+const UPDATE_SWAPPER_DEFAULT_SCALED_OFFER_FACTOR_EVENT_PREFIX = "usdsofe";
+const UPDATE_SWAPPER_SCALED_OFFER_FACTOR_OVERRIDES_EVENT_PREFIX = "ussofoe";
 const SWAP_FUNDS_EVENT_PREFIX = "sfe";
 
 export function handleCreateSwapper(event: CreateSwapper): void {
@@ -245,7 +250,7 @@ export function handleSetOracle(event: SetOracle): void {
   swapper.save();
 
   // Save events
-  let updateOracleEventId = createJointId([UPDATE_SWAPPER_TOKEN_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateOracleEventId = createJointId([UPDATE_SWAPPER_ORACLE_EVENT_PREFIX, txHash, logIdx.toString()]);
   let updateOracleEvent = new UpdateSwapperOracleEvent(updateOracleEventId);
   updateOracleEvent.timestamp = timestamp;
   updateOracleEvent.transaction = txHash;
@@ -280,7 +285,7 @@ export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFa
   swapper.save();
 
   // Save events
-  let updateDefaultScaledOfferFactorEventId = createJointId([UPDATE_SWAPPER_TOKEN_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateDefaultScaledOfferFactorEventId = createJointId([UPDATE_SWAPPER_DEFAULT_SCALED_OFFER_FACTOR_EVENT_PREFIX, txHash, logIdx.toString()]);
   let updateDefaultScaledOfferFactorEvent = new UpdateSwapperDefaultScaledOfferFactorEvent(updateDefaultScaledOfferFactorEventId);
   updateDefaultScaledOfferFactorEvent.timestamp = timestamp;
   updateDefaultScaledOfferFactorEvent.transaction = txHash;
@@ -289,6 +294,53 @@ export function handleSetDefaultScaledOfferFactor(event: SetDefaultScaledOfferFa
   updateDefaultScaledOfferFactorEvent.oldScaledOfferFactor = oldScaledOfferFactor;
   updateDefaultScaledOfferFactorEvent.newScaledOfferFactor = defaultScaledOfferFactor;
   updateDefaultScaledOfferFactorEvent.save();
+}
+
+export function handleSetPairScaledOfferFactors(event: SetPairScaledOfferFactors): void {
+  let swapperId = event.address.toHexString();
+
+  let swapper = getSwapper(swapperId);
+  if (!swapper) return;
+
+  let blockNumber = event.block.number.toI32();
+  let timestamp = event.block.timestamp;
+  let txHash = event.transaction.hash.toHexString();
+  createTransactionIfMissing(txHash);
+  let logIdx = event.logIndex;
+
+  if (event.block.number.toI32() > swapper.latestBlock) {
+    swapper.latestBlock = blockNumber;
+    swapper.latestActivity = timestamp;
+  }
+
+  let scaledOfferFactorPairOverrides = event.params.params;
+
+  for (let i: i32 = 0; i < scaledOfferFactorPairOverrides.length; i++) {
+    let quotePair = scaledOfferFactorPairOverrides[i].quotePair;
+
+    let base = quotePair.base.toHexString();
+    let baseToken = new Token(base);
+    baseToken.save();
+
+    let quote = quotePair.quote.toHexString();
+    let quoteToken = new Token(quote);
+    quoteToken.save();
+
+    let scaledOfferFactor = scaledOfferFactorPairOverrides[i].scaledOfferFactor;
+
+    updatePairOverride(swapperId, base, quote, scaledOfferFactor);
+  }
+
+  swapper.save();
+
+  // Save events
+  let updateScaledOfferFactorOverridesEventId = createJointId([UPDATE_SWAPPER_SCALED_OFFER_FACTOR_OVERRIDES_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let updateScaledOfferFactorOverridesEvent = new UpdateSwapperScaledOfferFactorOverridesEvent(updateScaledOfferFactorOverridesEventId);
+  updateScaledOfferFactorOverridesEvent.timestamp = timestamp;
+  updateScaledOfferFactorOverridesEvent.transaction = txHash;
+  updateScaledOfferFactorOverridesEvent.logIndex = logIdx;
+  updateScaledOfferFactorOverridesEvent.account = swapperId;
+  updateScaledOfferFactorOverridesEvent.save();
 }
 
 export function handleSetPaused(event: SetPaused): void {

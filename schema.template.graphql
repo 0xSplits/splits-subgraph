@@ -662,6 +662,15 @@ type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent @entity 
   newScaledOfferFactor: BigInt!
 }
 
+type UpdateSwapperScaledOfferFactorOverridesEvent implements AccountEvent @entity {
+  id: ID! # ussofoe-${txHash}-${logIdx}
+  timestamp: BigInt!
+  account: Account!
+  logIndex: BigInt!
+
+  transaction: Transaction!
+}
+
 type SwapFundsEvent implements AccountEvent @entity {
   id: ID! # sfe-${txHash}-${logIdx}
   timestamp: BigInt!

@@ -394,6 +394,8 @@ templates:
           handler: handleSetOracle
         - event: SetDefaultScaledOfferFactor(uint32)
           handler: handleSetDefaultScaledOfferFactor
+        - event: SetPairScaledOfferFactors(((address,address),uint32)[])
+          handler: handleSetPairScaledOfferFactors
         - event: SetPaused(bool)
           handler: handleSetPaused
         - event: OwnershipTransferred(indexed address,indexed address)
