@@ -709,6 +709,7 @@ function createOracleIfMissing(
   if (!oracle) {
     oracle = new Oracle(oracleId);
     oracle.type = 'unknown';
+    oracle.save();
   }
 }
 
