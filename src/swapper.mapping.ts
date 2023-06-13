@@ -780,5 +780,10 @@ function updatePairOverride(
     pairOverride.quote = quoteToken;
   }
   pairOverride.scaledOfferFactor = scaledOfferFactor;
-  pairOverride.save();
+
+  if (scaledOfferFactor == ZERO) {
+    store.remove('SwapperPairOverride', pairOverrideId);
+  } else {
+    pairOverride.save();
+  }
 }
