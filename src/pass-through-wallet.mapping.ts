@@ -34,6 +34,7 @@ import {
   getAddressHexFromBytes32,
   getPassThroughWallet,
   getSplit,
+  saveToken,
   RECEIVE_PREFIX,
   TRANSFER_EVENT_TOPIC,
   updateDistributionAmount,
@@ -268,8 +269,7 @@ export function handlePassThrough(event: PassThrough): void {
     let tokenId = tokenIds[i].toHexString()
     let amount = amounts[i]
 
-    let token = new Token(tokenId)
-    token.save()
+    saveToken(tokenId)
 
     updateDistributionAmount(passThroughWalletId, tokenId, amount)
     // token release is deprecated

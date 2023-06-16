@@ -9,12 +9,15 @@ import {
 } from '../generated/templates/UniV3Oracle/UniV3Oracle'
 import { UniV3Oracle as UniV3OracleTemplate } from '../generated/templates'
 import {
-  Token,
   User,
   UniswapV3TWAPOracle as Oracle,
   UniswapV3TWAPPairDetail,
 } from '../generated/schema'
-import { createJointId, createUserIfMissing } from './helpers'
+import {
+  createJointId,
+  createUserIfMissing,
+  saveToken,
+} from './helpers'
 
 export const ZERO = BigInt.fromI32(0)
 
@@ -48,12 +51,9 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
     let quotePair = pairDetails[i].quotePair
 
     let base = quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
-
     let quote = quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
+    saveToken(base)
+    saveToken(quote)
 
     let pairDetail = pairDetails[i].pairDetail
     let pool = pairDetail.pool
@@ -146,12 +146,9 @@ export function handleSetPairDetails(event: SetPairDetails): void {
   let pairDetails = event.params.params
   for (let i: i32 = 0; i < pairDetails.length; i++) {
     let base = pairDetails[i].quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
-
     let quote = pairDetails[i].quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
+    saveToken(base)
+    saveToken(quote)
 
     let pool = pairDetails[i].pairDetail.pool
     let period = pairDetails[i].pairDetail.period

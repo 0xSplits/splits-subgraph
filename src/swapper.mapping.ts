@@ -48,6 +48,7 @@ import {
   WETH_DEPOSIT_EVENT_TOPIC,
   updateWithdrawalAmount,
   updateDistributionAmount,
+  saveToken,
 } from './helpers'
 
 const CREATE_SWAPPER_EVENT_PREFIX = 'cswe'
@@ -92,8 +93,7 @@ export function handleCreateSwapper(event: CreateSwapper): void {
   createUserIfMissing(owner, blockNumber, timestamp)
   createUserIfMissing(beneficiary, blockNumber, timestamp)
   createOracleIfMissing(oracleId)
-  let token = new Token(tokenToBeneficiary)
-  token.save()
+  saveToken(tokenToBeneficiary)
 
   swapper.type = 'swapper'
   swapper.owner = owner
@@ -110,13 +110,10 @@ export function handleCreateSwapper(event: CreateSwapper): void {
     let quotePair = scaledOfferFactorPairOverrides[i].quotePair
 
     let base = quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
-
     let quote = quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
-
+    saveToken(base)
+    saveToken(quote)
+    
     let scaledOfferFactor = scaledOfferFactorPairOverrides[i].scaledOfferFactor
 
     updatePairOverride(swapperId, base, quote, scaledOfferFactor)
@@ -239,8 +236,7 @@ export function handleSetTokenToBeneficiary(
   }
 
   let newToken = event.params.tokenToBeneficiary.toHexString()
-  let token = new Token(newToken)
-  token.save()
+  saveToken(newToken)
 
   let oldToken = swapper.tokenToBeneficiary
   swapper.tokenToBeneficiary = newToken
@@ -370,12 +366,9 @@ export function handleSetPairScaledOfferFactors(
     let quotePair = scaledOfferFactorPairOverrides[i].quotePair
 
     let base = quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
-
     let quote = quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
+    saveToken(base)
+    saveToken(quote)
 
     let scaledOfferFactor = scaledOfferFactorPairOverrides[i].scaledOfferFactor
 
@@ -488,8 +481,7 @@ export function handleFlash(event: Flash): void {
     let inputAmount = quoteParams[i].baseAmount
     let outputAmount = amountsToBeneificiary[i]
     let inputTokenId = quoteParams[i].quotePair.base.toHexString()
-    let token = new Token(inputTokenId)
-    token.save()
+    saveToken(inputTokenId)
 
     updateSwapBalance(
       swapperId,

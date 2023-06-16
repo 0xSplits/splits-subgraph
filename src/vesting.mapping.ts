@@ -16,13 +16,7 @@ import {
   ReceiveVestedFundsEvent,
   User,
 } from '../generated/schema'
-import {
-  createJointId,
-  createTransactionIfMissing,
-  createUserIfMissing,
-  getVestingModule,
-  RECEIVE_PREFIX,
-} from './helpers'
+import { createJointId, createTransactionIfMissing, createUserIfMissing, getVestingModule, saveToken, RECEIVE_PREFIX } from "./helpers"
 
 export const ZERO = BigInt.fromI32(0)
 
@@ -100,8 +94,7 @@ export function handleCreateVestingStream(event: CreateVestingStream): void {
   let startTime = event.block.timestamp
   let totalAmount = event.params.amount
 
-  let token = new Token(tokenId)
-  token.save()
+  saveToken(tokenId);
 
   let vestingStreamId = createJointId([vestingModuleId, streamId.toString()])
   let vestingStream = new VestingStream(vestingStreamId)

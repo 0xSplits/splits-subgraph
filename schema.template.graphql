@@ -31,7 +31,7 @@ interface Account {
   upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
-type Token @entity {
+type Token @entity(immutable: true) {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "token")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "token")
@@ -242,7 +242,7 @@ type Holder @entity {
   ownership: BigInt!
 }
 
-type Transaction @entity {
+type Transaction @entity(immutable: true) {
   id: ID! #txHash
   # can't use derived relations inside mapping.ts
   # distributionEvents: [DistributionEvent!]! @derivedFrom(field: "transaction")
@@ -444,7 +444,7 @@ enum SetSplitType {
   update
 }
 
-type SetSplitEvent implements AccountEvent @entity {
+type SetSplitEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # sse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -459,7 +459,7 @@ type SetSplitEvent implements AccountEvent @entity {
     @derivedFrom(field: "setSplitEvent")
 }
 
-type RecipientAddedEvent implements AccountEvent @entity {
+type RecipientAddedEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -469,7 +469,7 @@ type RecipientAddedEvent implements AccountEvent @entity {
   ownership: BigInt!
 }
 
-type RecipientRemovedEvent implements AccountEvent @entity {
+type RecipientRemovedEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -478,7 +478,7 @@ type RecipientRemovedEvent implements AccountEvent @entity {
   setSplitEvent: SetSplitEvent!
 }
 
-type DistributionEvent implements AccountEvent @entity {
+type DistributionEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # de-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -494,7 +494,7 @@ type DistributionEvent implements AccountEvent @entity {
     @derivedFrom(field: "distributionEvent")
 }
 
-type ReceiveDistributionEvent implements AccountEvent @entity {
+type ReceiveDistributionEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # r-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -505,7 +505,7 @@ type ReceiveDistributionEvent implements AccountEvent @entity {
   distributionEvent: DistributionEvent!
 }
 
-type DistributeDistributionEvent implements AccountEvent @entity {
+type DistributeDistributionEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # d-de-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -516,7 +516,7 @@ type DistributeDistributionEvent implements AccountEvent @entity {
   distributionEvent: DistributionEvent!
 }
 
-type WithdrawalEvent implements AccountEvent @entity {
+type WithdrawalEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # we-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -527,7 +527,7 @@ type WithdrawalEvent implements AccountEvent @entity {
     @derivedFrom(field: "withdrawalEvent")
 }
 
-type TokenWithdrawalEvent @entity {
+type TokenWithdrawalEvent @entity(immutable: true) {
   id: ID! # t-we-${txHash}-${logIdx}-${accountId}-${tokenId}
   token: Token!
   amount: BigInt!
@@ -540,7 +540,7 @@ enum ControlTransferType {
   transfer
 }
 
-type ControlTransferEvent implements AccountEvent @entity {
+type ControlTransferEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # ct-{txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -554,7 +554,7 @@ type ControlTransferEvent implements AccountEvent @entity {
     @derivedFrom(field: "controlTransferEvent")
 }
 
-type FromUserControlTransferEvent implements AccountEvent @entity {
+type FromUserControlTransferEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # fu-ct-{txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -563,7 +563,7 @@ type FromUserControlTransferEvent implements AccountEvent @entity {
   controlTransferEvent: ControlTransferEvent!
 }
 
-type ToUserControlTransferEvent implements AccountEvent @entity {
+type ToUserControlTransferEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # tu-ct-{txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -572,7 +572,7 @@ type ToUserControlTransferEvent implements AccountEvent @entity {
   controlTransferEvent: ControlTransferEvent!
 }
 
-type CreateVestingModuleEvent implements AccountEvent @entity {
+type CreateVestingModuleEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # cvme-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -581,7 +581,7 @@ type CreateVestingModuleEvent implements AccountEvent @entity {
   transaction: Transaction!
 }
 
-type CreateVestingStreamEvent implements AccountEvent @entity {
+type CreateVestingStreamEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # cvse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -592,7 +592,7 @@ type CreateVestingStreamEvent implements AccountEvent @entity {
   amount: BigInt!
 }
 
-type ReleaseVestingFundsEvent implements AccountEvent @entity {
+type ReleaseVestingFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -603,7 +603,7 @@ type ReleaseVestingFundsEvent implements AccountEvent @entity {
   amount: BigInt!
 }
 
-type ReceiveVestedFundsEvent implements AccountEvent @entity {
+type ReceiveVestedFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -612,7 +612,7 @@ type ReceiveVestedFundsEvent implements AccountEvent @entity {
   releaseVestingFundsEvent: ReleaseVestingFundsEvent!
 }
 
-type CreateWaterfallModuleEvent implements AccountEvent @entity {
+type CreateWaterfallModuleEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # cwme-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -624,7 +624,7 @@ type CreateWaterfallModuleEvent implements AccountEvent @entity {
     @derivedFrom(field: "createWaterfallEvent")
 }
 
-type WaterfallRecipientAddedEvent implements AccountEvent @entity {
+type WaterfallRecipientAddedEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -633,7 +633,7 @@ type WaterfallRecipientAddedEvent implements AccountEvent @entity {
   createWaterfallEvent: CreateWaterfallModuleEvent!
 }
 
-type WaterfallFundsEvent implements AccountEvent @entity {
+type WaterfallFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # wfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -646,7 +646,7 @@ type WaterfallFundsEvent implements AccountEvent @entity {
     @derivedFrom(field: "waterfallFundsEvent")
 }
 
-type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
+type ReceiveWaterfallFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # r-wfe-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -656,7 +656,7 @@ type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
   waterfallFundsEvent: WaterfallFundsEvent!
 }
 
-type RecoverNonWaterfallFundsEvent implements AccountEvent @entity {
+type RecoverNonWaterfallFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # rnwfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -670,7 +670,7 @@ type RecoverNonWaterfallFundsEvent implements AccountEvent @entity {
     @derivedFrom(field: "recoverNonWaterfallFundsEvent")
 }
 
-type ReceiveNonWaterfallFundsEvent implements AccountEvent @entity {
+type ReceiveNonWaterfallFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # r-rnwfe-${txHash}-${logIdx}-${accountId}
   timestamp: BigInt!
   account: Account!
@@ -679,7 +679,7 @@ type ReceiveNonWaterfallFundsEvent implements AccountEvent @entity {
   recoverNonWaterfallFundsEvent: RecoverNonWaterfallFundsEvent!
 }
 
-type CreateLiquidSplitEvent implements AccountEvent @entity {
+type CreateLiquidSplitEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # clse-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -694,7 +694,7 @@ enum NFTTransferType {
   burn
 }
 
-type LiquidSplitNFTTransferEvent implements AccountEvent @entity {
+type LiquidSplitNFTTransferEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -710,7 +710,7 @@ type LiquidSplitNFTTransferEvent implements AccountEvent @entity {
     @derivedFrom(field: "nftTransferEvent")
 }
 
-type LiquidSplitNFTAddedEvent implements AccountEvent @entity {
+type LiquidSplitNFTAddedEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # add-nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -719,7 +719,7 @@ type LiquidSplitNFTAddedEvent implements AccountEvent @entity {
   nftTransferEvent: LiquidSplitNFTTransferEvent!
 }
 
-type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
+type LiquidSplitNFTRemovedEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # rem-nte-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -728,7 +728,7 @@ type LiquidSplitNFTRemovedEvent implements AccountEvent @entity {
   nftTransferEvent: LiquidSplitNFTTransferEvent!
 }
 
-type CreateSwapperEvent implements AccountEvent @entity {
+type CreateSwapperEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # cswe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -741,7 +741,7 @@ type CreateSwapperEvent implements AccountEvent @entity {
     @derivedFrom(field: "createSwapperEvent")
 }
 
-type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
+type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # usbe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -755,7 +755,7 @@ type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
     @derivedFrom(field: "updateSwapperEvent")
 }
 
-type SwapperBeneficiaryAddedEvent implements AccountEvent @entity {
+type SwapperBeneficiaryAddedEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -765,7 +765,7 @@ type SwapperBeneficiaryAddedEvent implements AccountEvent @entity {
   updateSwapperEvent: UpdateSwapperBeneficiaryEvent
 }
 
-type SwapperBeneficiaryRemovedEvent implements AccountEvent @entity {
+type SwapperBeneficiaryRemovedEvent implements AccountEvent @entity(immutable: true) {
   id: ID!
   timestamp: BigInt!
   account: Account!
@@ -774,7 +774,7 @@ type SwapperBeneficiaryRemovedEvent implements AccountEvent @entity {
   updateSwapperEvent: UpdateSwapperBeneficiaryEvent!
 }
 
-type UpdateSwapperTokenEvent implements AccountEvent @entity {
+type UpdateSwapperTokenEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # uste-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -786,7 +786,7 @@ type UpdateSwapperTokenEvent implements AccountEvent @entity {
   newToken: Token!
 }
 
-type UpdateSwapperOracleEvent implements AccountEvent @entity {
+type UpdateSwapperOracleEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # usoe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -799,7 +799,7 @@ type UpdateSwapperOracleEvent implements AccountEvent @entity {
 }
 
 type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent
-  @entity {
+  @entity(immutable: true) {
   id: ID! # usdsofe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -812,7 +812,7 @@ type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent
 }
 
 type UpdateSwapperScaledOfferFactorOverridesEvent implements AccountEvent
-  @entity {
+  @entity(immutable: true) {
   id: ID! # ussofoe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -821,7 +821,7 @@ type UpdateSwapperScaledOfferFactorOverridesEvent implements AccountEvent
   transaction: Transaction!
 }
 
-type SwapFundsEvent implements AccountEvent @entity {
+type SwapFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # sfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -837,7 +837,7 @@ type SwapFundsEvent implements AccountEvent @entity {
   recipient: ReceiveSwappedFundsEvent @derivedFrom(field: "swapFundsEvent")
 }
 
-type ReceiveSwappedFundsEvent implements AccountEvent @entity {
+type ReceiveSwappedFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # r-sfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -846,7 +846,7 @@ type ReceiveSwappedFundsEvent implements AccountEvent @entity {
   swapFundsEvent: SwapFundsEvent!
 }
 
-type CreatePassThroughWalletEvent implements AccountEvent @entity {
+type CreatePassThroughWalletEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # cptwe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -857,7 +857,7 @@ type CreatePassThroughWalletEvent implements AccountEvent @entity {
   passThroughAccount: Account!
 }
 
-type UpdatePassThroughAccountEvent implements AccountEvent @entity {
+type UpdatePassThroughAccountEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # uptae-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -869,7 +869,7 @@ type UpdatePassThroughAccountEvent implements AccountEvent @entity {
   newPassThroughAccount: Account!
 }
 
-type PassThroughFundsBalance @entity {
+type PassThroughFundsBalance @entity(immutable: true) {
   id: ID! # ${passThroughFundsEventId}-${tokenId}
   token: Token!
   amount: BigInt!
@@ -877,7 +877,7 @@ type PassThroughFundsBalance @entity {
   passThroughFundsEvent: PassThroughFundsEvent!
 }
 
-type PassThroughFundsEvent implements AccountEvent @entity {
+type PassThroughFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # ptfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -892,7 +892,7 @@ type PassThroughFundsEvent implements AccountEvent @entity {
     @derivedFrom(field: "passThroughFundsEvent")
 }
 
-type ReceivePassThroughFundsEvent implements AccountEvent @entity {
+type ReceivePassThroughFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # r-ptfe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -901,7 +901,7 @@ type ReceivePassThroughFundsEvent implements AccountEvent @entity {
   passThroughFundsEvent: PassThroughFundsEvent!
 }
 
-type ReceiveOwnerSwappedDiversifierFundsEvent implements AccountEvent @entity {
+type ReceiveOwnerSwappedDiversifierFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! #
   timestamp: BigInt!
   account: Account!
@@ -910,7 +910,7 @@ type ReceiveOwnerSwappedDiversifierFundsEvent implements AccountEvent @entity {
   swapDiversifierFundsBalance: SwapDiversifierFundsBalance!
 }
 
-type SwapDiversifierFundsBalance @entity {
+type SwapDiversifierFundsBalance @entity(immutable: true) {
   id: ID! # ${owernSwapDiversifierFundsEventId}-${tokenId}-${recipientId}
   inputToken: Token!
   inputAmount: BigInt!
@@ -922,7 +922,7 @@ type SwapDiversifierFundsBalance @entity {
   ownerSwapDiversifierFundsEvent: OwnerSwapDiversifierFundsEvent!
 }
 
-type OwnerSwapDiversifierFundsEvent implements AccountEvent @entity {
+type OwnerSwapDiversifierFundsEvent implements AccountEvent @entity(immutable: true) {
   id: ID! # osdfe-${inputToken}-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!

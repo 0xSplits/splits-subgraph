@@ -26,7 +26,10 @@ import {
   RECEIVE_PREFIX,
   updateDistributionAmount,
   updateWithdrawalAmount,
-} from './helpers'
+  saveToken,
+  TOKEN_WITHDRAWAL_USER_PREFIX,
+  TOKEN_WITHDRAWAL_WATERFALL_PREFIX
+} from "./helpers"
 
 export const ZERO = BigInt.fromI32(0)
 
@@ -59,9 +62,8 @@ export function handleCreateWaterfallModule(
 
   let waterfallModule = new WaterfallModule(waterfallModuleId)
 
-  let tokenId = event.params.token.toHexString()
-  let token = new Token(tokenId)
-  token.save()
+  let tokenId = event.params.token.toHexString();
+  saveToken(tokenId);
 
   let nonWaterfallRecipientAccountId = event.params.nonWaterfallRecipient.toHexString()
   createUserIfMissing(nonWaterfallRecipientAccountId, blockNumber, timestamp)
@@ -226,8 +228,7 @@ export function handleRecoverNonWaterfallFunds(
   let logIdx = event.logIndex
 
   let tokenId = event.params.nonWaterfallToken.toHexString()
-  let token = new Token(tokenId)
-  token.save()
+  saveToken(tokenId)
 
   let amount = event.params.amount
 

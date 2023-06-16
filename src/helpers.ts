@@ -288,8 +288,7 @@ export function distributeSplit(
   let split = getSplit(splitId)
   if (!split) return
 
-  let token = new Token(tokenId)
-  token.save()
+  saveToken(tokenId);
 
   let distributionEventId = createJointId([
     DISTRIBUTION_EVENT_PREFIX,
@@ -857,4 +856,13 @@ export function getBigIntFromString(str: string, start: i32, end: i32): BigInt {
   let strSlice = str.slice(start, end)
   let value = parseInt(strSlice, 16)
   return BigInt.fromString(value.toString().slice(0, -2))
+}
+
+export function saveToken(address: string): Token {
+  let token = Token.load(address);
+  if (!token) {
+    token = new Token(address);
+    token.save();
+  }
+  return token;
 }
