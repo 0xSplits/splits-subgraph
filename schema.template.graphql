@@ -309,10 +309,10 @@ type PassThroughWallet implements Account @entity {
   paused: Boolean!
   passThroughAccount: Account!
 
-  passThroughBalances: [TokenRelease!]! @derivedFrom(field: "account")
   swapBalances: [PassThroughWalletSwapBalance]! @derivedFrom(field: "passThroughWallet")
 
   # Deprecated
+  passThroughBalances: [TokenRelease!]! @derivedFrom(field: "account")
   upstream: [Recipient!] @derivedFrom(field: "account")
 }
 
