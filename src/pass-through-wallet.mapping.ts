@@ -25,6 +25,7 @@ import {
   OwnerSwapDiversifierFundsEvent,
   SwapDiversifierFundsBalance,
   ReceiveOwnerSwappedDiversifierFundsEvent,
+  TokenRelease,
 } from "../generated/schema";
 import {
   createJointId,
@@ -47,6 +48,7 @@ const CREATE_PASS_THROUGH_WALLET_EVENT_PREFIX = "cptwe";
 const UPDATE_PASS_THROUGH_ACCOUNT_EVENT_PREFIX = "uptae";
 const PASS_THROUGH_FUNDS_EVENT_PREFIX = "ptfe";
 const OWNER_SWAP_DIVERSIFIER_FUNDS_EVENT_PREFIX = "osdfe";
+const TOKEN_RELEASE_PREFIX = "tr";
 
 const DIVERSIFIER_FACTORY_ADDRESS = "0x78791997483f25217F4C3FE2a568Fe3eFaf77884";
 
@@ -251,6 +253,8 @@ export function handlePassThrough(event: PassThrough): void {
     token.save();
 
     updateDistributionAmount(passThroughWalletId, tokenId, amount);
+    // token release is deprecated
+    updateTokenRelease(passThroughWalletId, tokenId, amount);
   }
 
   passThroughWallet.save();
@@ -626,3 +630,25 @@ function updateSwapBalance(
     receiveOwnerSwappedDiversifierFundsEvent.save();
   }
 }
+
+function updateTokenRelease(
+  passThroughWalletId: string,
+  tokenId: string,
+  amount: BigInt,
+): void {
+  let passThroughWalletTokenBalanceId = createJointId([passThroughWalletId, tokenId]);
+  let passThroughWalletTokenReleaseId = createJointId([
+    TOKEN_RELEASE_PREFIX,
+    passThroughWalletTokenBalanceId
+  ]);
+  let passThroughWalletTokenRelease = TokenRelease.load(passThroughWalletTokenReleaseId);
+  if (!passThroughWalletTokenRelease) {
+    passThroughWalletTokenRelease = new TokenRelease(passThroughWalletTokenReleaseId);
+    passThroughWalletTokenRelease.account = passThroughWalletId;
+    passThroughWalletTokenRelease.token = tokenId;
+    passThroughWalletTokenRelease.amount = ZERO;
+  }
+  passThroughWalletTokenRelease.amount += amount;
+  passThroughWalletTokenRelease.save();
+}
+
