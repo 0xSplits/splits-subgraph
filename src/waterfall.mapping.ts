@@ -158,7 +158,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
     waterfallModuleId,
     waterfallModule.token,
     totalPayout,
-  )
+  );
 
   // Save event
   let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
@@ -199,7 +199,7 @@ export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds):
     waterfallModuleId,
     tokenId,
     amount,
-  )
+  );
 
   // Save events
   let recoverNonWaterfallFundsEventId = createJointId([RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
@@ -226,6 +226,13 @@ export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds):
   receiveNonWaterfallFundsEvent.logIndex = logIdx;
   receiveNonWaterfallFundsEvent.recoverNonWaterfallFundsEvent = recoverNonWaterfallFundsEventId;
   receiveNonWaterfallFundsEvent.save();
+
+  // Only need to update withdrawn for users. For all modules, waterfall'd funds
+  // will show up in their active balances.
+  let user = User.load(accountId);
+  if (user) {
+    updateWithdrawalAmount(accountId, tokenId, amount);
+  }
 }
 
 function createWaterfallTranche(
