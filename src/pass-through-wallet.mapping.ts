@@ -590,7 +590,7 @@ function updateSwapBalance(
   // will show up in their active balances.
   let user = User.load(recipient);
   if (user) {
-    updateWithdrawalAmount(recipient, outputTokenId, outputAmount);
+    updateWithdrawalAmount(passThroughWalletId, recipient, outputTokenId, outputAmount);
   }
 
   // Save events

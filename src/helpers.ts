@@ -66,10 +66,12 @@ export function createJointId(args: Array<string>): string {
   return args.join(ID_SEPARATOR);
 }
 
-function addBalanceToUser(
+function addInternalBalance(
+  splitId: string,
   accountId: string,
   tokenId: string,
-  amount: BigInt
+  amount: BigInt,
+  isDistributorIncentive: boolean,
 ): void {
   let accountTokenInternalBalanceId = createJointId([
     TOKEN_INTERNAL_BALANCE_PREFIX,
@@ -89,6 +91,45 @@ function addBalanceToUser(
   }
   accountTokenInternalBalance.amount += amount;
   accountTokenInternalBalance.save();
+
+  // TODO: Not including distributor incentives for now. Need to decide if they'll be lumped into
+  // contractEarnings or a separate distributionEarnings entity.
+  if (isDistributorIncentive) return;
+
+  // Only set contract earnings on users right now. Eventually would like to set them on any account type
+  let user = getUser(accountId);
+  if (user) {
+    saveContractEarnings(splitId, accountId);
+    let contractEarningsId = createJointId([CONTRACT_EARNINGS_PREFIX, splitId, accountId]);
+    let contractEarningsInternalBalanceId = createJointId([
+      CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+      contractEarningsId,
+      tokenId
+    ]);
+    let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(contractEarningsInternalBalanceId);
+    if (!contractEarningsInternalBalance) {
+      contractEarningsInternalBalance = new ContractEarningsInternalBalance(contractEarningsInternalBalanceId);
+      contractEarningsInternalBalance.contractEarnings = contractEarningsId;
+      contractEarningsInternalBalance.token = tokenId;
+      contractEarningsInternalBalance.amount = ZERO;
+    }
+    contractEarningsInternalBalance.amount += amount;
+    contractEarningsInternalBalance.save();
+  }
+}
+
+function saveContractEarnings(
+  contractId: string,
+  accountId: string,
+): void {
+  let contractEarningsId = createJointId([CONTRACT_EARNINGS_PREFIX, contractId, accountId]);
+  let contractEarnings = ContractEarnings.load(contractEarningsId);
+  if (!contractEarnings) {
+    contractEarnings = new ContractEarnings(contractEarningsId);
+    contractEarnings.contract = contractId;
+    contractEarnings.account = accountId;
+    contractEarnings.save();
+  }
 }
 
 export function saveSetSplitEvent(
@@ -224,7 +265,7 @@ export function distributeSplit(
     logIdx.toString()
   ]);
 
-  updateWithdrawalAmount(splitId, tokenId, amount);
+  updateWithdrawalAmount(splitId, splitId, tokenId, amount);
   updateDistributionAmount(splitId, tokenId, amount);
 
   let splitTokenBalanceId = createJointId([splitId, tokenId]);
@@ -261,7 +302,7 @@ export function distributeSplit(
       // 'Create' the user in case they don't exist yet
       createUserIfMissing(distributorAddressString, blockNumber, timestamp);
 
-      addBalanceToUser(distributorAddressString, tokenId, distributorAmount);
+      addInternalBalance(splitId, distributorAddressString, tokenId, distributorAmount, true);
 
       let distributeDistributionEventId = createJointId([
         DISTRIBUTE_PREFIX,
@@ -288,7 +329,7 @@ export function distributeSplit(
     let recipient = Recipient.load(recipientId) as Recipient;
     let ownership = recipient.ownership;
     let recipientAmount = (amount * ownership) / PERCENTAGE_SCALE;
-    addBalanceToUser(recipient.account, tokenId, recipientAmount);
+    addInternalBalance(splitId, recipient.account, tokenId, recipientAmount, false);
 
     let receiveDistributionEventId = createJointId([
       RECEIVE_PREFIX,
@@ -416,7 +457,7 @@ export function handleTokenWithdrawal(
   blockNumber: i32,
   timestamp: BigInt
 ): void {
-  updateWithdrawalAmount(accountId, tokenId, amount);
+  updateWithdrawalAmount(null, accountId, tokenId, amount);
 
   let tokenBalanceId = createJointId([accountId, tokenId]);
   let tokenInternalBalanceId = createJointId([
@@ -444,6 +485,7 @@ export function handleTokenWithdrawal(
 }
 
 export function updateWithdrawalAmount(
+  contractId: string | null,
   accountId: string,
   tokenId: string,
   amount: BigInt
@@ -463,6 +505,67 @@ export function updateWithdrawalAmount(
   }
   tokenWithdrawal.amount += amount;
   tokenWithdrawal.save();
+
+  // If contractId == accountId this is a split distribution, can ignore. It's a weird edge case,
+  // really shouldn't be captured in withdrawn amount but need to handle for legacy.
+  if (contractId != accountId) {
+    // Ideally can set contract earnings for any account type eventually. For now only setting them on users
+    let account = getUser(accountId);
+    if (!account) return;
+
+    if (contractId) {
+      // Funds were pushed directly to the recipient, did not go through split main
+      saveContractEarnings(contractId, accountId);
+      let contractEarningsId = createJointId([contractId, accountId]);
+      let contractEarningsWithdrawalId = createJointId([
+        CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+        contractEarningsId,
+        tokenId,
+      ]);
+      let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(contractEarningsWithdrawalId);
+      if (!contractEarningsWithdrawal) {
+        contractEarningsWithdrawal = new ContractEarningsWithdrawal(contractEarningsWithdrawalId);
+        contractEarningsWithdrawal.contractEarnings = contractEarningsId;
+        contractEarningsWithdrawal.token = tokenId;
+        contractEarningsWithdrawal.amount = ZERO;
+      }
+      contractEarningsWithdrawal.amount += amount;
+      contractEarningsWithdrawal.save();
+    } else {
+      // It's a split main withdrawal, move contract earnings internal balances over to contract earnings withdrawals
+      let contractEarningsArray = account.contractEarnings.load();
+      for (let i = 0; i < contractEarningsArray.length; i++) {
+        let contractEarnings = contractEarningsArray[i];
+        let contractEarningsInternalBalanceId = createJointId([
+          CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+          contractEarnings.id,
+          tokenId
+        ]);
+        let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(contractEarningsInternalBalanceId);
+        if (contractEarningsInternalBalance) {
+          if (contractEarningsInternalBalance.amount > ZERO) {
+            let contractEarningsWithdrawalId = createJointId([
+              CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+              contractEarnings.id,
+              tokenId,
+            ]);
+            let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(contractEarningsWithdrawalId);
+            if (!contractEarningsWithdrawal) {
+              contractEarningsWithdrawal = new ContractEarningsWithdrawal(contractEarningsWithdrawalId);
+              contractEarningsWithdrawal.contractEarnings = contractEarnings.id;
+              contractEarningsWithdrawal.token = tokenId;
+              contractEarningsWithdrawal.amount = ZERO;
+            }
+            contractEarningsWithdrawal.amount += contractEarningsInternalBalance.amount;
+            contractEarningsWithdrawal.save();
+  
+            contractEarningsInternalBalance.amount = ZERO;
+            contractEarningsInternalBalance.save();
+          }
+        }
+      }
+    }
+  }
 }
 
 export function updateDistributionAmount(
@@ -606,7 +709,7 @@ export function getPassThroughWallet(passThroughWalletId: string): PassThroughWa
   if (!passThroughWallet) {
     let passThroughWalletUser = User.load(passThroughWalletId);
     if (passThroughWalletUser) {
-      // It's a valid case where the waterfall doesn't exist. Just exit.
+      // It's a valid case where the pass through wallet doesn't exist. Just exit.
       log.warning('Trying to fetch a pass through wallet, but a user already exists: {}', [passThroughWalletId]);
       return null;
     }
@@ -616,31 +719,9 @@ export function getPassThroughWallet(passThroughWalletId: string): PassThroughWa
   return passThroughWallet;
 }
 
-export function getAccount(accountId: string): (
-  Split | WaterfallModule | VestingModule | LiquidSplit | Swapper | PassThroughWallet | User
-) {
-  let split = Split.load(accountId);
-  if (split) return split;
-
-  let waterfall = WaterfallModule.load(accountId);
-  if (waterfall) return waterfall;
-
-  let vesting = VestingModule.load(accountId);
-  if (vesting) return vesting;
-
-  let liquidSplit = LiquidSplit.load(accountId);
-  if (liquidSplit) return liquidSplit;
-
-  let swapper = Swapper.load(accountId);
-  if (swapper) return swapper;
-
-  let passThroughWallet = PassThroughWallet.load(accountId);
-  if (passThroughWallet) return passThroughWallet;
-  
-  let user = User.load(accountId);
-  if (user) return user;
-  
-  throw new Error('Account never created')
+export function getUser(userId: string): User | null {
+  let user = User.load(userId);
+  return user;
 }
 
 export function createTransactionIfMissing(txHash: string): void {
