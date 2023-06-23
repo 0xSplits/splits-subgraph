@@ -53,12 +53,42 @@ type TokenDistribution implements TokenBalance @entity {
   account: Account!
 }
 
+type ContractEarnings @entity {
+  id: ID! # ce-${contractId}-${accountId}
+  contract: Account!
+  account: User!
+  internalBalances: [ContractEarningsInternalBalance!]! @derivedFrom(field: "contractEarnings")
+  withdrawals: [ContractEarningsWithdrawal!]! @derivedFrom(field: "contractEarnings")
+}
+
+interface ContractEarningsBalance {
+  id: ID!
+  contractEarnings: ContractEarnings!
+  token: Token!
+  amount: BigInt!
+}
+
+type ContractEarningsInternalBalance implements ContractEarningsBalance @entity {
+  id: ID! # ib-${contractEarningsId}-${tokenId}
+  contractEarnings: ContractEarnings!
+  token: Token!
+  amount: BigInt!
+}
+
+type ContractEarningsWithdrawal implements ContractEarningsBalance @entity {
+  id: ID! # w-${contractEarningsId}-${tokenId}
+  contractEarnings: ContractEarnings!
+  token: Token!
+  amount: BigInt!
+}
+
 type User implements Account @entity {
   id: ID! # ethereum address
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!

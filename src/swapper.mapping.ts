@@ -1,4 +1,4 @@
-import { BigInt, Bytes, ethereum, log } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, ethereum, log, store } from "@graphprotocol/graph-ts";
 import { CreateSwapper } from "../generated/SwapperFactory/SwapperFactory";
 import {
   SetBeneficiary,
@@ -716,7 +716,7 @@ function updateSwapBalance(
   // will show up in their active balances.
   let user = User.load(beneficiary);
   if (user) {
-    updateWithdrawalAmount(beneficiary, outputTokenId, outputAmount);
+    updateWithdrawalAmount(swapperId, beneficiary, outputTokenId, outputAmount);
   }
 
   // Save events
