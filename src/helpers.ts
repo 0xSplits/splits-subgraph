@@ -99,8 +99,7 @@ function addInternalBalance(
   // Only set contract earnings on users right now. Eventually would like to set them on any account type
   let user = getUser(accountId);
   if (user) {
-    saveContractEarnings(splitId, accountId);
-    let contractEarningsId = createJointId([CONTRACT_EARNINGS_PREFIX, splitId, accountId]);
+    let contractEarningsId = saveContractEarnings(splitId, accountId);
     let contractEarningsInternalBalanceId = createJointId([
       CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
       contractEarningsId,
@@ -121,7 +120,7 @@ function addInternalBalance(
 function saveContractEarnings(
   contractId: string,
   accountId: string,
-): void {
+): string {
   let contractEarningsId = createJointId([CONTRACT_EARNINGS_PREFIX, contractId, accountId]);
   let contractEarnings = ContractEarnings.load(contractEarningsId);
   if (!contractEarnings) {
@@ -130,6 +129,8 @@ function saveContractEarnings(
     contractEarnings.account = accountId;
     contractEarnings.save();
   }
+
+  return contractEarningsId;
 }
 
 export function saveSetSplitEvent(
@@ -515,8 +516,7 @@ export function updateWithdrawalAmount(
 
     if (contractId) {
       // Funds were pushed directly to the recipient, did not go through split main
-      saveContractEarnings(contractId, accountId);
-      let contractEarningsId = createJointId([contractId, accountId]);
+      let contractEarningsId = saveContractEarnings(contractId, accountId);
       let contractEarningsWithdrawalId = createJointId([
         CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
         contractEarningsId,
