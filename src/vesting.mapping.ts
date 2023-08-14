@@ -16,7 +16,7 @@ import {
   ReceiveVestedFundsEvent,
   User,
 } from "../generated/schema";
-import { createJointId, createTransactionIfMissing, getVestingModule, RECEIVE_PREFIX } from "./helpers";
+import { createJointId, createTransactionIfMissing, createUserIfMissing, getVestingModule, RECEIVE_PREFIX } from "./helpers";
 
 export const ZERO = BigInt.fromI32(0);
 
@@ -39,9 +39,12 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
     return;
   }
 
+  let beneficiary = event.params.beneficiary.toHexString();
+  createUserIfMissing(beneficiary, blockNumber, timestamp);
+
   let vestingModule = new VestingModule(vestingModuleId);
   vestingModule.vestingPeriod = event.params.vestingPeriod;
-  vestingModule.beneficiary = event.params.beneficiary.toHexString();
+  vestingModule.beneficiary = beneficiary;
   vestingModule.createdBlock = blockNumber;
   vestingModule.latestBlock = blockNumber;
   vestingModule.latestActivity = timestamp;
