@@ -45,6 +45,7 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   let vestingModule = new VestingModule(vestingModuleId);
   vestingModule.vestingPeriod = event.params.vestingPeriod;
   vestingModule.beneficiary = beneficiary;
+  vestingModule.splitBeneficiary = beneficiary; // Deprecated, keeping for legacy
   vestingModule.createdBlock = blockNumber;
   vestingModule.latestBlock = blockNumber;
   vestingModule.latestActivity = timestamp;

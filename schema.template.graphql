@@ -80,7 +80,7 @@ type Split implements Account @entity {
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
-  vestingModules: [VestingModule!] @derivedFrom(field: "beneficiary")
+  vestingModules: [VestingModule!] @derivedFrom(field: "splitBeneficiary")
 }
 
 type Recipient @entity {
@@ -101,11 +101,12 @@ type VestingModule implements Account @entity {
   parentEntityType: ParentEntityType
 
   vestingPeriod: BigInt!
-  beneficiary: Split!
+  beneficiary: Account!
   streams: [VestingStream!] @derivedFrom(field: "account")
 
   # Deprecated
   upstream: [Recipient!] @derivedFrom(field: "account")
+  splitBeneficiary: Split
 }
 
 type VestingStream @entity {
