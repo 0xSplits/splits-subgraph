@@ -429,6 +429,9 @@ function handleOwnerSwap(
               txHash,
               logIdx,
             );
+
+            pendingInputToken = '';
+            pendingInputAmount = ZERO;
             pendingOutputToken = '';
             pendingOutputAmount = ZERO;
             pendingOutputBeneficiary = '';
@@ -447,6 +450,29 @@ function handleOwnerSwap(
               pendingOutputToken = token;
               pendingOutputAmount = amount;
               pendingOutputBeneficiary = toAddress;
+
+              // If the input data is stored, add the swap. Otherwise we got the output
+              // data before the input data so just store the output data
+              if (pendingInputToken != '') {
+                updateSwapBalance(
+                  passThroughWallet.id,
+                  pendingOutputBeneficiary,
+                  pendingInputToken,
+                  pendingInputAmount,
+                  pendingOutputToken,
+                  pendingOutputAmount,
+                  timestamp,
+                  txHash,
+                  logIdx,
+                );
+
+                pendingInputToken = '';
+                pendingInputAmount = ZERO;
+                pendingOutputToken = '';
+                pendingOutputAmount = ZERO;
+                pendingOutputBeneficiary = '';
+              }
+
               break;
             }
           }
@@ -465,7 +491,7 @@ function handleOwnerSwap(
             let ethTransferData = ethTransfers[j];
             if (ethTransferData.amount == amount) {
               beneficiary = ethTransferData.beneficiary;
-              ethTransfers.pop();
+              ethTransfers.splice(j, 1);
               break;
             }
           }
@@ -498,7 +524,8 @@ function handleOwnerSwap(
             txHash,
             logIdx,
           );
-          pendingInputToken = ZERO_ADDRESS;
+
+          pendingInputToken = '';
           pendingInputAmount = ZERO;
 
           pendingSwapperBeneficiaryIndex += 1;
@@ -531,6 +558,10 @@ function handleOwnerSwap(
           pendingOutputToken = '';
           pendingOutputAmount = ZERO;
           pendingOutputBeneficiary = '';
+        } else if (pendingInputToken == '') {
+          // It's an eth --> ??? trade. Set the input data
+          pendingInputToken = ZERO_ADDRESS;
+          pendingInputAmount = amount;
         }
       }
     }
