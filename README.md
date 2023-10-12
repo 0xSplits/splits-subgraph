@@ -1,14 +1,17 @@
 # 0xSplits Subgraph
 
 ## Ethereum
+
 - [Mainnet](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ethereum)
 - [Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-goerli)
 
 ## Polygon
+
 - [Polygon](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-polygon)
 - [Mumbai](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-mumbai)
 
 ## Other Networks
+
 - [Optimism](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-optimism)
 - [Optimism Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-opt-goerli)
 - [Arbitrum](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-arbitrum)
@@ -43,7 +46,7 @@ yarn prepare:${NETWORK} (mainnet, polygon)
 First you will need to authenticate with the proper deploy key for the given network. Or you can create your own Subgraph and deploy key for testing:
 
 ```bash
-graph auth --studio ${GRAPH_API_KEY} 
+graph auth --studio ${GRAPH_API_KEY}
 # or
 graph auth --hosted-servce ${GRAPH_API_KEY}
 ```
@@ -60,7 +63,7 @@ If you are deploying your own for testing:
 graph deploy --node https://api.studio.thegraph.com/deploy/${PROJECT}
 ```
 
-To check health of a deployed subgraph: 
+To check health of a deployed subgraph:
 
 ```
 curl -X POST -d '{ "query": "{indexingStatuses(subgraphs: [\"<deployment-id>\"]) {synced health fatalError {message block { number } handler } subgraph chains { chainHeadBlock { number } latestBlock { number }}}}"}' https://api.thegraph.com/index-node/graphql
