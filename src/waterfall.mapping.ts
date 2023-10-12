@@ -1,10 +1,10 @@
-import { BigInt, log } from "@graphprotocol/graph-ts";
-import { CreateWaterfallModule } from "../generated/WaterfallModuleFactory/WaterfallModuleFactory";
+import { BigInt, log } from '@graphprotocol/graph-ts'
+import { CreateWaterfallModule } from '../generated/WaterfallModuleFactory/WaterfallModuleFactory'
 import {
   WaterfallFunds,
   RecoverNonWaterfallFunds,
-} from "../generated/templates/WaterfallModule/WaterfallModule";
-import { WaterfallModule as WaterfallModuleTemplate } from "../generated/templates";
+} from '../generated/templates/WaterfallModule/WaterfallModule'
+import { WaterfallModule as WaterfallModuleTemplate } from '../generated/templates'
 import {
   Token,
   User,
@@ -17,7 +17,7 @@ import {
   RecoverNonWaterfallFundsEvent,
   ReceiveNonWaterfallFundsEvent,
   TokenWithdrawal,
-} from "../generated/schema";
+} from '../generated/schema'
 import {
   ADDED_PREFIX,
   createJointId,
@@ -27,115 +27,145 @@ import {
   RECEIVE_PREFIX,
   TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
   updateDistributionAmount,
-  updateWithdrawalAmount
-} from "./helpers";
+  updateWithdrawalAmount,
+} from './helpers'
 
-export const ZERO = BigInt.fromI32(0);
+export const ZERO = BigInt.fromI32(0)
 
-const CREATE_WATERFALL_MODULE_EVENT_PREFIX = "cwme";
-const WATERFALL_FUNDS_EVENT_PREFIX = "wfe";
-const RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX = "rnwfe";
+const CREATE_WATERFALL_MODULE_EVENT_PREFIX = 'cwme'
+const WATERFALL_FUNDS_EVENT_PREFIX = 'wfe'
+const RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX = 'rnwfe'
 
-export function handleCreateWaterfallModule(event: CreateWaterfallModule): void {
+export function handleCreateWaterfallModule(
+  event: CreateWaterfallModule,
+): void {
   // Save module
-  let waterfallModuleId = event.params.waterfallModule.toHexString();
+  let waterfallModuleId = event.params.waterfallModule.toHexString()
 
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
   // in subgraph v2.
-  let waterfallUser = User.load(waterfallModuleId);
+  let waterfallUser = User.load(waterfallModuleId)
   if (waterfallUser) {
-    log.warning('Trying to create a waterfall, but a user already exists: {}', [waterfallModuleId]);
-    return;
+    log.warning('Trying to create a waterfall, but a user already exists: {}', [
+      waterfallModuleId,
+    ])
+    return
   }
 
-  let blockNumber = event.block.number.toI32();
-  let timestamp = event.block.timestamp;
-  let txHash = event.transaction.hash.toHexString();
-  createTransactionIfMissing(txHash);
-  let logIdx = event.logIndex;
+  let blockNumber = event.block.number.toI32()
+  let timestamp = event.block.timestamp
+  let txHash = event.transaction.hash.toHexString()
+  createTransactionIfMissing(txHash)
+  let logIdx = event.logIndex
 
-  let waterfallModule = new WaterfallModule(waterfallModuleId);
+  let waterfallModule = new WaterfallModule(waterfallModuleId)
 
-  let tokenId = event.params.token.toHexString();
-  let token = new Token(tokenId);
-  token.save();
+  let tokenId = event.params.token.toHexString()
+  let token = new Token(tokenId)
+  token.save()
 
-  let nonWaterfallRecipientAccountId = event.params.nonWaterfallRecipient.toHexString();
-  createUserIfMissing(nonWaterfallRecipientAccountId, blockNumber, timestamp);
+  let nonWaterfallRecipientAccountId = event.params.nonWaterfallRecipient.toHexString()
+  createUserIfMissing(nonWaterfallRecipientAccountId, blockNumber, timestamp)
 
-  waterfallModule.token = tokenId;
-  waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient; // deprecated
-  waterfallModule.nonWaterfallRecipientAccount = nonWaterfallRecipientAccountId;
-  waterfallModule.totalClaimedAmount = ZERO;
-  waterfallModule.createdBlock = blockNumber;
-  waterfallModule.latestBlock = blockNumber;
-  waterfallModule.latestActivity = timestamp;
+  waterfallModule.token = tokenId
+  waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient // deprecated
+  waterfallModule.nonWaterfallRecipientAccount = nonWaterfallRecipientAccountId
+  waterfallModule.totalClaimedAmount = ZERO
+  waterfallModule.createdBlock = blockNumber
+  waterfallModule.latestBlock = blockNumber
+  waterfallModule.latestActivity = timestamp
 
-  let waterfallTrancheRecipients = event.params.recipients;
-  let waterfallTrancheThresholds = event.params.thresholds;
+  let waterfallTrancheRecipients = event.params.recipients
+  let waterfallTrancheThresholds = event.params.thresholds
 
-  let previousThreshold = ZERO;
-  let i: i32 = 0;
+  let previousThreshold = ZERO
+  let i: i32 = 0
   for (; i < waterfallTrancheThresholds.length; i++) {
-    let currentTrancheAmount = waterfallTrancheThresholds[i] - previousThreshold;
-    let accountId = waterfallTrancheRecipients[i].toHexString();
-    createWaterfallTranche(waterfallModuleId, blockNumber, timestamp, accountId, i.toString(), previousThreshold, currentTrancheAmount);
-    saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
+    let currentTrancheAmount = waterfallTrancheThresholds[i] - previousThreshold
+    let accountId = waterfallTrancheRecipients[i].toHexString()
+    createWaterfallTranche(
+      waterfallModuleId,
+      blockNumber,
+      timestamp,
+      accountId,
+      i.toString(),
+      previousThreshold,
+      currentTrancheAmount,
+    )
+    saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId)
 
-    previousThreshold = waterfallTrancheThresholds[i];
+    previousThreshold = waterfallTrancheThresholds[i]
   }
 
   // One more create call for the residual recipient
-  let accountId = waterfallTrancheRecipients[i].toHexString();
-  createWaterfallTranche(waterfallModuleId, blockNumber, timestamp, accountId, i.toString(), previousThreshold);
-  saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId);
+  let accountId = waterfallTrancheRecipients[i].toHexString()
+  createWaterfallTranche(
+    waterfallModuleId,
+    blockNumber,
+    timestamp,
+    accountId,
+    i.toString(),
+    previousThreshold,
+  )
+  saveWaterfallRecipientAddedEvent(timestamp, txHash, logIdx, accountId)
 
-  waterfallModule.save();
-  WaterfallModuleTemplate.create(event.params.waterfallModule);
+  waterfallModule.save()
+  WaterfallModuleTemplate.create(event.params.waterfallModule)
 
   // Save event
-  let createWaterfallModuleEventId = createJointId([CREATE_WATERFALL_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
-  let createWaterfallModuleEvent = new CreateWaterfallModuleEvent(createWaterfallModuleEventId);
-  createWaterfallModuleEvent.timestamp = timestamp;
-  createWaterfallModuleEvent.transaction = txHash;
-  createWaterfallModuleEvent.logIndex = logIdx;
-  createWaterfallModuleEvent.account = waterfallModuleId;
-  createWaterfallModuleEvent.save();
+  let createWaterfallModuleEventId = createJointId([
+    CREATE_WATERFALL_MODULE_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+  ])
+  let createWaterfallModuleEvent = new CreateWaterfallModuleEvent(
+    createWaterfallModuleEventId,
+  )
+  createWaterfallModuleEvent.timestamp = timestamp
+  createWaterfallModuleEvent.transaction = txHash
+  createWaterfallModuleEvent.logIndex = logIdx
+  createWaterfallModuleEvent.account = waterfallModuleId
+  createWaterfallModuleEvent.save()
 }
 
 export function handleWaterfallFunds(event: WaterfallFunds): void {
-  let waterfallModuleId = event.address.toHexString();
+  let waterfallModuleId = event.address.toHexString()
 
-  let waterfallModule = getWaterfallModule(waterfallModuleId);
-  if (!waterfallModule) return;
+  let waterfallModule = getWaterfallModule(waterfallModuleId)
+  if (!waterfallModule) return
 
-  let timestamp = event.block.timestamp;
-  let txHash = event.transaction.hash.toHexString();
-  createTransactionIfMissing(txHash);
-  let logIdx = event.logIndex;
+  let timestamp = event.block.timestamp
+  let txHash = event.transaction.hash.toHexString()
+  createTransactionIfMissing(txHash)
+  let logIdx = event.logIndex
 
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
-    waterfallModule.latestBlock = event.block.number.toI32();
-    waterfallModule.latestActivity = event.block.timestamp;
+    waterfallModule.latestBlock = event.block.number.toI32()
+    waterfallModule.latestActivity = event.block.timestamp
   }
 
-  let payoutAmounts = event.params.payouts;
-  let remainingPayout = ZERO;
+  let payoutAmounts = event.params.payouts
+  let remainingPayout = ZERO
   for (let i: i32 = 0; i < payoutAmounts.length; i++) {
-    remainingPayout += payoutAmounts[i];
+    remainingPayout += payoutAmounts[i]
   }
-  let totalPayout = remainingPayout;
-  waterfallModule.totalClaimedAmount += remainingPayout;
+  let totalPayout = remainingPayout
+  waterfallModule.totalClaimedAmount += remainingPayout
 
-  let i: i32 = 0;
+  let i: i32 = 0
   while (remainingPayout > ZERO) {
-    let waterfallTrancheId = createJointId([waterfallModuleId, i.toString()]);
-    let waterfallTranche = WaterfallTranche.load(waterfallTrancheId) as WaterfallTranche;
-    i++;
+    let waterfallTrancheId = createJointId([waterfallModuleId, i.toString()])
+    let waterfallTranche = WaterfallTranche.load(
+      waterfallTrancheId,
+    ) as WaterfallTranche
+    i++
 
-    let oldRemainingPayout = remainingPayout;
-    remainingPayout = updateWaterfallTrancheAmount(waterfallTranche, remainingPayout);
+    let oldRemainingPayout = remainingPayout
+    remainingPayout = updateWaterfallTrancheAmount(
+      waterfallTranche,
+      remainingPayout,
+    )
 
     // Nothing to save if the remaining payout didn't change, just skipped a filled tranche
     if (!oldRemainingPayout.equals(remainingPayout)) {
@@ -149,90 +179,94 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
         recipientPayout,
         waterfallModuleId,
       )
-      waterfallTranche.save();
+      waterfallTranche.save()
     }
   }
 
-  waterfallModule.save();
+  waterfallModule.save()
 
-  updateTokenWithdrawal(
-    waterfallModuleId,
-    waterfallModule.token,
-    totalPayout,
-  );
+  updateTokenWithdrawal(waterfallModuleId, waterfallModule.token, totalPayout)
 
   // Save event
-  let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
-  let waterfallFundsEvent = new WaterfallFundsEvent(waterfallFundsEventId);
-  waterfallFundsEvent.timestamp = timestamp;
-  waterfallFundsEvent.transaction = txHash;
-  waterfallFundsEvent.account = waterfallModuleId;
-  waterfallFundsEvent.logIndex = logIdx;
-  waterfallFundsEvent.amount = totalPayout;
-  waterfallFundsEvent.save();
+  let waterfallFundsEventId = createJointId([
+    WATERFALL_FUNDS_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+  ])
+  let waterfallFundsEvent = new WaterfallFundsEvent(waterfallFundsEventId)
+  waterfallFundsEvent.timestamp = timestamp
+  waterfallFundsEvent.transaction = txHash
+  waterfallFundsEvent.account = waterfallModuleId
+  waterfallFundsEvent.logIndex = logIdx
+  waterfallFundsEvent.amount = totalPayout
+  waterfallFundsEvent.save()
 }
 
-export function handleRecoverNonWaterfallFunds(event: RecoverNonWaterfallFunds): void {
-  let waterfallModuleId = event.address.toHexString();
-  let waterfallModule = getWaterfallModule(waterfallModuleId);
-  if (!waterfallModule) return;
-  
+export function handleRecoverNonWaterfallFunds(
+  event: RecoverNonWaterfallFunds,
+): void {
+  let waterfallModuleId = event.address.toHexString()
+  let waterfallModule = getWaterfallModule(waterfallModuleId)
+  if (!waterfallModule) return
+
   // Update latest block
   if (event.block.number.toI32() > waterfallModule.latestBlock) {
-    waterfallModule.latestBlock = event.block.number.toI32();
-    waterfallModule.latestActivity = event.block.timestamp;
-    waterfallModule.save();
+    waterfallModule.latestBlock = event.block.number.toI32()
+    waterfallModule.latestActivity = event.block.timestamp
+    waterfallModule.save()
   }
-  
-  // Save events
-  let timestamp = event.block.timestamp;
-  let txHash = event.transaction.hash.toHexString();
-  createTransactionIfMissing(txHash);
-  let logIdx = event.logIndex;
-
-  let tokenId = event.params.nonWaterfallToken.toHexString();
-  let token = new Token(tokenId);
-  token.save();
-
-  let amount = event.params.amount;
-
-  updateTokenWithdrawal(
-    waterfallModuleId,
-    tokenId,
-    amount,
-  );
 
   // Save events
-  let recoverNonWaterfallFundsEventId = createJointId([RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
-  let recoverNonWaterfallFundsEvent = new RecoverNonWaterfallFundsEvent(recoverNonWaterfallFundsEventId);
-  recoverNonWaterfallFundsEvent.timestamp = timestamp;
-  recoverNonWaterfallFundsEvent.transaction = txHash;
-  recoverNonWaterfallFundsEvent.account = waterfallModuleId;
-  recoverNonWaterfallFundsEvent.logIndex = logIdx;
-  recoverNonWaterfallFundsEvent.amount = amount;
-  recoverNonWaterfallFundsEvent.nonWaterfallToken = tokenId;
-  recoverNonWaterfallFundsEvent.save();
+  let timestamp = event.block.timestamp
+  let txHash = event.transaction.hash.toHexString()
+  createTransactionIfMissing(txHash)
+  let logIdx = event.logIndex
 
-  let accountId = event.params.recipient.toHexString();
+  let tokenId = event.params.nonWaterfallToken.toHexString()
+  let token = new Token(tokenId)
+  token.save()
+
+  let amount = event.params.amount
+
+  updateTokenWithdrawal(waterfallModuleId, tokenId, amount)
+
+  // Save events
+  let recoverNonWaterfallFundsEventId = createJointId([
+    RECOVER_NON_WATERFALL_FUNDS_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+  ])
+  let recoverNonWaterfallFundsEvent = new RecoverNonWaterfallFundsEvent(
+    recoverNonWaterfallFundsEventId,
+  )
+  recoverNonWaterfallFundsEvent.timestamp = timestamp
+  recoverNonWaterfallFundsEvent.transaction = txHash
+  recoverNonWaterfallFundsEvent.account = waterfallModuleId
+  recoverNonWaterfallFundsEvent.logIndex = logIdx
+  recoverNonWaterfallFundsEvent.amount = amount
+  recoverNonWaterfallFundsEvent.nonWaterfallToken = tokenId
+  recoverNonWaterfallFundsEvent.save()
+
+  let accountId = event.params.recipient.toHexString()
   let receiveNonWaterfallFundsEventId = createJointId([
     RECEIVE_PREFIX,
     recoverNonWaterfallFundsEventId,
-    accountId
-  ]);
+    accountId,
+  ])
   let receiveNonWaterfallFundsEvent = new ReceiveNonWaterfallFundsEvent(
-    receiveNonWaterfallFundsEventId
-  );
-  receiveNonWaterfallFundsEvent.timestamp = timestamp;
-  receiveNonWaterfallFundsEvent.account = accountId;
-  receiveNonWaterfallFundsEvent.logIndex = logIdx;
-  receiveNonWaterfallFundsEvent.recoverNonWaterfallFundsEvent = recoverNonWaterfallFundsEventId;
-  receiveNonWaterfallFundsEvent.save();
+    receiveNonWaterfallFundsEventId,
+  )
+  receiveNonWaterfallFundsEvent.timestamp = timestamp
+  receiveNonWaterfallFundsEvent.account = accountId
+  receiveNonWaterfallFundsEvent.logIndex = logIdx
+  receiveNonWaterfallFundsEvent.recoverNonWaterfallFundsEvent = recoverNonWaterfallFundsEventId
+  receiveNonWaterfallFundsEvent.save()
 
   // Only need to update withdrawn for users. For all modules, waterfall'd funds
   // will show up in their active balances.
-  let user = User.load(accountId);
+  let user = User.load(accountId)
   if (user) {
-    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount);
+    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
   }
 }
 
@@ -243,50 +277,53 @@ function createWaterfallTranche(
   recipientAddress: string,
   tranchePosition: string,
   trancheStart: BigInt,
-  trancheSize: BigInt | null = null
+  trancheSize: BigInt | null = null,
 ): void {
-  let waterfallTrancheId = createJointId([waterfallModuleId, tranchePosition]);
-  let waterfallTranche = new WaterfallTranche(waterfallTrancheId);
+  let waterfallTrancheId = createJointId([waterfallModuleId, tranchePosition])
+  let waterfallTranche = new WaterfallTranche(waterfallTrancheId)
 
-  waterfallTranche.account = waterfallModuleId;
-  waterfallTranche.startAmount = trancheStart;
+  waterfallTranche.account = waterfallModuleId
+  waterfallTranche.startAmount = trancheStart
   if (trancheSize) {
-    waterfallTranche.size = trancheSize;
+    waterfallTranche.size = trancheSize
   }
-  waterfallTranche.claimedAmount = ZERO;
+  waterfallTranche.claimedAmount = ZERO
 
-  createUserIfMissing(recipientAddress, blockNumber, timestamp);
-  waterfallTranche.recipient = recipientAddress;
+  createUserIfMissing(recipientAddress, blockNumber, timestamp)
+  waterfallTranche.recipient = recipientAddress
 
-  waterfallTranche.save();
+  waterfallTranche.save()
 }
 
 // returns the new remaining payout
-function updateWaterfallTrancheAmount(waterfallTranche: WaterfallTranche, remainingPayout: BigInt): BigInt {
+function updateWaterfallTrancheAmount(
+  waterfallTranche: WaterfallTranche,
+  remainingPayout: BigInt,
+): BigInt {
   if (!waterfallTranche.size) {
     // It's the residual
-    waterfallTranche.claimedAmount += remainingPayout;
-    return ZERO;
+    waterfallTranche.claimedAmount += remainingPayout
+    return ZERO
   }
 
   // Need to cast to avoid compilation error with graph-ts.
-  let trancheSize = waterfallTranche.size as BigInt;
+  let trancheSize = waterfallTranche.size as BigInt
 
   if (trancheSize === waterfallTranche.claimedAmount) {
     // Tranche is already filled
-    return remainingPayout;
+    return remainingPayout
   }
 
-  let trancheFundsRemaining = trancheSize - waterfallTranche.claimedAmount;
+  let trancheFundsRemaining = trancheSize - waterfallTranche.claimedAmount
   if (trancheFundsRemaining >= remainingPayout) {
     // The current tranche can take the rest of the payout
-    waterfallTranche.claimedAmount += remainingPayout;
-    return ZERO;
+    waterfallTranche.claimedAmount += remainingPayout
+    return ZERO
   }
 
   // Fill the current tranche and continue to the next one
-  waterfallTranche.claimedAmount += trancheFundsRemaining;
-  return remainingPayout - trancheFundsRemaining;
+  waterfallTranche.claimedAmount += trancheFundsRemaining
+  return remainingPayout - trancheFundsRemaining
 }
 
 function saveWaterfallRecipientAddedEvent(
@@ -295,15 +332,25 @@ function saveWaterfallRecipientAddedEvent(
   logIdx: BigInt,
   accountId: string,
 ): void {
-  let createWaterfallModuleEventId = createJointId([CREATE_WATERFALL_MODULE_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let createWaterfallModuleEventId = createJointId([
+    CREATE_WATERFALL_MODULE_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+  ])
 
-  let recipientAddedEventId = createJointId([ADDED_PREFIX, createWaterfallModuleEventId, accountId]);
-  let recipientAddedEvent = new WaterfallRecipientAddedEvent(recipientAddedEventId);
-  recipientAddedEvent.timestamp = timestamp;
-  recipientAddedEvent.account = accountId;
-  recipientAddedEvent.logIndex = logIdx;
-  recipientAddedEvent.createWaterfallEvent = createWaterfallModuleEventId;
-  recipientAddedEvent.save();
+  let recipientAddedEventId = createJointId([
+    ADDED_PREFIX,
+    createWaterfallModuleEventId,
+    accountId,
+  ])
+  let recipientAddedEvent = new WaterfallRecipientAddedEvent(
+    recipientAddedEventId,
+  )
+  recipientAddedEvent.timestamp = timestamp
+  recipientAddedEvent.account = accountId
+  recipientAddedEvent.logIndex = logIdx
+  recipientAddedEvent.createWaterfallEvent = createWaterfallModuleEventId
+  recipientAddedEvent.save()
 }
 
 function saveWaterfallRecipientReceivedFunds(
@@ -317,27 +364,31 @@ function saveWaterfallRecipientReceivedFunds(
 ): void {
   // Only need to update withdrawn for users. For all modules, waterfall'd funds
   // will show up in their active balances.
-  let user = User.load(accountId);
+  let user = User.load(accountId)
   if (user) {
-    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount);
+    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
   }
 
   // Save event
-  let waterfallFundsEventId = createJointId([WATERFALL_FUNDS_EVENT_PREFIX, txHash, logIdx.toString()]);
+  let waterfallFundsEventId = createJointId([
+    WATERFALL_FUNDS_EVENT_PREFIX,
+    txHash,
+    logIdx.toString(),
+  ])
   let receiveWaterfallFundsEventId = createJointId([
     RECEIVE_PREFIX,
     waterfallFundsEventId,
-    accountId
-  ]);
+    accountId,
+  ])
   let receiveWaterfallFundsEvent = new ReceiveWaterfallFundsEvent(
-    receiveWaterfallFundsEventId
-  );
-  receiveWaterfallFundsEvent.timestamp = timestamp;
-  receiveWaterfallFundsEvent.account = accountId;
-  receiveWaterfallFundsEvent.logIndex = logIdx;
-  receiveWaterfallFundsEvent.amount = amount;
-  receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId;
-  receiveWaterfallFundsEvent.save();
+    receiveWaterfallFundsEventId,
+  )
+  receiveWaterfallFundsEvent.timestamp = timestamp
+  receiveWaterfallFundsEvent.account = accountId
+  receiveWaterfallFundsEvent.logIndex = logIdx
+  receiveWaterfallFundsEvent.amount = amount
+  receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId
+  receiveWaterfallFundsEvent.save()
 }
 
 function updateTokenWithdrawal(
@@ -345,24 +396,22 @@ function updateTokenWithdrawal(
   tokenId: string,
   amount: BigInt,
 ): void {
-  let waterfallTokenBalanceId = createJointId([waterfallModuleId, tokenId]);
+  let waterfallTokenBalanceId = createJointId([waterfallModuleId, tokenId])
   let waterfallTokenWithdrawalId = createJointId([
     TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
-    waterfallTokenBalanceId
-  ]);
-  let waterfallTokenWithdrawal = TokenWithdrawal.load(waterfallTokenWithdrawalId);
+    waterfallTokenBalanceId,
+  ])
+  let waterfallTokenWithdrawal = TokenWithdrawal.load(
+    waterfallTokenWithdrawalId,
+  )
   if (!waterfallTokenWithdrawal) {
-    waterfallTokenWithdrawal = new TokenWithdrawal(waterfallTokenWithdrawalId);
-    waterfallTokenWithdrawal.account = waterfallModuleId;
-    waterfallTokenWithdrawal.token = tokenId;
-    waterfallTokenWithdrawal.amount = ZERO;
+    waterfallTokenWithdrawal = new TokenWithdrawal(waterfallTokenWithdrawalId)
+    waterfallTokenWithdrawal.account = waterfallModuleId
+    waterfallTokenWithdrawal.token = tokenId
+    waterfallTokenWithdrawal.amount = ZERO
   }
-  waterfallTokenWithdrawal.amount += amount;
-  waterfallTokenWithdrawal.save();
+  waterfallTokenWithdrawal.amount += amount
+  waterfallTokenWithdrawal.save()
 
-  updateDistributionAmount(
-    waterfallModuleId,
-    tokenId,
-    amount
-  );
+  updateDistributionAmount(waterfallModuleId, tokenId, amount)
 }
