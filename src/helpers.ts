@@ -679,6 +679,7 @@ export function createUserIfMissing(
   if (accountId == CHAOS_LIQUID_SPLIT) return
 
   let user = new User(accountId)
+  user.type = 'user'
   user.createdBlock = blockNumber
   user.latestBlock = blockNumber
   user.latestActivity = timestamp

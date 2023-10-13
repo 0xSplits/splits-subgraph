@@ -4,8 +4,19 @@ enum ParentEntityType {
   diversifier
 }
 
+enum AccountType {
+  user
+  split
+  vesting # change to vesting
+  waterfall # change to waterfall
+  liquidSplit
+  swapper
+  passThroughWallet
+}
+
 interface Account {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -87,6 +98,7 @@ type ContractEarningsWithdrawal implements ContractEarningsBalance @entity {
 
 type User implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -103,6 +115,7 @@ type User implements Account @entity {
 
 type Split implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -135,6 +148,7 @@ type Recipient @entity {
 
 type VestingModule implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -166,6 +180,7 @@ type VestingStream @entity {
 
 type WaterfallModule implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -196,6 +211,7 @@ type WaterfallTranche @entity {
 
 type LiquidSplit implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -279,6 +295,7 @@ type SwapperPairOverride @entity {
 
 type Swapper implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -331,6 +348,7 @@ type PassThroughWalletSwapBalance @entity {
 
 type PassThroughWallet implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")

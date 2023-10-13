@@ -52,6 +52,7 @@ export function handleCreateVestingModule(event: CreateVestingModule): void {
   createUserIfMissing(beneficiary, blockNumber, timestamp)
 
   let vestingModule = new VestingModule(vestingModuleId)
+  vestingModule.type = 'vesting'
   vestingModule.vestingPeriod = event.params.vestingPeriod
   vestingModule.beneficiary = beneficiary
   vestingModule.splitBeneficiary = beneficiary // Deprecated, keeping for legacy

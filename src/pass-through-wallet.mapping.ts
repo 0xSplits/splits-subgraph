@@ -84,6 +84,7 @@ export function handleCreatePassThroughWallet(
   createUserIfMissing(owner, blockNumber, timestamp)
   createUserIfMissing(passThroughAccount, blockNumber, timestamp)
 
+  passThroughWallet.type = 'passThroughWallet'
   passThroughWallet.owner = owner
   passThroughWallet.paused = paused
   passThroughWallet.passThroughAccount = passThroughAccount

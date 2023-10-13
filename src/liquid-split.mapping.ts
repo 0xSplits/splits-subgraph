@@ -329,6 +329,7 @@ function handleLiquidSplitCreation(
   }
 
   let liquidSplit = new LiquidSplit(liquidSplitId)
+  liquidSplit.type = 'liquidSplit'
   liquidSplit.createdBlock = blockNumber
   liquidSplit.latestBlock = blockNumber
   liquidSplit.latestActivity = timestamp

@@ -93,6 +93,7 @@ export function handleCreateSwapper(event: CreateSwapper): void {
   let token = new Token(tokenToBeneficiary)
   token.save()
 
+  swapper.type = 'swapper'
   swapper.owner = owner
   swapper.paused = paused
   swapper.beneficiary = beneficiary
