@@ -48,7 +48,7 @@ First you will need to authenticate with the proper deploy key for the given net
 ```bash
 graph auth --studio ${GRAPH_API_KEY}
 # or
-graph auth --hosted-servce ${GRAPH_API_KEY}
+graph auth ${GRAPH_API_KEY} --product hosted-service
 ```
 
 If you are deploying one of the official 0xSplits subgraphs:

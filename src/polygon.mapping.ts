@@ -121,6 +121,7 @@ export function handleCreateSplit(event: CreateSplit): void {
   }
 
   let split = new Split(splitId)
+  split.type = 'split'
   split.createdBlock = blockNumber
   split.latestBlock = blockNumber
   split.latestActivity = timestamp

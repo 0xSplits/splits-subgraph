@@ -68,6 +68,7 @@ export function handleCreateWaterfallModule(
   let nonWaterfallRecipientAccountId = event.params.nonWaterfallRecipient.toHexString()
   createUserIfMissing(nonWaterfallRecipientAccountId, blockNumber, timestamp)
 
+  waterfallModule.type = 'waterfall'
   waterfallModule.token = tokenId
   waterfallModule.nonWaterfallRecipient = event.params.nonWaterfallRecipient // deprecated
   waterfallModule.nonWaterfallRecipientAccount = nonWaterfallRecipientAccountId
