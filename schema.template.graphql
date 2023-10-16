@@ -4,8 +4,19 @@ enum ParentEntityType {
   diversifier
 }
 
+enum AccountType {
+  user
+  split
+  vesting
+  waterfall
+  liquidSplit
+  swapper
+  passThroughWallet
+}
+
 interface Account {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -57,8 +68,10 @@ type ContractEarnings @entity {
   id: ID! # ce-${contractId}-${accountId}
   contract: Account!
   account: User!
-  internalBalances: [ContractEarningsInternalBalance!]! @derivedFrom(field: "contractEarnings")
-  withdrawals: [ContractEarningsWithdrawal!]! @derivedFrom(field: "contractEarnings")
+  internalBalances: [ContractEarningsInternalBalance!]!
+    @derivedFrom(field: "contractEarnings")
+  withdrawals: [ContractEarningsWithdrawal!]!
+    @derivedFrom(field: "contractEarnings")
 }
 
 interface ContractEarningsBalance {
@@ -68,7 +81,8 @@ interface ContractEarningsBalance {
   amount: BigInt!
 }
 
-type ContractEarningsInternalBalance implements ContractEarningsBalance @entity {
+type ContractEarningsInternalBalance implements ContractEarningsBalance
+  @entity {
   id: ID! # ib-${contractEarningsId}-${tokenId}
   contractEarnings: ContractEarnings!
   token: Token!
@@ -84,6 +98,7 @@ type ContractEarningsWithdrawal implements ContractEarningsBalance @entity {
 
 type User implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -100,6 +115,7 @@ type User implements Account @entity {
 
 type Split implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -132,6 +148,7 @@ type Recipient @entity {
 
 type VestingModule implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -163,6 +180,7 @@ type VestingStream @entity {
 
 type WaterfallModule implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -193,6 +211,7 @@ type WaterfallTranche @entity {
 
 type LiquidSplit implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -242,7 +261,7 @@ type UniswapV3TWAPPairDetail @entity {
   period: BigInt!
 }
 
-# No required fields because of third-party oracles. We'll still create the 
+# No required fields because of third-party oracles. We'll still create the
 # oracle object but won't know anything about it
 type Oracle @entity {
   id: ID! #ethereum address
@@ -276,6 +295,7 @@ type SwapperPairOverride @entity {
 
 type Swapper implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -290,7 +310,8 @@ type Swapper implements Account @entity {
   beneficiary: Account!
   tokenToBeneficiary: Token!
   defaultScaledOfferFactor: BigInt!
-  scaledOfferFactorPairOverrides: [SwapperPairOverride!]! @derivedFrom(field: "swapper")
+  scaledOfferFactorPairOverrides: [SwapperPairOverride!]!
+    @derivedFrom(field: "swapper")
   oracle: Oracle!
 
   swapBalances: [SwapBalance!]! @derivedFrom(field: "swapper")
@@ -319,13 +340,15 @@ type PassThroughWalletSwapBalance @entity {
   id: ID! # ${passThroughWalletId}-${inputTokenId}
   inputToken: Token!
   inputAmount: BigInt!
-  outputs: [PassThroughWalletSwapBalanceOutput!]! @derivedFrom(field: "passThroughWalletSwapBalance")
+  outputs: [PassThroughWalletSwapBalanceOutput!]!
+    @derivedFrom(field: "passThroughWalletSwapBalance")
 
   passThroughWallet: PassThroughWallet!
 }
 
 type PassThroughWallet implements Account @entity {
   id: ID! # ethereum address
+  type: AccountType!
   internalBalances: [TokenInternalBalance!]! @derivedFrom(field: "account")
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
@@ -339,7 +362,8 @@ type PassThroughWallet implements Account @entity {
   paused: Boolean!
   passThroughAccount: Account!
 
-  swapBalances: [PassThroughWalletSwapBalance]! @derivedFrom(field: "passThroughWallet")
+  swapBalances: [PassThroughWalletSwapBalance]!
+    @derivedFrom(field: "passThroughWallet")
 
   # Deprecated
   passThroughBalances: [TokenRelease!]! @derivedFrom(field: "account")
@@ -367,8 +391,10 @@ type SetSplitEvent implements AccountEvent @entity {
   transaction: Transaction!
   type: SetSplitType
 
-  recipientAddedEvents: [RecipientAddedEvent!] @derivedFrom(field: "setSplitEvent")
-  recipientRemovedEvents: [RecipientRemovedEvent!] @derivedFrom(field: "setSplitEvent")
+  recipientAddedEvents: [RecipientAddedEvent!]
+    @derivedFrom(field: "setSplitEvent")
+  recipientRemovedEvents: [RecipientRemovedEvent!]
+    @derivedFrom(field: "setSplitEvent")
 }
 
 type RecipientAddedEvent implements AccountEvent @entity {
@@ -399,8 +425,10 @@ type DistributionEvent implements AccountEvent @entity {
   token: Token!
   amount: BigInt!
 
-  receiveDistributionEvents: [ReceiveDistributionEvent!]! @derivedFrom(field: "distributionEvent")
-  distributeDistributionEvent: DistributeDistributionEvent @derivedFrom(field: "distributionEvent")
+  receiveDistributionEvents: [ReceiveDistributionEvent!]!
+    @derivedFrom(field: "distributionEvent")
+  distributeDistributionEvent: DistributeDistributionEvent
+    @derivedFrom(field: "distributionEvent")
 }
 
 type ReceiveDistributionEvent implements AccountEvent @entity {
@@ -432,7 +460,8 @@ type WithdrawalEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   transaction: Transaction!
-  tokenWithdrawalEvents: [TokenWithdrawalEvent!]! @derivedFrom(field: "withdrawalEvent")
+  tokenWithdrawalEvents: [TokenWithdrawalEvent!]!
+    @derivedFrom(field: "withdrawalEvent")
 }
 
 type TokenWithdrawalEvent @entity {
@@ -456,8 +485,10 @@ type ControlTransferEvent implements AccountEvent @entity {
 
   type: ControlTransferType
   transaction: Transaction!
-  fromUserEvent: FromUserControlTransferEvent! @derivedFrom(field: "controlTransferEvent")
-  toUserEvent: ToUserControlTransferEvent @derivedFrom(field: "controlTransferEvent")
+  fromUserEvent: FromUserControlTransferEvent!
+    @derivedFrom(field: "controlTransferEvent")
+  toUserEvent: ToUserControlTransferEvent
+    @derivedFrom(field: "controlTransferEvent")
 }
 
 type FromUserControlTransferEvent implements AccountEvent @entity {
@@ -525,8 +556,9 @@ type CreateWaterfallModuleEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   transaction: Transaction!
-  
-  recipientAddedEvents: [WaterfallRecipientAddedEvent!] @derivedFrom(field: "createWaterfallEvent")
+
+  recipientAddedEvents: [WaterfallRecipientAddedEvent!]
+    @derivedFrom(field: "createWaterfallEvent")
 }
 
 type WaterfallRecipientAddedEvent implements AccountEvent @entity {
@@ -547,7 +579,8 @@ type WaterfallFundsEvent implements AccountEvent @entity {
   transaction: Transaction!
   amount: BigInt!
 
-  receiveFundsEvents: [ReceiveWaterfallFundsEvent!]! @derivedFrom(field: "waterfallFundsEvent")
+  receiveFundsEvents: [ReceiveWaterfallFundsEvent!]!
+    @derivedFrom(field: "waterfallFundsEvent")
 }
 
 type ReceiveWaterfallFundsEvent implements AccountEvent @entity {
@@ -570,7 +603,8 @@ type RecoverNonWaterfallFundsEvent implements AccountEvent @entity {
   amount: BigInt!
   nonWaterfallToken: Token!
 
-  receiveNonWaterfallFundsEvent: ReceiveNonWaterfallFundsEvent! @derivedFrom(field: "recoverNonWaterfallFundsEvent")
+  receiveNonWaterfallFundsEvent: ReceiveNonWaterfallFundsEvent!
+    @derivedFrom(field: "recoverNonWaterfallFundsEvent")
 }
 
 type ReceiveNonWaterfallFundsEvent implements AccountEvent @entity {
@@ -607,8 +641,10 @@ type LiquidSplitNFTTransferEvent implements AccountEvent @entity {
   transaction: Transaction!
   transferType: NFTTransferType
 
-  nftAddedEvent: LiquidSplitNFTAddedEvent @derivedFrom(field: "nftTransferEvent")
-  nftRemovedEvent: LiquidSplitNFTRemovedEvent @derivedFrom(field: "nftTransferEvent")
+  nftAddedEvent: LiquidSplitNFTAddedEvent
+    @derivedFrom(field: "nftTransferEvent")
+  nftRemovedEvent: LiquidSplitNFTRemovedEvent
+    @derivedFrom(field: "nftTransferEvent")
 }
 
 type LiquidSplitNFTAddedEvent implements AccountEvent @entity {
@@ -638,7 +674,8 @@ type CreateSwapperEvent implements AccountEvent @entity {
   transaction: Transaction!
 
   token: Token!
-  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent @derivedFrom(field: "createSwapperEvent")
+  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent
+    @derivedFrom(field: "createSwapperEvent")
 }
 
 type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
@@ -649,8 +686,10 @@ type UpdateSwapperBeneficiaryEvent implements AccountEvent @entity {
 
   transaction: Transaction!
 
-  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent @derivedFrom(field: "updateSwapperEvent")
-  beneficiaryRemovedEvent: SwapperBeneficiaryRemovedEvent @derivedFrom(field: "updateSwapperEvent")
+  beneficiaryAddedEvent: SwapperBeneficiaryAddedEvent
+    @derivedFrom(field: "updateSwapperEvent")
+  beneficiaryRemovedEvent: SwapperBeneficiaryRemovedEvent
+    @derivedFrom(field: "updateSwapperEvent")
 }
 
 type SwapperBeneficiaryAddedEvent implements AccountEvent @entity {
@@ -696,7 +735,8 @@ type UpdateSwapperOracleEvent implements AccountEvent @entity {
   newOracle: Oracle!
 }
 
-type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent @entity {
+type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent
+  @entity {
   id: ID! # usdsofe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -708,7 +748,8 @@ type UpdateSwapperDefaultScaledOfferFactorEvent implements AccountEvent @entity 
   newScaledOfferFactor: BigInt!
 }
 
-type UpdateSwapperScaledOfferFactorOverridesEvent implements AccountEvent @entity {
+type UpdateSwapperScaledOfferFactorOverridesEvent implements AccountEvent
+  @entity {
   id: ID! # ussofoe-${txHash}-${logIdx}
   timestamp: BigInt!
   account: Account!
@@ -781,9 +822,11 @@ type PassThroughFundsEvent implements AccountEvent @entity {
 
   transaction: Transaction!
 
-  passThroughBalances: [PassThroughFundsBalance!] @derivedFrom(field: "passThroughFundsEvent")
+  passThroughBalances: [PassThroughFundsBalance!]
+    @derivedFrom(field: "passThroughFundsEvent")
 
-  recipient: ReceivePassThroughFundsEvent @derivedFrom(field: "passThroughFundsEvent")
+  recipient: ReceivePassThroughFundsEvent
+    @derivedFrom(field: "passThroughFundsEvent")
 }
 
 type ReceivePassThroughFundsEvent implements AccountEvent @entity {
@@ -811,7 +854,8 @@ type SwapDiversifierFundsBalance @entity {
   outputToken: Token!
   outputAmount: BigInt!
 
-  recipient: ReceiveOwnerSwappedDiversifierFundsEvent @derivedFrom(field: "swapDiversifierFundsBalance")
+  recipient: ReceiveOwnerSwappedDiversifierFundsEvent
+    @derivedFrom(field: "swapDiversifierFundsBalance")
   ownerSwapDiversifierFundsEvent: OwnerSwapDiversifierFundsEvent!
 }
 
@@ -823,5 +867,6 @@ type OwnerSwapDiversifierFundsEvent implements AccountEvent @entity {
 
   transaction: Transaction!
 
-  swapDiversifierFundsBalances: [SwapDiversifierFundsBalance!] @derivedFrom(field: "ownerSwapDiversifierFundsEvent")
+  swapDiversifierFundsBalances: [SwapDiversifierFundsBalance!]
+    @derivedFrom(field: "ownerSwapDiversifierFundsEvent")
 }
