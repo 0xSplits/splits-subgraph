@@ -16,7 +16,6 @@ import {
   ReceiveWaterfallFundsEvent,
   RecoverNonWaterfallFundsEvent,
   ReceiveNonWaterfallFundsEvent,
-  TokenWithdrawal,
 } from '../generated/schema'
 import {
   ADDED_PREFIX,
@@ -25,7 +24,6 @@ import {
   createUserIfMissing,
   getWaterfallModule,
   RECEIVE_PREFIX,
-  TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
   updateDistributionAmount,
   updateWithdrawalAmount,
 } from './helpers'
@@ -186,7 +184,11 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
 
   waterfallModule.save()
 
-  updateTokenWithdrawal(waterfallModuleId, waterfallModule.token, totalPayout)
+  updateDistributionAmount(
+    waterfallModuleId,
+    waterfallModule.token,
+    totalPayout
+  )
 
   // Save event
   let waterfallFundsEventId = createJointId([
@@ -229,7 +231,7 @@ export function handleRecoverNonWaterfallFunds(
 
   let amount = event.params.amount
 
-  updateTokenWithdrawal(waterfallModuleId, tokenId, amount)
+  updateDistributionAmount(waterfallModuleId, tokenId, amount)
 
   // Save events
   let recoverNonWaterfallFundsEventId = createJointId([
@@ -390,29 +392,4 @@ function saveWaterfallRecipientReceivedFunds(
   receiveWaterfallFundsEvent.amount = amount
   receiveWaterfallFundsEvent.waterfallFundsEvent = waterfallFundsEventId
   receiveWaterfallFundsEvent.save()
-}
-
-function updateTokenWithdrawal(
-  waterfallModuleId: string,
-  tokenId: string,
-  amount: BigInt,
-): void {
-  let waterfallTokenBalanceId = createJointId([waterfallModuleId, tokenId])
-  let waterfallTokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_WATERFALL_PREFIX,
-    waterfallTokenBalanceId,
-  ])
-  let waterfallTokenWithdrawal = TokenWithdrawal.load(
-    waterfallTokenWithdrawalId,
-  )
-  if (!waterfallTokenWithdrawal) {
-    waterfallTokenWithdrawal = new TokenWithdrawal(waterfallTokenWithdrawalId)
-    waterfallTokenWithdrawal.account = waterfallModuleId
-    waterfallTokenWithdrawal.token = tokenId
-    waterfallTokenWithdrawal.amount = ZERO
-  }
-  waterfallTokenWithdrawal.amount += amount
-  waterfallTokenWithdrawal.save()
-
-  updateDistributionAmount(waterfallModuleId, tokenId, amount)
 }
