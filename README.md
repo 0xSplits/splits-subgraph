@@ -4,6 +4,7 @@
 
 - [Mainnet](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ethereum)
 - [Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-goerli)
+- [Sepolia](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-sepolia)
 
 ## Polygon
 
