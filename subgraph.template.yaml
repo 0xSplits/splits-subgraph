@@ -198,7 +198,7 @@ dataSources:
         - event: CreateRecoup(address)
           handler: handleCreateRecoup
       file: ./src/templates.mapping.ts
-  {{#ethereum}}
+  {{#swapper}}
   - kind: ethereum/contract
     name: UniV3OracleFactory
     network: {{network}}
@@ -282,7 +282,7 @@ dataSources:
         - event: CreateDiversifier(indexed address)
           handler: handleCreateDiversifier
       file: ./src/templates.mapping.ts
-  {{/ethereum}}
+  {{/swapper}}
 templates:
   - kind: ethereum/contract
     name: VestingModule
