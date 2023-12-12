@@ -18,5 +18,6 @@
   "swapperStartBlock": "17395991",
   "passThroughWalletStartBlock": "17396007",
   "diversifierStartBlock": "17396020",
-  "ethereum": true
+  "ethereum": true,
+  "swapper": true
 }
