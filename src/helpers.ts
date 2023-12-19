@@ -817,3 +817,9 @@ export function getAddressHexFromBytes32(bytesAddress: string): string {
   let address = bytesAddress.slice(26)
   return prefix + address
 }
+
+export function getBigIntFromString(str: string, start: i32, end: i32): BigInt {
+  let strSlice = str.slice(start, end)
+  let value = parseInt(strSlice, 16)
+  return BigInt.fromString(value.toString().slice(0, -2))
+}

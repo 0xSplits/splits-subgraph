@@ -1,25 +1,34 @@
 import { Address, BigInt, Bytes, log } from '@graphprotocol/graph-ts'
-import { CreateUniV3Oracle } from '../generated/UniV3OracleFactory/UniV3OracleFactory'
-import { UniV3Pool as UniV3PoolContract } from '../generated/UniV3OracleFactory/UniV3Pool'
+import { CreateChainlinkOracle } from '../generated/ChainlinkOracleFactory/ChainlinkOracleFactory'
+import { ChainlinkOracle } from '../generated/ChainlinkOracleFactory/ChainlinkOracle'
 import {
   OwnershipTransferred,
-  SetDefaultPeriod,
   SetPairDetails,
   SetPaused,
-} from '../generated/templates/UniV3Oracle/UniV3Oracle'
-import { UniV3Oracle as UniV3OracleTemplate } from '../generated/templates'
+} from '../generated/templates/ChainlinkOracle/ChainlinkOracle'
+import { ChainlinkOracle as ChainlinkOracleTemplate } from '../generated/templates'
 import {
   Token,
   User,
-  UniswapV3TWAPOracle as Oracle,
-  UniswapV3TWAPPairDetail,
+  ChainlinkOracle as Oracle,
+  ChainlinkPairDetail,
+  ChainlinkFeed,
 } from '../generated/schema'
-import { createJointId, createUserIfMissing } from './helpers'
+import {
+  createJointId,
+  createUserIfMissing,
+  getBigIntFromString,
+} from './helpers'
 
 export const ZERO = BigInt.fromI32(0)
 
-export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
+const FEED_SIZE = 50
+
+export function handleCreateChainlinkOracle(
+  event: CreateChainlinkOracle,
+): void {
   let oracleId = event.params.oracle.toHexString()
+  log.info('oracleId: {}', [oracleId])
 
   // If a user already exists at this id, just return for now. Cannot have two
   // entities with the same id if they share an interface. Will handle this situation
@@ -34,12 +43,10 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
 
   let blockNumber = event.block.number.toI32()
   let timestamp = event.block.timestamp
-
   let oracle = new Oracle(oracleId)
 
   let owner = event.params.params.owner.toHexString()
   let paused = event.params.params.paused
-  let defaultPeriod = event.params.params.defaultPeriod
   let pairDetails = event.params.params.pairDetails
 
   createUserIfMissing(owner, blockNumber, timestamp)
@@ -56,77 +63,98 @@ export function handleCreateUniV3Oracle(event: CreateUniV3Oracle): void {
     quoteToken.save()
 
     let pairDetail = pairDetails[i].pairDetail
-    let pool = pairDetail.pool
-    let period = pairDetail.period
+    let path = pairDetail.path
+    let inverted = pairDetail.inverted
 
     // Store reverse pairing as well for easier lookup
-    updatePairDetail(oracleId, base, quote, pool, period)
-    updatePairDetail(oracleId, quote, base, pool, period)
+    updatePairDetail(oracleId, base, quote, path, inverted)
+    updatePairDetail(oracleId, quote, base, path, !inverted)
   }
 
-  oracle.type = 'uniswapV3TWAP'
+  oracle.type = 'chainlink'
   oracle.owner = owner
   oracle.paused = paused
-  oracle.defaultPeriod = defaultPeriod
 
   oracle.createdBlock = blockNumber
   oracle.latestBlock = blockNumber
   oracle.latestActivity = timestamp
 
-  oracle.save()
-  UniV3OracleTemplate.create(event.params.oracle)
+  let sequencerFeedCall = ChainlinkOracle.bind(
+    event.params.oracle,
+  ).try_sequencerFeed()
+  if (!sequencerFeedCall.reverted) {
+    oracle.sequencerFeed = sequencerFeedCall.value
+  }
 
-  // TODO: Save event?
+  oracle.save()
+
+  ChainlinkOracleTemplate.create(event.params.oracle)
 }
 
 function updatePairDetail(
   oracleId: string,
   baseToken: string,
   quoteToken: string,
-  pool: Bytes,
-  period: BigInt,
+  path: Bytes,
+  inverted: boolean,
 ): void {
   let pairDetailId = createJointId([oracleId, baseToken, quoteToken])
-  let pairDetail = UniswapV3TWAPPairDetail.load(pairDetailId)
+  let pairDetail = ChainlinkPairDetail.load(pairDetailId)
   if (!pairDetail) {
-    pairDetail = new UniswapV3TWAPPairDetail(pairDetailId)
+    pairDetail = new ChainlinkPairDetail(pairDetailId)
     pairDetail.oracle = oracleId
     pairDetail.base = baseToken
     pairDetail.quote = quoteToken
   }
-  pairDetail.pool = pool
-  pairDetail.period = period
+  pairDetail.inverted = inverted
 
-  // Fetch pool fee. Need to handle the case of a non-univ3 pool
-  let uniV3PoolContract = UniV3PoolContract.bind(Address.fromBytes(pool))
-  let feeCallResult = uniV3PoolContract.try_fee()
-  let fee = 0
-  if (!feeCallResult.reverted) {
-    fee = feeCallResult.value
+  let pathAsString = path.toHex()
+  let numberOfFeeds = pathAsString.length / FEED_SIZE
+
+  for (let i = 0; i < numberOfFeeds; i++) {
+    let feed = pathAsString.slice(FEED_SIZE * i, FEED_SIZE * (i + 1) + 2)
+    createChainlinkFeed(feed, pairDetailId, oracleId, baseToken, quoteToken)
   }
-  pairDetail.fee = fee
-
   pairDetail.save()
 }
 
-export function handleSetDefaultPeriod(event: SetDefaultPeriod): void {
-  let oracleId = event.address.toHexString()
+function createChainlinkFeed(
+  feed: string,
+  pairDetailId: string,
+  oracle: string,
+  base: string,
+  quote: string,
+): ChainlinkFeed {
+  /// decoding feed address from first 42 characters
+  let feedAddress = Address.fromHexString(feed.slice(0, 42))
 
-  let oracle = Oracle.load(oracleId)
-  if (!oracle) return
+  /// decoding feed staleAfter from next 6 characters
+  let staleAfter = getBigIntFromString(feed, 42, 48)
 
-  let blockNumber = event.block.number.toI32()
-  let timestamp = event.block.timestamp
+  /// decoding feed decimals from next 2 characters
+  let decimals = getBigIntFromString(feed, 48, 50)
 
-  if (event.block.number.toI32() > oracle.latestBlock) {
-    oracle.latestBlock = blockNumber
-    oracle.latestActivity = timestamp
+  /// decoding feed operation from last 2 characters
+  let mul = getBigIntFromString(feed, 50, 52) == BigInt.fromI32(1)
+
+  let feedId = createJointId([oracle, base, quote, feedAddress.toHexString()])
+  let chainlinkFeed = ChainlinkFeed.load(feedId)
+  if (!chainlinkFeed) {
+    chainlinkFeed = new ChainlinkFeed(feedId)
+    chainlinkFeed.aggregatorV3 = feedAddress
+    chainlinkFeed.decimals = decimals
+    chainlinkFeed.staleAfter = staleAfter
+    chainlinkFeed.mul = mul
+    chainlinkFeed.chainlinkPairDetail = pairDetailId
+  } else {
+    chainlinkFeed.aggregatorV3 = feedAddress
+    chainlinkFeed.decimals = decimals
+    chainlinkFeed.staleAfter = staleAfter
+    chainlinkFeed.mul = mul
   }
+  chainlinkFeed.save()
 
-  oracle.defaultPeriod = event.params.defaultPeriod
-  oracle.save()
-
-  // TODO: Save event?
+  return chainlinkFeed
 }
 
 export function handleSetPairDetails(event: SetPairDetails): void {
@@ -153,17 +181,15 @@ export function handleSetPairDetails(event: SetPairDetails): void {
     let quoteToken = new Token(quote)
     quoteToken.save()
 
-    let pool = pairDetails[i].pairDetail.pool
-    let period = pairDetails[i].pairDetail.period
+    let inverted = pairDetails[i].pairDetail.inverted
+    let path = pairDetails[i].pairDetail.path
 
     // Store reverse pairing as well for easier lookup
-    updatePairDetail(oracleId, base, quote, pool, period)
-    updatePairDetail(oracleId, quote, base, pool, period)
+    updatePairDetail(oracleId, base, quote, path, inverted)
+    updatePairDetail(oracleId, quote, base, path, inverted)
   }
 
   oracle.save()
-
-  // TODO: Save event?
 }
 
 export function handleSetPaused(event: SetPaused): void {

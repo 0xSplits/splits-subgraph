@@ -1,0 +1,361 @@
+{
+  "abi": [
+    {
+      "type": "constructor",
+      "inputs": [
+        { "name": "weth9_", "type": "address", "internalType": "address" },
+        {
+          "name": "sequencerFeed_",
+          "type": "address",
+          "internalType": "address"
+        }
+      ],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "chainlinkOracleFactory",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getPairDetails",
+      "inputs": [
+        {
+          "name": "quotePairs_",
+          "type": "tuple[]",
+          "internalType": "struct QuotePair[]",
+          "components": [
+            { "name": "base", "type": "address", "internalType": "address" },
+            { "name": "quote", "type": "address", "internalType": "address" }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "pairDetails",
+          "type": "tuple[]",
+          "internalType": "struct ChainlinkOracleImpl.PairDetail[]",
+          "components": [
+            { "name": "path", "type": "bytes", "internalType": "bytes" },
+            { "name": "inverted", "type": "bool", "internalType": "bool" }
+          ]
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "getQuoteAmounts",
+      "inputs": [
+        {
+          "name": "quoteParams_",
+          "type": "tuple[]",
+          "internalType": "struct QuoteParams[]",
+          "components": [
+            {
+              "name": "quotePair",
+              "type": "tuple",
+              "internalType": "struct QuotePair",
+              "components": [
+                {
+                  "name": "base",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "quote",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ]
+            },
+            {
+              "name": "baseAmount",
+              "type": "uint128",
+              "internalType": "uint128"
+            },
+            { "name": "data", "type": "bytes", "internalType": "bytes" }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "quoteAmounts",
+          "type": "uint256[]",
+          "internalType": "uint256[]"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "initializer",
+      "inputs": [
+        {
+          "name": "params_",
+          "type": "tuple",
+          "internalType": "struct ChainlinkOracleImpl.InitParams",
+          "components": [
+            { "name": "owner", "type": "address", "internalType": "address" },
+            { "name": "paused", "type": "bool", "internalType": "bool" },
+            {
+              "name": "pairDetails",
+              "type": "tuple[]",
+              "internalType": "struct ChainlinkOracleImpl.SetPairDetailParams[]",
+              "components": [
+                {
+                  "name": "quotePair",
+                  "type": "tuple",
+                  "internalType": "struct QuotePair",
+                  "components": [
+                    {
+                      "name": "base",
+                      "type": "address",
+                      "internalType": "address"
+                    },
+                    {
+                      "name": "quote",
+                      "type": "address",
+                      "internalType": "address"
+                    }
+                  ]
+                },
+                {
+                  "name": "pairDetail",
+                  "type": "tuple",
+                  "internalType": "struct ChainlinkOracleImpl.PairDetail",
+                  "components": [
+                    {
+                      "name": "path",
+                      "type": "bytes",
+                      "internalType": "bytes"
+                    },
+                    {
+                      "name": "inverted",
+                      "type": "bool",
+                      "internalType": "bool"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "owner",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "paused",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "bool", "internalType": "bool" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "sequencerFeed",
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "",
+          "type": "address",
+          "internalType": "contract AggregatorV3Interface"
+        }
+      ],
+      "stateMutability": "view"
+    },
+    {
+      "type": "function",
+      "name": "setPairDetails",
+      "inputs": [
+        {
+          "name": "params_",
+          "type": "tuple[]",
+          "internalType": "struct ChainlinkOracleImpl.SetPairDetailParams[]",
+          "components": [
+            {
+              "name": "quotePair",
+              "type": "tuple",
+              "internalType": "struct QuotePair",
+              "components": [
+                {
+                  "name": "base",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "quote",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ]
+            },
+            {
+              "name": "pairDetail",
+              "type": "tuple",
+              "internalType": "struct ChainlinkOracleImpl.PairDetail",
+              "components": [
+                { "name": "path", "type": "bytes", "internalType": "bytes" },
+                { "name": "inverted", "type": "bool", "internalType": "bool" }
+              ]
+            }
+          ]
+        }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "setPaused",
+      "inputs": [{ "name": "paused_", "type": "bool", "internalType": "bool" }],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "transferOwnership",
+      "inputs": [
+        { "name": "owner_", "type": "address", "internalType": "address" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "weth9",
+      "inputs": [],
+      "outputs": [{ "name": "", "type": "address", "internalType": "address" }],
+      "stateMutability": "view"
+    },
+    {
+      "type": "event",
+      "name": "OwnershipTransferred",
+      "inputs": [
+        {
+          "name": "oldOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        },
+        {
+          "name": "newOwner",
+          "type": "address",
+          "indexed": true,
+          "internalType": "address"
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SetPairDetails",
+      "inputs": [
+        {
+          "name": "params",
+          "type": "tuple[]",
+          "indexed": false,
+          "internalType": "struct ChainlinkOracleImpl.SetPairDetailParams[]",
+          "components": [
+            {
+              "name": "quotePair",
+              "type": "tuple",
+              "internalType": "struct QuotePair",
+              "components": [
+                {
+                  "name": "base",
+                  "type": "address",
+                  "internalType": "address"
+                },
+                {
+                  "name": "quote",
+                  "type": "address",
+                  "internalType": "address"
+                }
+              ]
+            },
+            {
+              "name": "pairDetail",
+              "type": "tuple",
+              "internalType": "struct ChainlinkOracleImpl.PairDetail",
+              "components": [
+                { "name": "path", "type": "bytes", "internalType": "bytes" },
+                { "name": "inverted", "type": "bool", "internalType": "bool" }
+              ]
+            }
+          ]
+        }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "SetPaused",
+      "inputs": [
+        {
+          "name": "paused",
+          "type": "bool",
+          "indexed": false,
+          "internalType": "bool"
+        }
+      ],
+      "anonymous": false
+    },
+    { "type": "error", "name": "GracePeriodNotOver", "inputs": [] },
+    { "type": "error", "name": "InvalidFeed_Decimals", "inputs": [] },
+    {
+      "type": "error",
+      "name": "InvalidPair_FeedNotSet",
+      "inputs": [
+        {
+          "name": "qp",
+          "type": "tuple",
+          "internalType": "struct QuotePair",
+          "components": [
+            { "name": "base", "type": "address", "internalType": "address" },
+            { "name": "quote", "type": "address", "internalType": "address" }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "error",
+      "name": "NegativePrice",
+      "inputs": [
+        {
+          "name": "feed",
+          "type": "address",
+          "internalType": "contract AggregatorV3Interface"
+        },
+        { "name": "price", "type": "int256", "internalType": "int256" }
+      ]
+    },
+    { "type": "error", "name": "Paused", "inputs": [] },
+    { "type": "error", "name": "SequencerDown", "inputs": [] },
+    {
+      "type": "error",
+      "name": "StalePrice",
+      "inputs": [
+        {
+          "name": "feed",
+          "type": "address",
+          "internalType": "contract AggregatorV3Interface"
+        },
+        { "name": "timestamp", "type": "uint256", "internalType": "uint256" }
+      ]
+    },
+    { "type": "error", "name": "Unauthorized", "inputs": [] },
+    { "type": "error", "name": "ZeroPrice", "inputs": [] }
+  ]
+}

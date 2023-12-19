@@ -246,14 +246,25 @@ type Transaction @entity {
   withdrawEvents: [WithdrawalEvent!]
 }
 
+interface Oracle {
+  id: ID!
+  type: OracleType!
+  createdBlock: Int
+  latestBlock: Int
+  latestActivity: BigInt
+  owner: Account
+  paused: Boolean
+}
+
 enum OracleType {
   uniswapV3TWAP
+  chainlink
   unknown
 }
 
 type UniswapV3TWAPPairDetail @entity {
   id: ID! # ${oracleId}-${base}-${quote}
-  oracle: Oracle!
+  oracle: UniswapV3TWAPOracle!
   base: Token!
   quote: Token!
   pool: Bytes!
@@ -261,19 +272,58 @@ type UniswapV3TWAPPairDetail @entity {
   period: BigInt!
 }
 
-# No required fields because of third-party oracles. We'll still create the
-# oracle object but won't know anything about it
-type Oracle @entity {
+type ChainlinkFeed @entity {
+  id: ID! # ${oracleId}-${base}-${quote}-${feed}
+  chainlinkPairDetail: ChainlinkPairDetail!
+  aggregatorV3: Bytes!
+  decimals: BigInt!
+  staleAfter: BigInt!
+  mul: Boolean!
+}
+
+type ChainlinkPairDetail @entity {
+  id: ID! # ${oracleId}-${base}-${quote}
+  oracle: ChainlinkOracle!
+  base: Token!
+  quote: Token!
+  feeds: [ChainlinkFeed!]! @derivedFrom(field: "chainlinkPairDetail")
+  inverted: Boolean!
+}
+
+type UniswapV3TWAPOracle implements Oracle @entity {
   id: ID! #ethereum address
   type: OracleType!
   createdBlock: Int
   latestBlock: Int
   latestActivity: BigInt
-  # TODO: These are all specific to univ3twap, should we pull out to something else?
   owner: Account
   paused: Boolean
+
   defaultPeriod: BigInt
   pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
+}
+
+type ChainlinkOracle implements Oracle @entity {
+  id: ID! #ethereum address
+  type: OracleType!
+  createdBlock: Int
+  latestBlock: Int
+  latestActivity: BigInt
+  owner: Account
+  paused: Boolean
+
+  sequencerFeed: Bytes
+  pairDetails: [ChainlinkPairDetail!] @derivedFrom(field: "oracle")
+}
+
+type UnknownOracle implements Oracle @entity {
+  id: ID! #ethereum address
+  type: OracleType!
+  createdBlock: Int
+  latestBlock: Int
+  latestActivity: BigInt
+  owner: Account
+  paused: Boolean
 }
 
 type SwapBalance @entity {

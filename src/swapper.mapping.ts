@@ -17,7 +17,6 @@ import {
   User,
   Swapper,
   SwapBalance,
-  Oracle,
   CreateSwapperEvent,
   SwapperBeneficiaryAddedEvent,
   SwapperBeneficiaryRemovedEvent,
@@ -29,6 +28,9 @@ import {
   SwapFundsEvent,
   ReceiveSwappedFundsEvent,
   SwapperPairOverride,
+  UnknownOracle,
+  UniswapV3TWAPOracle,
+  ChainlinkOracle,
 } from '../generated/schema'
 import {
   createJointId,
@@ -817,9 +819,11 @@ function updateSwapBalance(
 }
 
 function createOracleIfMissing(oracleId: string): void {
-  let oracle = Oracle.load(oracleId)
-  if (!oracle) {
-    oracle = new Oracle(oracleId)
+  let uniswapOracle = UniswapV3TWAPOracle.load(oracleId)
+  let chainlinkOracle = ChainlinkOracle.load(oracleId)
+  let unknownOracle = UnknownOracle.load(oracleId)
+  if (!uniswapOracle && !chainlinkOracle && !unknownOracle) {
+    let oracle = new UnknownOracle(oracleId)
     oracle.type = 'unknown'
     oracle.save()
   }

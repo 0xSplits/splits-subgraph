@@ -211,7 +211,7 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - Oracle
+        - UniswapV3TWAPOracle
         - UniswapV3TWAPPairDetail
       abis:
         - name: UniV3OracleFactory
@@ -222,6 +222,31 @@ dataSources:
         - event: CreateUniV3Oracle(indexed address,(address,bool,uint32,((address,address),(address,uint32))[]))
           handler: handleCreateUniV3Oracle
       file: ./src/oracle.mapping.ts
+  - kind: ethereum/contract
+    name: ChainlinkOracleFactory
+    network: {{network}}
+    source:
+      address: {{{chainlinkOracleFactoryAddress}}}
+      abi: ChainlinkOracleFactory
+      startBlock: {{chainlinkOracleStartBlock}}
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ChainlinkOracle
+        - ChainlinkOracleL2
+        - ChainlinkOraclePairDetail
+      abis:
+        - name: ChainlinkOracleFactory
+          file: ./abis/ChainlinkOracleFactory.json
+        - name: ChainlinkOracle
+          file: ./abis/ChainlinkOracle.json
+      eventHandlers:
+        - event: CreateChainlinkOracle(indexed address,(address,bool,((address,address),(bytes,bool))[]))
+          handler: handleCreateChainlinkOracle
+      file: ./src/chainlink-oracle.mapping.ts
+  {{/swapper}}
   - kind: ethereum/contract
     name: SwapperFactory
     network: {{network}}
@@ -369,7 +394,34 @@ templates:
           handler: handleSetDefaultPeriod
         - event: SetPairDetails(((address,address),(address,uint32))[])
           handler: handleSetPairDetails
+        - event: SetPaused(bool)
+          handler: handleSetPaused
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
       file: ./src/oracle.mapping.ts
+  - kind: ethereum/contract
+    name: ChainlinkOracle
+    network: {{network}}
+    source:
+      abi: ChainlinkOracle
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Oracle
+        - ChainlinkPairDetail
+      abis:
+        - name: ChainlinkOracle
+          file: ./abis/ChainlinkOracle.json
+      eventHandlers:
+        - event: SetPairDetails(((address,address),(bytes,bool))[])
+          handler: handleSetPairDetails
+        - event: SetPaused(bool)
+          handler: handleSetPaused
+        - event: OwnershipTransferred(indexed address,indexed address)
+          handler: handleOwnershipTransferred
+      file: ./src/chainlink-oracle.mapping.ts
   - kind: ethereum/contract
     name: Swapper
     network: {{network}}
