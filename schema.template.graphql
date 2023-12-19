@@ -254,6 +254,8 @@ interface Oracle {
   latestActivity: BigInt
   owner: Account
   paused: Boolean
+  defaultPeriod: BigInt
+  pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
 }
 
 enum OracleType {
@@ -264,7 +266,7 @@ enum OracleType {
 
 type UniswapV3TWAPPairDetail @entity {
   id: ID! # ${oracleId}-${base}-${quote}
-  oracle: UniswapV3TWAPOracle!
+  oracle: Oracle!
   base: Token!
   quote: Token!
   pool: Bytes!
@@ -298,7 +300,6 @@ type UniswapV3TWAPOracle implements Oracle @entity {
   latestActivity: BigInt
   owner: Account
   paused: Boolean
-
   defaultPeriod: BigInt
   pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
 }
@@ -311,9 +312,11 @@ type ChainlinkOracle implements Oracle @entity {
   latestActivity: BigInt
   owner: Account
   paused: Boolean
+  defaultPeriod: BigInt
+  pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
 
   sequencerFeed: Bytes
-  pairDetails: [ChainlinkPairDetail!] @derivedFrom(field: "oracle")
+  chainlinkPairDetails: [ChainlinkPairDetail!] @derivedFrom(field: "oracle")
 }
 
 type UnknownOracle implements Oracle @entity {
@@ -324,6 +327,8 @@ type UnknownOracle implements Oracle @entity {
   latestActivity: BigInt
   owner: Account
   paused: Boolean
+  defaultPeriod: BigInt
+  pairDetails: [UniswapV3TWAPPairDetail!] @derivedFrom(field: "oracle")
 }
 
 type SwapBalance @entity {
