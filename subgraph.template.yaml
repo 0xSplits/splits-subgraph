@@ -246,7 +246,6 @@ dataSources:
         - event: CreateChainlinkOracle(indexed address,(address,bool,((address,address),(bytes,bool))[]))
           handler: handleCreateChainlinkOracle
       file: ./src/chainlink-oracle.mapping.ts
-  {{/swapper}}
   - kind: ethereum/contract
     name: SwapperFactory
     network: {{network}}
