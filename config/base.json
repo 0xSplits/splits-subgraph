@@ -16,7 +16,7 @@
   "liquidSplitStartBlock": "2294473",
   "recoupStartBlock": "2294611",
   "uniV3OracleStartBlock": "7777505",
-  "chainlinkOracleFactoryStartBlock": "7784149",
+  "chainlinkOracleStartBlock": "7784149",
   "swapperStartBlock": "7778070",
   "passThroughWalletStartBlock": "7778616",
   "diversifierStartBlock": "7778915",
