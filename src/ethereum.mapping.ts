@@ -181,7 +181,7 @@ export function handleCreateSplitCall(call: CreateSplitCall): void {
     recipient.save()
     recipientIds.push(recipientId)
 
-    saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId)
+    saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId, percentAllocations[i])
   }
   split.recipients = recipientIds
 
@@ -611,7 +611,7 @@ function _updateSplit(
     newRecipientIds.push(recipientId)
 
     if (shouldSaveRecipientEvents && !oldRecipientIds.includes(recipientId)) {
-      saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId)
+      saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId, percentAllocations[i])
     }
   }
 

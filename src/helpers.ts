@@ -176,6 +176,7 @@ export function saveSplitRecipientAddedEvent(
   txHash: string,
   logIdx: BigInt,
   accountId: string,
+  ownership: BigInt,
 ): void {
   let setSplitEventId = createJointId([
     SET_SPLIT_EVENT_PREFIX,
@@ -193,6 +194,7 @@ export function saveSplitRecipientAddedEvent(
   recipientAddedEvent.account = accountId
   recipientAddedEvent.logIndex = logIdx
   recipientAddedEvent.setSplitEvent = setSplitEventId
+  recipientAddedEvent.ownership = ownership
   recipientAddedEvent.save()
 }
 

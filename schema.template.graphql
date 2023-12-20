@@ -459,6 +459,7 @@ type RecipientAddedEvent implements AccountEvent @entity {
   logIndex: BigInt!
 
   setSplitEvent: SetSplitEvent!
+  ownership: BigInt!
 }
 
 type RecipientRemovedEvent implements AccountEvent @entity {
