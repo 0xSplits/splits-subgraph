@@ -722,6 +722,9 @@ function handleOwnerSwap(swapper: Swapper, event: ExecCalls): void {
     let inputToken = inputTokens[i]
     let swapData = swapBalanceData.get(inputToken)
 
+    let token = new Token(inputToken)
+    token.save()
+
     let outputTokens = swapData.outputs.keys()
     for (let j: i32 = 0; j < outputTokens.length; j++) {
       let outputToken = outputTokens[j]
