@@ -670,17 +670,12 @@ function updateSwapBalance(
   swapBalanceOutput.amount += outputAmount
   swapBalanceOutput.save()
 
-  // Only need to update withdrawn for users. For all modules, swapped funds
-  // will show up in their active balances.
-  let user = User.load(recipient)
-  if (user) {
-    updateWithdrawalAmount(
-      passThroughWalletId,
-      recipient,
-      outputTokenId,
-      outputAmount,
-    )
-  }
+  updateWithdrawalAmount(
+    passThroughWalletId,
+    recipient,
+    outputTokenId,
+    outputAmount,
+  )
 
   // Save events
   let ownerSwapDiversifierFundsEventId = createJointId([

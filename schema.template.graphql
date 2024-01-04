@@ -21,6 +21,7 @@ interface Account {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -67,7 +68,7 @@ type TokenDistribution implements TokenBalance @entity {
 type ContractEarnings @entity {
   id: ID! # ce-${contractId}-${accountId}
   contract: Account!
-  account: User!
+  account: Account!
   internalBalances: [ContractEarningsInternalBalance!]!
     @derivedFrom(field: "contractEarnings")
   withdrawals: [ContractEarningsWithdrawal!]!
@@ -120,6 +121,7 @@ type Split implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -153,6 +155,7 @@ type VestingModule implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -185,6 +188,7 @@ type WaterfallModule implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -216,6 +220,7 @@ type LiquidSplit implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -355,6 +360,7 @@ type Swapper implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!
@@ -408,6 +414,7 @@ type PassThroughWallet implements Account @entity {
   withdrawals: [TokenWithdrawal!]! @derivedFrom(field: "account")
   distributions: [TokenDistribution!]! @derivedFrom(field: "account")
   accountEvents: [AccountEvent!]! @derivedFrom(field: "account")
+  contractEarnings: [ContractEarnings!]! @derivedFrom(field: "account")
   createdBlock: Int!
   latestBlock: Int!
   latestActivity: BigInt!

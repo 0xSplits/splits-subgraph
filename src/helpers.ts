@@ -99,32 +99,31 @@ function addInternalBalance(
   // contractEarnings or a separate distributionEarnings entity.
   if (isDistributorIncentive) return
 
-  // Only set contract earnings on users right now. Eventually would like to set them on any account type
-  let user = getUser(accountId)
-  if (user) {
-    let contractEarningsId = saveContractEarnings(splitId, accountId)
-    let contractEarningsInternalBalanceId = createJointId([
-      CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
-      contractEarningsId,
-      tokenId,
-    ])
-    let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+  let contractEarningsId = saveContractEarnings(splitId, accountId).id
+  let contractEarningsInternalBalanceId = createJointId([
+    CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+    contractEarningsId,
+    tokenId,
+  ])
+  let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+    contractEarningsInternalBalanceId,
+  )
+  if (!contractEarningsInternalBalance) {
+    contractEarningsInternalBalance = new ContractEarningsInternalBalance(
       contractEarningsInternalBalanceId,
     )
-    if (!contractEarningsInternalBalance) {
-      contractEarningsInternalBalance = new ContractEarningsInternalBalance(
-        contractEarningsInternalBalanceId,
-      )
-      contractEarningsInternalBalance.contractEarnings = contractEarningsId
-      contractEarningsInternalBalance.token = tokenId
-      contractEarningsInternalBalance.amount = ZERO
-    }
-    contractEarningsInternalBalance.amount += amount
-    contractEarningsInternalBalance.save()
+    contractEarningsInternalBalance.contractEarnings = contractEarningsId
+    contractEarningsInternalBalance.token = tokenId
+    contractEarningsInternalBalance.amount = ZERO
   }
+  contractEarningsInternalBalance.amount += amount
+  contractEarningsInternalBalance.save()
 }
 
-function saveContractEarnings(contractId: string, accountId: string): string {
+function saveContractEarnings(
+  contractId: string,
+  accountId: string,
+): ContractEarnings {
   let contractEarningsId = createJointId([
     CONTRACT_EARNINGS_PREFIX,
     contractId,
@@ -138,7 +137,7 @@ function saveContractEarnings(contractId: string, accountId: string): string {
     contractEarnings.save()
   }
 
-  return contractEarningsId
+  return contractEarnings
 }
 
 export function saveSetSplitEvent(
@@ -555,72 +554,66 @@ export function updateWithdrawalAmount(
   tokenWithdrawal.amount += amount
   tokenWithdrawal.save()
 
-  // If contractId == accountId this is a split distribution, can ignore. It's a weird edge case,
-  // really shouldn't be captured in withdrawn amount but need to handle for legacy.
-  if (contractId != accountId) {
-    // Ideally can set contract earnings for any account type eventually. For now only setting them on users
-    let account = getUser(accountId)
-    if (!account) return
-
-    if (contractId) {
-      // Funds were pushed directly to the recipient, did not go through split main
-      let contractEarningsId = saveContractEarnings(contractId, accountId)
-      let contractEarningsWithdrawalId = createJointId([
-        CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
-        contractEarningsId,
-        tokenId,
-      ])
-      let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+  if (contractId && contractId != accountId) {
+    // Funds were pushed directly to the recipient, did not go through split main
+    let contractEarningsId = saveContractEarnings(contractId, accountId).id
+    let contractEarningsWithdrawalId = createJointId([
+      CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+      contractEarningsId,
+      tokenId,
+    ])
+    let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+      contractEarningsWithdrawalId,
+    )
+    if (!contractEarningsWithdrawal) {
+      contractEarningsWithdrawal = new ContractEarningsWithdrawal(
         contractEarningsWithdrawalId,
       )
-      if (!contractEarningsWithdrawal) {
-        contractEarningsWithdrawal = new ContractEarningsWithdrawal(
-          contractEarningsWithdrawalId,
-        )
-        contractEarningsWithdrawal.contractEarnings = contractEarningsId
-        contractEarningsWithdrawal.token = tokenId
-        contractEarningsWithdrawal.amount = ZERO
-      }
-      contractEarningsWithdrawal.amount += amount
-      contractEarningsWithdrawal.save()
-    } else {
-      // It's a split main withdrawal, move contract earnings internal balances over to contract earnings withdrawals
-      let contractEarningsArray = account.contractEarnings.load()
-      for (let i = 0; i < contractEarningsArray.length; i++) {
-        let contractEarnings = contractEarningsArray[i]
-        let contractEarningsInternalBalanceId = createJointId([
-          CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
-          contractEarnings.id,
-          tokenId,
-        ])
-        let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
-          contractEarningsInternalBalanceId,
-        )
-        if (contractEarningsInternalBalance) {
-          if (contractEarningsInternalBalance.amount > ZERO) {
-            let contractEarningsWithdrawalId = createJointId([
-              CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
-              contractEarnings.id,
-              tokenId,
-            ])
-            let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+      contractEarningsWithdrawal.contractEarnings = contractEarningsId
+      contractEarningsWithdrawal.token = tokenId
+      contractEarningsWithdrawal.amount = ZERO
+    }
+    contractEarningsWithdrawal.amount += amount
+    contractEarningsWithdrawal.save()
+  } else if (contractId == accountId || !contractId) {
+    // contractId == accountId => split distribution
+    // !contractId => split main withdrawal
+    // Move contract earnings internal balances over to contract earnings withdrawals
+    let contractEarningsArray = getContractEarnings(accountId)
+    for (let i = 0; i < contractEarningsArray.length; i++) {
+      let contractEarnings = contractEarningsArray[i]
+      let contractEarningsInternalBalanceId = createJointId([
+        CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+        contractEarnings.id,
+        tokenId,
+      ])
+      let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+        contractEarningsInternalBalanceId,
+      )
+      if (contractEarningsInternalBalance) {
+        if (contractEarningsInternalBalance.amount > ZERO) {
+          let contractEarningsWithdrawalId = createJointId([
+            CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+            contractEarnings.id,
+            tokenId,
+          ])
+          let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+            contractEarningsWithdrawalId,
+          )
+          if (!contractEarningsWithdrawal) {
+            contractEarningsWithdrawal = new ContractEarningsWithdrawal(
               contractEarningsWithdrawalId,
             )
-            if (!contractEarningsWithdrawal) {
-              contractEarningsWithdrawal = new ContractEarningsWithdrawal(
-                contractEarningsWithdrawalId,
-              )
-              contractEarningsWithdrawal.contractEarnings = contractEarnings.id
-              contractEarningsWithdrawal.token = tokenId
-              contractEarningsWithdrawal.amount = ZERO
-            }
-            contractEarningsWithdrawal.amount +=
-              contractEarningsInternalBalance.amount
-            contractEarningsWithdrawal.save()
-
-            contractEarningsInternalBalance.amount = ZERO
-            contractEarningsInternalBalance.save()
+            contractEarningsWithdrawal.contractEarnings = contractEarnings.id
+            contractEarningsWithdrawal.token = tokenId
+            contractEarningsWithdrawal.amount = ZERO
           }
+          contractEarningsWithdrawal.amount +=
+            contractEarningsInternalBalance.amount
+          contractEarningsWithdrawal.save()
+
+          contractEarningsInternalBalance.amount = ZERO
+          contractEarningsInternalBalance.save()
         }
       }
     }
@@ -686,6 +679,31 @@ export function createUserIfMissing(
   user.latestBlock = blockNumber
   user.latestActivity = timestamp
   user.save()
+}
+
+function getContractEarnings(accountId: string): ContractEarnings[] {
+  const user = getUser(accountId)
+  if (user) return user.contractEarnings.load()
+
+  const split = getSplit(accountId)
+  if (split) return split.contractEarnings.load()
+
+  const waterfall = getWaterfallModule(accountId)
+  if (waterfall) return waterfall.contractEarnings.load()
+
+  const vesting = getVestingModule(accountId)
+  if (vesting) return vesting.contractEarnings.load()
+
+  const liquidSplit = getLiquidSplit(accountId)
+  if (liquidSplit) return liquidSplit.contractEarnings.load()
+
+  const swapper = getSwapper(accountId)
+  if (swapper) return swapper.contractEarnings.load()
+
+  const passThroughWallet = getPassThroughWallet(accountId)
+  if (passThroughWallet) return passThroughWallet.contractEarnings.load()
+
+  throw new Error('Contract earnings must exist')
 }
 
 export function getSplit(splitId: string): Split | null {
