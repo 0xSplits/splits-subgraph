@@ -685,28 +685,31 @@ function getContractEarnings(accountId: string): ContractEarnings[] {
   const user = getUser(accountId)
   if (user) return user.contractEarnings.load()
 
-  const split = getSplit(accountId)
+  const split = getSplit(accountId, false)
   if (split) return split.contractEarnings.load()
 
-  const waterfall = getWaterfallModule(accountId)
+  const waterfall = getWaterfallModule(accountId, false)
   if (waterfall) return waterfall.contractEarnings.load()
 
-  const vesting = getVestingModule(accountId)
+  const vesting = getVestingModule(accountId, false)
   if (vesting) return vesting.contractEarnings.load()
 
-  const liquidSplit = getLiquidSplit(accountId)
+  const liquidSplit = getLiquidSplit(accountId, false)
   if (liquidSplit) return liquidSplit.contractEarnings.load()
 
-  const swapper = getSwapper(accountId)
+  const swapper = getSwapper(accountId, false)
   if (swapper) return swapper.contractEarnings.load()
 
-  const passThroughWallet = getPassThroughWallet(accountId)
+  const passThroughWallet = getPassThroughWallet(accountId, false)
   if (passThroughWallet) return passThroughWallet.contractEarnings.load()
 
   throw new Error('Contract earnings must exist')
 }
 
-export function getSplit(splitId: string): Split | null {
+export function getSplit(
+  splitId: string,
+  required: boolean = true,
+): Split | null {
   let split = Split.load(splitId)
   if (!split) {
     let splitUser = User.load(splitId)
@@ -717,7 +720,7 @@ export function getSplit(splitId: string): Split | null {
       ])
       return null
     }
-    throw new Error('Split must exist')
+    if (required) throw new Error('Split must exist')
   }
 
   return split
@@ -725,6 +728,7 @@ export function getSplit(splitId: string): Split | null {
 
 export function getWaterfallModule(
   waterfallModuleId: string,
+  required: boolean = true,
 ): WaterfallModule | null {
   let waterfall = WaterfallModule.load(waterfallModuleId)
   if (!waterfall) {
@@ -737,7 +741,7 @@ export function getWaterfallModule(
       )
       return null
     }
-    throw new Error('Waterfall must exist')
+    if (required) throw new Error('Waterfall must exist')
   }
 
   return waterfall
@@ -745,6 +749,7 @@ export function getWaterfallModule(
 
 export function getVestingModule(
   vestingModuleId: string,
+  required: boolean = true,
 ): VestingModule | null {
   let vesting = VestingModule.load(vestingModuleId)
   if (!vesting) {
@@ -756,13 +761,16 @@ export function getVestingModule(
       ])
       return null
     }
-    throw new Error('Vesting must exist')
+    if (required) throw new Error('Vesting must exist')
   }
 
   return vesting
 }
 
-export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
+export function getLiquidSplit(
+  liquidSplitId: string,
+  required: boolean = true,
+): LiquidSplit | null {
   let liquidSplit = LiquidSplit.load(liquidSplitId)
   if (!liquidSplit) {
     let liquidSplitUser = User.load(liquidSplitId)
@@ -774,14 +782,16 @@ export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
       )
       return null
     }
-
-    throw new Error('Liquid split must exist')
+    if (required) throw new Error('Liquid split must exist')
   }
 
   return liquidSplit
 }
 
-export function getSwapper(swapperId: string): Swapper | null {
+export function getSwapper(
+  swapperId: string,
+  required: boolean = true,
+): Swapper | null {
   let swapper = Swapper.load(swapperId)
   if (!swapper) {
     let swapperUser = User.load(swapperId)
@@ -792,7 +802,7 @@ export function getSwapper(swapperId: string): Swapper | null {
       ])
       return null
     }
-    throw new Error('Swapper must exist')
+    if (required) throw new Error('Swapper must exist')
   }
 
   return swapper
@@ -800,6 +810,7 @@ export function getSwapper(swapperId: string): Swapper | null {
 
 export function getPassThroughWallet(
   passThroughWalletId: string,
+  required: boolean = true,
 ): PassThroughWallet | null {
   let passThroughWallet = PassThroughWallet.load(passThroughWalletId)
   if (!passThroughWallet) {
@@ -812,7 +823,7 @@ export function getPassThroughWallet(
       )
       return null
     }
-    throw new Error('Pass through wallet must exist')
+    if (required) throw new Error('Pass through wallet must exist')
   }
 
   return passThroughWallet
