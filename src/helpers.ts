@@ -538,22 +538,26 @@ export function updateWithdrawalAmount(
   tokenId: string,
   amount: BigInt,
 ): void {
-  let tokenBalanceId = createJointId([accountId, tokenId])
+  // Create TokenWithdrawal if account is a user
+  if (getUser(accountId)) {
+    let tokenBalanceId = createJointId([accountId, tokenId])
 
-  let tokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_USER_PREFIX,
-    tokenBalanceId,
-  ])
-  let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId)
-  if (!tokenWithdrawal) {
-    tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId)
-    tokenWithdrawal.account = accountId
-    tokenWithdrawal.token = tokenId
-    tokenWithdrawal.amount = ZERO
+    let tokenWithdrawalId = createJointId([
+      TOKEN_WITHDRAWAL_USER_PREFIX,
+      tokenBalanceId,
+    ])
+    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId)
+    if (!tokenWithdrawal) {
+      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId)
+      tokenWithdrawal.account = accountId
+      tokenWithdrawal.token = tokenId
+      tokenWithdrawal.amount = ZERO
+    }
+    tokenWithdrawal.amount += amount
+    tokenWithdrawal.save()
   }
-  tokenWithdrawal.amount += amount
-  tokenWithdrawal.save()
 
+  // Modify ContractEarnings
   if (contractId && contractId != accountId) {
     // Funds were pushed directly to the recipient, did not go through split main
     let contractEarningsId = saveContractEarnings(contractId, accountId).id
@@ -576,8 +580,8 @@ export function updateWithdrawalAmount(
     contractEarningsWithdrawal.amount += amount
     contractEarningsWithdrawal.save()
   } else if (contractId == accountId || !contractId) {
-    // contractId == accountId => split distribution
-    // !contractId => split main withdrawal
+    // Funds were pushed throughs split main
+    // contractId == accountId => split distribution, !contractId => split main withdrawal
     // Move contract earnings internal balances over to contract earnings withdrawals
     let contractEarningsArray = getContractEarnings(accountId)
     for (let i = 0; i < contractEarningsArray.length; i++) {
