@@ -773,12 +773,7 @@ function updateSwapBalance(
 
   updateDistributionAmount(swapperId, inputTokenId, inputAmount)
 
-  // Only need to update withdrawn for users. For all modules, swapped funds
-  // will show up in their active balances.
-  let user = User.load(beneficiary)
-  if (user) {
-    updateWithdrawalAmount(swapperId, beneficiary, outputTokenId, outputAmount)
-  }
+  updateWithdrawalAmount(swapperId, beneficiary, outputTokenId, outputAmount)
 
   // Save events
   let swapFundsEventId = createJointId([

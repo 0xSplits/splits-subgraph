@@ -99,32 +99,31 @@ function addInternalBalance(
   // contractEarnings or a separate distributionEarnings entity.
   if (isDistributorIncentive) return
 
-  // Only set contract earnings on users right now. Eventually would like to set them on any account type
-  let user = getUser(accountId)
-  if (user) {
-    let contractEarningsId = saveContractEarnings(splitId, accountId)
-    let contractEarningsInternalBalanceId = createJointId([
-      CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
-      contractEarningsId,
-      tokenId,
-    ])
-    let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+  let contractEarningsId = saveContractEarnings(splitId, accountId).id
+  let contractEarningsInternalBalanceId = createJointId([
+    CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+    contractEarningsId,
+    tokenId,
+  ])
+  let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+    contractEarningsInternalBalanceId,
+  )
+  if (!contractEarningsInternalBalance) {
+    contractEarningsInternalBalance = new ContractEarningsInternalBalance(
       contractEarningsInternalBalanceId,
     )
-    if (!contractEarningsInternalBalance) {
-      contractEarningsInternalBalance = new ContractEarningsInternalBalance(
-        contractEarningsInternalBalanceId,
-      )
-      contractEarningsInternalBalance.contractEarnings = contractEarningsId
-      contractEarningsInternalBalance.token = tokenId
-      contractEarningsInternalBalance.amount = ZERO
-    }
-    contractEarningsInternalBalance.amount += amount
-    contractEarningsInternalBalance.save()
+    contractEarningsInternalBalance.contractEarnings = contractEarningsId
+    contractEarningsInternalBalance.token = tokenId
+    contractEarningsInternalBalance.amount = ZERO
   }
+  contractEarningsInternalBalance.amount += amount
+  contractEarningsInternalBalance.save()
 }
 
-function saveContractEarnings(contractId: string, accountId: string): string {
+function saveContractEarnings(
+  contractId: string,
+  accountId: string,
+): ContractEarnings {
   let contractEarningsId = createJointId([
     CONTRACT_EARNINGS_PREFIX,
     contractId,
@@ -138,7 +137,7 @@ function saveContractEarnings(contractId: string, accountId: string): string {
     contractEarnings.save()
   }
 
-  return contractEarningsId
+  return contractEarnings
 }
 
 export function saveSetSplitEvent(
@@ -539,88 +538,86 @@ export function updateWithdrawalAmount(
   tokenId: string,
   amount: BigInt,
 ): void {
-  let tokenBalanceId = createJointId([accountId, tokenId])
+  // Create TokenWithdrawal if account is a user
+  if (getUser(accountId)) {
+    let tokenBalanceId = createJointId([accountId, tokenId])
 
-  let tokenWithdrawalId = createJointId([
-    TOKEN_WITHDRAWAL_USER_PREFIX,
-    tokenBalanceId,
-  ])
-  let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId)
-  if (!tokenWithdrawal) {
-    tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId)
-    tokenWithdrawal.account = accountId
-    tokenWithdrawal.token = tokenId
-    tokenWithdrawal.amount = ZERO
+    let tokenWithdrawalId = createJointId([
+      TOKEN_WITHDRAWAL_USER_PREFIX,
+      tokenBalanceId,
+    ])
+    let tokenWithdrawal = TokenWithdrawal.load(tokenWithdrawalId)
+    if (!tokenWithdrawal) {
+      tokenWithdrawal = new TokenWithdrawal(tokenWithdrawalId)
+      tokenWithdrawal.account = accountId
+      tokenWithdrawal.token = tokenId
+      tokenWithdrawal.amount = ZERO
+    }
+    tokenWithdrawal.amount += amount
+    tokenWithdrawal.save()
   }
-  tokenWithdrawal.amount += amount
-  tokenWithdrawal.save()
 
-  // If contractId == accountId this is a split distribution, can ignore. It's a weird edge case,
-  // really shouldn't be captured in withdrawn amount but need to handle for legacy.
-  if (contractId != accountId) {
-    // Ideally can set contract earnings for any account type eventually. For now only setting them on users
-    let account = getUser(accountId)
-    if (!account) return
-
-    if (contractId) {
-      // Funds were pushed directly to the recipient, did not go through split main
-      let contractEarningsId = saveContractEarnings(contractId, accountId)
-      let contractEarningsWithdrawalId = createJointId([
-        CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
-        contractEarningsId,
-        tokenId,
-      ])
-      let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+  // Modify ContractEarnings
+  if (contractId && contractId != accountId) {
+    // Funds were pushed directly to the recipient, did not go through split main
+    let contractEarningsId = saveContractEarnings(contractId, accountId).id
+    let contractEarningsWithdrawalId = createJointId([
+      CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+      contractEarningsId,
+      tokenId,
+    ])
+    let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+      contractEarningsWithdrawalId,
+    )
+    if (!contractEarningsWithdrawal) {
+      contractEarningsWithdrawal = new ContractEarningsWithdrawal(
         contractEarningsWithdrawalId,
       )
-      if (!contractEarningsWithdrawal) {
-        contractEarningsWithdrawal = new ContractEarningsWithdrawal(
-          contractEarningsWithdrawalId,
-        )
-        contractEarningsWithdrawal.contractEarnings = contractEarningsId
-        contractEarningsWithdrawal.token = tokenId
-        contractEarningsWithdrawal.amount = ZERO
-      }
-      contractEarningsWithdrawal.amount += amount
-      contractEarningsWithdrawal.save()
-    } else {
-      // It's a split main withdrawal, move contract earnings internal balances over to contract earnings withdrawals
-      let contractEarningsArray = account.contractEarnings.load()
-      for (let i = 0; i < contractEarningsArray.length; i++) {
-        let contractEarnings = contractEarningsArray[i]
-        let contractEarningsInternalBalanceId = createJointId([
-          CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
-          contractEarnings.id,
-          tokenId,
-        ])
-        let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
-          contractEarningsInternalBalanceId,
-        )
-        if (contractEarningsInternalBalance) {
-          if (contractEarningsInternalBalance.amount > ZERO) {
-            let contractEarningsWithdrawalId = createJointId([
-              CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
-              contractEarnings.id,
-              tokenId,
-            ])
-            let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+      contractEarningsWithdrawal.contractEarnings = contractEarningsId
+      contractEarningsWithdrawal.token = tokenId
+      contractEarningsWithdrawal.amount = ZERO
+    }
+    contractEarningsWithdrawal.amount += amount
+    contractEarningsWithdrawal.save()
+  } else if (contractId == accountId || !contractId) {
+    // Funds were pushed throughs split main
+    // contractId == accountId => split distribution, !contractId => split main withdrawal
+    // Move contract earnings internal balances over to contract earnings withdrawals
+    let contractEarningsArray = getContractEarnings(accountId)
+    for (let i = 0; i < contractEarningsArray.length; i++) {
+      let contractEarnings = contractEarningsArray[i]
+      let contractEarningsInternalBalanceId = createJointId([
+        CONTRACT_EARNINGS_INTERNAL_BALANCE_PREFIX,
+        contractEarnings.id,
+        tokenId,
+      ])
+      let contractEarningsInternalBalance = ContractEarningsInternalBalance.load(
+        contractEarningsInternalBalanceId,
+      )
+      if (contractEarningsInternalBalance) {
+        if (contractEarningsInternalBalance.amount > ZERO) {
+          let contractEarningsWithdrawalId = createJointId([
+            CONTRACT_EARINGS_WITHDRAWAL_PREFIX,
+            contractEarnings.id,
+            tokenId,
+          ])
+          let contractEarningsWithdrawal = ContractEarningsWithdrawal.load(
+            contractEarningsWithdrawalId,
+          )
+          if (!contractEarningsWithdrawal) {
+            contractEarningsWithdrawal = new ContractEarningsWithdrawal(
               contractEarningsWithdrawalId,
             )
-            if (!contractEarningsWithdrawal) {
-              contractEarningsWithdrawal = new ContractEarningsWithdrawal(
-                contractEarningsWithdrawalId,
-              )
-              contractEarningsWithdrawal.contractEarnings = contractEarnings.id
-              contractEarningsWithdrawal.token = tokenId
-              contractEarningsWithdrawal.amount = ZERO
-            }
-            contractEarningsWithdrawal.amount +=
-              contractEarningsInternalBalance.amount
-            contractEarningsWithdrawal.save()
-
-            contractEarningsInternalBalance.amount = ZERO
-            contractEarningsInternalBalance.save()
+            contractEarningsWithdrawal.contractEarnings = contractEarnings.id
+            contractEarningsWithdrawal.token = tokenId
+            contractEarningsWithdrawal.amount = ZERO
           }
+          contractEarningsWithdrawal.amount +=
+            contractEarningsInternalBalance.amount
+          contractEarningsWithdrawal.save()
+
+          contractEarningsInternalBalance.amount = ZERO
+          contractEarningsInternalBalance.save()
         }
       }
     }
@@ -688,7 +685,35 @@ export function createUserIfMissing(
   user.save()
 }
 
-export function getSplit(splitId: string): Split | null {
+function getContractEarnings(accountId: string): ContractEarnings[] {
+  const user = getUser(accountId)
+  if (user) return user.contractEarnings.load()
+
+  const split = getSplit(accountId, false)
+  if (split) return split.contractEarnings.load()
+
+  const waterfall = getWaterfallModule(accountId, false)
+  if (waterfall) return waterfall.contractEarnings.load()
+
+  const vesting = getVestingModule(accountId, false)
+  if (vesting) return vesting.contractEarnings.load()
+
+  const liquidSplit = getLiquidSplit(accountId, false)
+  if (liquidSplit) return liquidSplit.contractEarnings.load()
+
+  const swapper = getSwapper(accountId, false)
+  if (swapper) return swapper.contractEarnings.load()
+
+  const passThroughWallet = getPassThroughWallet(accountId, false)
+  if (passThroughWallet) return passThroughWallet.contractEarnings.load()
+
+  throw new Error('Contract earnings must exist')
+}
+
+export function getSplit(
+  splitId: string,
+  required: boolean = true,
+): Split | null {
   let split = Split.load(splitId)
   if (!split) {
     let splitUser = User.load(splitId)
@@ -699,7 +724,7 @@ export function getSplit(splitId: string): Split | null {
       ])
       return null
     }
-    throw new Error('Split must exist')
+    if (required) throw new Error('Split must exist')
   }
 
   return split
@@ -707,6 +732,7 @@ export function getSplit(splitId: string): Split | null {
 
 export function getWaterfallModule(
   waterfallModuleId: string,
+  required: boolean = true,
 ): WaterfallModule | null {
   let waterfall = WaterfallModule.load(waterfallModuleId)
   if (!waterfall) {
@@ -719,7 +745,7 @@ export function getWaterfallModule(
       )
       return null
     }
-    throw new Error('Waterfall must exist')
+    if (required) throw new Error('Waterfall must exist')
   }
 
   return waterfall
@@ -727,6 +753,7 @@ export function getWaterfallModule(
 
 export function getVestingModule(
   vestingModuleId: string,
+  required: boolean = true,
 ): VestingModule | null {
   let vesting = VestingModule.load(vestingModuleId)
   if (!vesting) {
@@ -738,13 +765,16 @@ export function getVestingModule(
       ])
       return null
     }
-    throw new Error('Vesting must exist')
+    if (required) throw new Error('Vesting must exist')
   }
 
   return vesting
 }
 
-export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
+export function getLiquidSplit(
+  liquidSplitId: string,
+  required: boolean = true,
+): LiquidSplit | null {
   let liquidSplit = LiquidSplit.load(liquidSplitId)
   if (!liquidSplit) {
     let liquidSplitUser = User.load(liquidSplitId)
@@ -756,14 +786,16 @@ export function getLiquidSplit(liquidSplitId: string): LiquidSplit | null {
       )
       return null
     }
-
-    throw new Error('Liquid split must exist')
+    if (required) throw new Error('Liquid split must exist')
   }
 
   return liquidSplit
 }
 
-export function getSwapper(swapperId: string): Swapper | null {
+export function getSwapper(
+  swapperId: string,
+  required: boolean = true,
+): Swapper | null {
   let swapper = Swapper.load(swapperId)
   if (!swapper) {
     let swapperUser = User.load(swapperId)
@@ -774,7 +806,7 @@ export function getSwapper(swapperId: string): Swapper | null {
       ])
       return null
     }
-    throw new Error('Swapper must exist')
+    if (required) throw new Error('Swapper must exist')
   }
 
   return swapper
@@ -782,6 +814,7 @@ export function getSwapper(swapperId: string): Swapper | null {
 
 export function getPassThroughWallet(
   passThroughWalletId: string,
+  required: boolean = true,
 ): PassThroughWallet | null {
   let passThroughWallet = PassThroughWallet.load(passThroughWalletId)
   if (!passThroughWallet) {
@@ -794,7 +827,7 @@ export function getPassThroughWallet(
       )
       return null
     }
-    throw new Error('Pass through wallet must exist')
+    if (required) throw new Error('Pass through wallet must exist')
   }
 
   return passThroughWallet

@@ -187,7 +187,7 @@ export function handleWaterfallFunds(event: WaterfallFunds): void {
   updateDistributionAmount(
     waterfallModuleId,
     waterfallModule.token,
-    totalPayout
+    totalPayout,
   )
 
   // Save event
@@ -265,12 +265,7 @@ export function handleRecoverNonWaterfallFunds(
   receiveNonWaterfallFundsEvent.recoverNonWaterfallFundsEvent = recoverNonWaterfallFundsEventId
   receiveNonWaterfallFundsEvent.save()
 
-  // Only need to update withdrawn for users. For all modules, waterfall'd funds
-  // will show up in their active balances.
-  let user = User.load(accountId)
-  if (user) {
-    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
-  }
+  updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
 }
 
 function createWaterfallTranche(
@@ -365,12 +360,7 @@ function saveWaterfallRecipientReceivedFunds(
   amount: BigInt,
   waterfallModuleId: string,
 ): void {
-  // Only need to update withdrawn for users. For all modules, waterfall'd funds
-  // will show up in their active balances.
-  let user = User.load(accountId)
-  if (user) {
-    updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
-  }
+  updateWithdrawalAmount(waterfallModuleId, accountId, tokenId, amount)
 
   // Save event
   let waterfallFundsEventId = createJointId([
