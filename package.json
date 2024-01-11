@@ -14,7 +14,8 @@
     "deploy:mumbai-testing": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-mumbai-testing",
     "deploy:optimism": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-optimism",
     "deploy:opt-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-goerli",
-    "deploy:opt-sepolia": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-sepolia",
+    "deploy:opt-sepolia": "graph deploy --product hosted-service 0xsplits/splits-subgraph-base-sepolia",
+    "deploy:opt-sepolia-old": "graph deploy --product hosted-service --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-sepolia",
     "deploy:arbitrum": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arbitrum",
     "deploy:arb-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arb-goerli",
     "deploy:gnosis": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-gnosis",
@@ -56,7 +57,7 @@
     "build-and-deploy-mainnet-testing": "yarn prepare:mainnet-testing && yarn build && yarn deploy:mainnet-testing"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "^0.64.1",
+    "@graphprotocol/graph-cli": "^0.65.0",
     "@graphprotocol/graph-ts": "^0.32.0"
   },
   "devDependencies": {
