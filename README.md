@@ -15,6 +15,7 @@
 
 - [Optimism](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-optimism)
 - [Optimism Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-opt-goerli)
+- [Optimism Sepolia](https://thegraph.com/studio/subgraph/splits-subgraph-opt-sepolia/)
 - [Arbitrum](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-arbitrum)
 - [Arbitrum Goerli](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-arb-goerli)
 - [Zora](https://api.goldsky.com/api/public/project_clhk16b61ay9t49vm6ntn4mkz/subgraphs/splits-zora-mainnet/1.1.0/gn)

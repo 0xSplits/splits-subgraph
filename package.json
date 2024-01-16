@@ -12,10 +12,11 @@
     "deploy:polygon": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-polygon",
     "deploy:mumbai": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-mumbai",
     "deploy:mumbai-testing": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-mumbai-testing",
-    "deploy:opt-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-goerli",
-    "deploy:arb-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arb-goerli",
     "deploy:optimism": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-optimism",
+    "deploy:opt-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-opt-goerli",
+    "deploy:opt-sepolia": "graph deploy --studio splits-subgraph-opt-sepolia",
     "deploy:arbitrum": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arbitrum",
+    "deploy:arb-goerli": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-arb-goerli",
     "deploy:gnosis": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-gnosis",
     "deploy:fantom": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-fantom",
     "deploy:avalanche": "graph deploy --node https://api.thegraph.com/deploy/ 0xsplits/splits-subgraph-avalanche",
@@ -34,10 +35,11 @@
     "prepare:polygon": "mustache config/polygon.json schema.template.graphql > schema.graphql && mustache config/polygon.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:mumbai": "mustache config/mumbai.json schema.template.graphql > schema.graphql && mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:mumbai-testing": "mustache config/mumbai.json schema.template.graphql > schema.graphql && mustache config/mumbai.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
-    "prepare:opt-goerli": "mustache config/opt-goerli.json schema.template.graphql > schema.graphql && mustache config/opt-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
-    "prepare:arb-goerli": "mustache config/arb-goerli.json schema.template.graphql > schema.graphql && mustache config/arb-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:optimism": "mustache config/optimism.json schema.template.graphql > schema.graphql && mustache config/optimism.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:opt-goerli": "mustache config/opt-goerli.json schema.template.graphql > schema.graphql && mustache config/opt-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:opt-sepolia": "mustache config/opt-sepolia.json schema.template.graphql > schema.graphql && mustache config/opt-sepolia.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:arbitrum": "mustache config/arbitrum.json schema.template.graphql > schema.graphql && mustache config/arbitrum.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
+    "prepare:arb-goerli": "mustache config/arb-goerli.json schema.template.graphql > schema.graphql && mustache config/arb-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:gnosis": "mustache config/gnosis.json schema.template.graphql > schema.graphql && mustache config/gnosis.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:fantom": "mustache config/fantom.json schema.template.graphql > schema.graphql && mustache config/fantom.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:avalanche": "mustache config/avalanche.json schema.template.graphql > schema.graphql && mustache config/avalanche.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
@@ -48,14 +50,14 @@
     "prepare:base": "mustache config/base.json schema.template.graphql > schema.graphql && mustache config/base.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "prepare:base-goerli": "mustache config/base-goerli.json schema.template.graphql > schema.graphql && mustache config/base-goerli.json subgraph.template.yaml > subgraph.yaml && cp src/polygon.mapping.ts src/mapping.ts && cp abis/polygon.SplitMain.json abis/SplitMain.json && graph codegen",
     "build-and-deploy-prodnets": "yarn prepare:base && yarn build && yarn deploy:base && yarn prepare:aurora && yarn build && yarn deploy:aurora && yarn prepare:bsc && yarn build && yarn deploy:bsc && yarn prepare:avalanche && yarn build && yarn deploy:avalanche && yarn prepare:fantom && yarn build && yarn deploy:fantom && yarn prepare:gnosis && yarn build && yarn deploy:gnosis && yarn prepare:arbitrum && yarn build && yarn deploy:arbitrum && yarn prepare:optimism && yarn build && yarn deploy:optimism && yarn prepare:mainnet && yarn build && yarn deploy:mainnet && yarn prepare:polygon && yarn build && yarn deploy:polygon",
-    "build-and-deploy-testnets": "yarn prepare:sepolia && yarn build && yarn deploy:sepolia && yarn prepare:arb-goerli && yarn build && yarn deploy:arb-goerli && yarn prepare:opt-goerli && yarn build && yarn deploy:opt-goerli && yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:base-goerli && yarn build && yarn deploy:base-goerli",
+    "build-and-deploy-testnets": "yarn prepare:sepolia && yarn build && yarn deploy:sepolia && yarn prepare:arb-goerli && yarn build && yarn deploy:arb-goerli && yarn prepare:opt-goerli && yarn build && yarn deploy:opt-goerli && yarn prepare:opt-sepolia && yarn build && yarn deploy:opt-sepolia && yarn prepare:goerli && yarn build && yarn deploy:goerli && yarn prepare:mumbai && yarn build && yarn deploy:mumbai && yarn prepare:base-goerli && yarn build && yarn deploy:base-goerli",
     "build-and-deploy-mumbai-testing": "yarn prepare:mumbai-testing && yarn build && yarn deploy:mumbai-testing",
     "build-and-deploy-goerli-testing": "yarn prepare:goerli-testing && yarn build && yarn deploy:goerli-testing",
     "build-and-deploy-mainnet-testing": "yarn prepare:mainnet-testing && yarn build && yarn deploy:mainnet-testing"
   },
   "dependencies": {
-    "@graphprotocol/graph-cli": "0.52.0",
-    "@graphprotocol/graph-ts": "^0.31.0"
+    "@graphprotocol/graph-cli": "^0.65.0",
+    "@graphprotocol/graph-ts": "^0.32.0"
   },
   "devDependencies": {
     "mustache": "^4.2.0"
