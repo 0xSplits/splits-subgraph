@@ -267,7 +267,7 @@ enum OracleType {
 
 type UniswapV3TWAPPairDetail @entity {
   id: ID! # ${oracleId}-${base}-${quote}
-  oracle: Oracle!
+  oracle: UniswapV3TWAPOracle!
   base: Token!
   quote: Token!
   pool: Bytes!
