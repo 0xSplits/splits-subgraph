@@ -1,0 +1,14 @@
+{
+  "network": "holesky",
+  "splitMainAddress": "'0xfC8a305728051367797DADE6Aa0344E0987f5286'",
+  "vestingFactoryAddress": "'0x0a2841630f198745a55c4dab3fe98f77271949e5'",
+  "waterfallFactoryAddress": "'0x4Df01754eBd055498C8087b1e9a5c7a9ad19b0F6'",
+  "liquidSplitFactoryAddress": "'0xAbA0E852f1EB10196b55f877903A87a2588b7aa8'",
+  "recoupAddress": "'0xcFba37C5Ee4d80c286593342470EB881deb9799e'",
+  "splitStartBlock": "817717",
+  "vestingStartBlock": "148475",
+  "waterfallStartBlock": "148599",
+  "liquidSplitStartBlock": "817930",
+  "recoupStartBlock": "817916",
+  "polygon": true
+}
