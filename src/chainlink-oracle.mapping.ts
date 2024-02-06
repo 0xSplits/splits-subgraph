@@ -8,7 +8,6 @@ import {
 } from '../generated/templates/ChainlinkOracle/ChainlinkOracle'
 import { ChainlinkOracle as ChainlinkOracleTemplate } from '../generated/templates'
 import {
-  Token,
   User,
   ChainlinkOracle as Oracle,
   ChainlinkPairDetail,
@@ -18,6 +17,7 @@ import {
   createJointId,
   createUserIfMissing,
   getBigIntFromString,
+  saveToken,
 } from './helpers'
 
 export const ZERO = BigInt.fromI32(0)
@@ -55,12 +55,10 @@ export function handleCreateChainlinkOracle(
     let quotePair = pairDetails[i].quotePair
 
     let base = quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
+    saveToken(base)
 
     let quote = quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
+    saveToken(quote)
 
     let pairDetail = pairDetails[i].pairDetail
     let path = pairDetail.path
@@ -174,12 +172,10 @@ export function handleSetPairDetails(event: SetPairDetails): void {
   let pairDetails = event.params.params
   for (let i: i32 = 0; i < pairDetails.length; i++) {
     let base = pairDetails[i].quotePair.base.toHexString()
-    let baseToken = new Token(base)
-    baseToken.save()
+    saveToken(base)
 
     let quote = pairDetails[i].quotePair.quote.toHexString()
-    let quoteToken = new Token(quote)
-    quoteToken.save()
+    saveToken(quote)
 
     let inverted = pairDetails[i].pairDetail.inverted
     let path = pairDetails[i].pairDetail.path

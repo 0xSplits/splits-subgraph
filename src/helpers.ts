@@ -147,8 +147,8 @@ export function saveSetSplitEvent(
   splitId: string,
   type: string,
 ): void {
-  let tx = Transaction.load(txHash)
-  if (!tx) tx = new Transaction(txHash)
+  let tx = createTransactionIfMissing(txHash)
+
   let setSplitEvents = tx.setSplitEvents
   if (!setSplitEvents) setSplitEvents = new Array<string>()
 
@@ -246,8 +246,8 @@ export function saveDistributeEvent(
   tokenId: string,
   amount: BigInt,
 ): string {
-  let tx = Transaction.load(txHash)
-  if (!tx) tx = new Transaction(txHash)
+  let tx = createTransactionIfMissing(txHash)
+
   let distEvents = tx.distributionEvents
   if (!distEvents) distEvents = new Array<string>()
 
@@ -398,8 +398,8 @@ export function saveWithdrawalEvent(
   logIdx: BigInt,
   accountId: string,
 ): string {
-  let tx = Transaction.load(txHash)
-  if (!tx) tx = new Transaction(txHash)
+  let tx = createTransactionIfMissing(txHash)
+
   let withdrawEvents = tx.withdrawEvents
   if (!withdrawEvents) withdrawEvents = new Array<string>()
 
@@ -432,9 +432,7 @@ export function saveControlTransferEvents(
   fromUserId: string,
   toUserId: string,
 ): void {
-  let tx = Transaction.load(txHash)
-  if (!tx) tx = new Transaction(txHash)
-  tx.save()
+  createTransactionIfMissing(txHash)
 
   let controlTransferEventId = createJointId([
     CONTROL_TRANSFER_EVENT_PREFIX,
@@ -837,12 +835,13 @@ export function getUser(userId: string): User | null {
   return user
 }
 
-export function createTransactionIfMissing(txHash: string): void {
+export function createTransactionIfMissing(txHash: string): Transaction {
   let tx = Transaction.load(txHash)
   if (!tx) {
     tx = new Transaction(txHash)
     tx.save()
   }
+  return tx
 }
 
 // TODO: is there really nothing built-in for this??

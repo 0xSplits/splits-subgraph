@@ -1,6 +1,5 @@
 import { Address, BigInt, log } from '@graphprotocol/graph-ts'
 import {
-  CreateLS1155,
   CreateLS1155Clone,
 } from '../generated/LiquidSplitFactory/LiquidSplitFactory'
 import {

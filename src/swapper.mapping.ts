@@ -13,7 +13,6 @@ import {
 } from '../generated/templates/Swapper/Swapper'
 import { Swapper as SwapperTemplate } from '../generated/templates'
 import {
-  Token,
   User,
   Swapper,
   SwapBalance,
@@ -714,8 +713,7 @@ function handleOwnerSwap(swapper: Swapper, event: ExecCalls): void {
     let inputToken = inputTokens[i]
     let swapData = swapBalanceData.get(inputToken)
 
-    let token = new Token(inputToken)
-    token.save()
+    saveToken(inputToken)
 
     let outputTokens = swapData.outputs.keys()
     for (let j: i32 = 0; j < outputTokens.length; j++) {

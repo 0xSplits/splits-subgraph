@@ -6,7 +6,6 @@ import {
 } from '../generated/templates/WaterfallModule/WaterfallModule'
 import { WaterfallModule as WaterfallModuleTemplate } from '../generated/templates'
 import {
-  Token,
   User,
   WaterfallModule,
   WaterfallTranche,
@@ -27,8 +26,6 @@ import {
   updateDistributionAmount,
   updateWithdrawalAmount,
   saveToken,
-  TOKEN_WITHDRAWAL_USER_PREFIX,
-  TOKEN_WITHDRAWAL_WATERFALL_PREFIX
 } from "./helpers"
 
 export const ZERO = BigInt.fromI32(0)

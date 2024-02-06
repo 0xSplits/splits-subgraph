@@ -9,7 +9,6 @@ import {
 } from '../generated/templates/PassThroughWallet/PassThroughWallet'
 import { PassThroughWallet as PassThroughWalletTemplate } from '../generated/templates'
 import {
-  Token,
   User,
   PassThroughWallet,
   Recipient,

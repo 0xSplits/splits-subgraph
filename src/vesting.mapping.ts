@@ -6,8 +6,6 @@ import {
 } from '../generated/templates/VestingModule/VestingModule'
 import { VestingModule as VestingModuleTemplate } from '../generated/templates'
 import {
-  Token,
-  Transaction,
   VestingModule,
   VestingStream,
   CreateVestingModuleEvent,
