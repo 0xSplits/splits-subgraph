@@ -9,6 +9,7 @@
   "swapperFactoryAddress": "'0xa244bbe019cf1BA177EE5A532250be2663Fb55cA'",
   "passThroughWalletFactoryAddress": "'0xF5aCC1568706Fbf9A55a77DdBe8DF907Da95dD6B'",
   "diversifierFactoryAddress": "'0x78791997483f25217F4C3FE2a568Fe3eFaf77884'",
+  "chainlinkOracleFactoryAddress": "'0xD28182C2E11519ad081E7fa9da711274b7096098'",
   "splitStartBlock": "6374540",
   "vestingStartBlock": "6839434",
   "waterfallStartBlock": "7718183",
@@ -18,5 +19,7 @@
   "swapperStartBlock": "9111157",
   "passThroughWalletStartBlock": "9111177",
   "diversifierStartBlock": "9111208",
-  "ethereum": true
+  "chainlinkOracleStartBlock": "9111208",
+  "ethereum": true,
+  "swapper": true
 }
