@@ -420,7 +420,7 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
       let holder = holders[i]
       // Only update if it's not the from/to address (i.e. we haven't already updated it)
       if (holder.account != fromAddressString && holder.account != toAddressString) {
-        holder.ownership = liquidSplitContract.scaledPercentBalanceOf(Address.fromString(holder.id))
+        holder.ownership = liquidSplitContract.scaledPercentBalanceOf(Address.fromString(holder.account))
         holder.save()
       }
     }
