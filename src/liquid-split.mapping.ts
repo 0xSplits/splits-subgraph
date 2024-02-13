@@ -396,18 +396,16 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
   let toAddressString = toAddress.toHexString()
 
   if (fromAddressString == ZERO_ADDRESS || toAddressString == ZERO_ADDRESS) {
-    let liquidSplit = LiquidSplit.load(liquidSplitId) as LiquidSplit
-    let holders = liquidSplit.holders.load()
-    for (let i = 0; i < holders.length; i++) {
-      let holder = holders[i]
-      holder.ownership = liquidSplitContract.scaledPercentBalanceOf(Address.fromString(holder.id))
-      holder.save()
-    }
-
+    // If it's a mint or burn, need to update all holders ownership
     if (fromAddressString != ZERO_ADDRESS) {
       let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp)
-      fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
-      fromHolder.save()
+      let ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
+      if (ownership == ZERO) {
+        store.remove('Holder', fromHolder.id)
+      } else {
+        fromHolder.ownership = ownership
+        fromHolder.save()
+      }
     }
   
     if (toAddressString != ZERO_ADDRESS) {
@@ -415,7 +413,19 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
       toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
       toHolder.save()
     }
+
+    let liquidSplit = LiquidSplit.load(liquidSplitId) as LiquidSplit
+    let holders = liquidSplit.holders.load()
+    for (let i = 0; i < holders.length; i++) {
+      let holder = holders[i]
+      // Only update if it's not the from/to address (i.e. we haven't already updated it)
+      if (holder.account != fromAddressString && holder.account != toAddressString) {
+        holder.ownership = liquidSplitContract.scaledPercentBalanceOf(Address.fromString(holder.id))
+        holder.save()
+      }
+    }
   } else {
+    // if it's a transfer, just update the from/to ownership
     let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp)
     fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
     fromHolder.save()
