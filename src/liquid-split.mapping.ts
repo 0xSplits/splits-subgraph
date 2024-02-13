@@ -427,8 +427,13 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
   } else {
     // if it's a transfer, just update the from/to ownership
     let fromHolder = getHolder(fromAddressString, liquidSplitId, blockNumber, timestamp)
-    fromHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
-    fromHolder.save()
+    let fromOwnership = liquidSplitContract.scaledPercentBalanceOf(fromAddress)
+    if (fromOwnership == ZERO) {
+      store.remove('Holder', fromHolder.id)
+    } else {
+      fromHolder.ownership = fromOwnership
+      fromHolder.save()
+    }
   
     let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp)
     toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
