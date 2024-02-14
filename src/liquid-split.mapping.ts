@@ -410,8 +410,13 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
   
     if (toAddressString != ZERO_ADDRESS) {
       let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp)
-      toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
-      toHolder.save()
+      let ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
+      if (ownership == ZERO) {
+        store.remove('Holder', toHolder.id)
+      } else {
+        toHolder.ownership = ownership
+        toHolder.save()
+      }
     }
 
     let liquidSplit = LiquidSplit.load(liquidSplitId) as LiquidSplit
@@ -436,8 +441,13 @@ function updateHolderOwnershipNonFactoryLiquidSplit(
     }
   
     let toHolder = getHolder(toAddressString, liquidSplitId, blockNumber, timestamp)
-    toHolder.ownership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
-    toHolder.save()
+    let toOwnership = liquidSplitContract.scaledPercentBalanceOf(toAddress)
+    if (toOwnership == ZERO) {
+      store.remove('Holder', toHolder.id)
+    } else {
+      toHolder.ownership = toOwnership
+      toHolder.save()
+    }
   }
 }
 
