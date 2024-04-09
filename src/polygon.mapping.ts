@@ -142,7 +142,13 @@ export function handleCreateSplit(event: CreateSplit): void {
     recipient.save()
     recipientIds.push(recipientId)
 
-    saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId, percentAllocations[i])
+    saveSplitRecipientAddedEvent(
+      timestamp,
+      txHash,
+      logIdx,
+      accountId,
+      percentAllocations[i],
+    )
   }
   split.recipients = recipientIds
 
@@ -272,7 +278,13 @@ export function handleUpdateSplit(event: UpdateSplit): void {
     newRecipientIds.push(recipientId)
 
     if (shouldSaveRecipientEvents && !oldRecipientIds.includes(recipientId)) {
-      saveSplitRecipientAddedEvent(timestamp, txHash, logIdx, accountId, percentAllocations[i])
+      saveSplitRecipientAddedEvent(
+        timestamp,
+        txHash,
+        logIdx,
+        accountId,
+        percentAllocations[i],
+      )
     }
   }
 
@@ -306,6 +318,8 @@ export function handleWithdrawal(event: Withdrawal): void {
   let ethAmount = event.params.ethAmount
   let tokens = event.params.tokens
   let tokenAmounts = event.params.tokenAmounts
+
+  createUserIfMissing(account, blockNumber, timestamp)
 
   let withdrawalEventId = saveWithdrawalEvent(
     timestamp,
