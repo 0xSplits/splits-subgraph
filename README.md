@@ -1,5 +1,9 @@
 # 0xSplits Subgraph
 
+## NOTE
+The subgraphs below will all become inactive on June 12 when The Graph sunsets the Hosted Service. For more information please refer to their [announcement](https://thegraph.com/blog/sunbeam-upgrade-window/).
+To access Splits subgraph data post sunset, please use the [sdk](https://github.com/0xSplits/splits-sdk).
+
 ## Ethereum
 
 - [Mainnet](https://thegraph.com/hosted-service/subgraph/0xsplits/splits-subgraph-ethereum)
